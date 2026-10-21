@@ -1,0 +1,8000 @@
+      r.issues.push({
+        code: "invalid_type",
+        expected: "object",
+        input: o,
+        inst: e
+      });
+      return r;
+    }
+    const a = o?.[t.discriminator];
+    const l = i.value.get(a);
+    return l && (a !== void 0 || s.direction !== "backward") ? l._zod.run(r, s) : t.unionFallback || s.direction === "backward" ? n(r, s) : (r.issues.push({
+      code: "invalid_union",
+      errors: [],
+      note: "No matching discriminator",
+      discriminator: t.discriminator,
+      options: Array.from(i.value.keys()).filter(u => i.value.get(u) !== null),
+      input: o,
+      path: [t.discriminator],
+      inst: e
+    }), r);
+  };
+});
+var Spe = nn("$ZodIntersection", (e, t) => {
+  _l.init(e, t);
+  e._zod.parse = (n, i) => {
+    const r = n.value;
+    const s = t.left._zod.run({
+      value: r,
+      issues: []
+    }, i);
+    const o = t.right._zod.run({
+      value: r,
+      issues: []
+    }, i);
+    return s instanceof Promise || o instanceof Promise ? Promise.all([s, o]).then(([a, l]) => q7(n, a, l)) : q7(n, s, o);
+  };
+});
+function OL(e, t) {
+  if (e === t) {
+    return {
+      valid: !0,
+      data: e
+    };
+  }
+  if (e instanceof Date && t instanceof Date && +e == +t) {
+    return {
+      valid: !0,
+      data: e
+    };
+  }
+  if (qS(e) && qS(t)) {
+    const n = Object.keys(t);
+    const i = Object.keys(e).filter(s => n.indexOf(s) !== -1);
+    const r = {
+      ...e,
+      ...t
+    };
+    Object.prototype.hasOwnProperty.call(r, "__proto__") && delete r.__proto__;
+    for (const s of i) {
+      if (s === "__proto__") {
+        continue;
+      }
+      const o = OL(e[s], t[s]);
+      if (!o.valid) {
+        return {
+          valid: !1,
+          mergeErrorPath: [s, ...o.mergeErrorPath]
+        };
+      }
+      r[s] = o.data;
+    }
+    return {
+      valid: !0,
+      data: r
+    };
+  }
+  if (Array.isArray(e) && Array.isArray(t)) {
+    if (e.length !== t.length) {
+      return {
+        valid: !1,
+        mergeErrorPath: []
+      };
+    }
+    const n = [];
+    for (let i = 0; i < e.length; i++) {
+      const r = e[i];
+      const s = t[i];
+      const o = OL(r, s);
+      if (!o.valid) {
+        return {
+          valid: !1,
+          mergeErrorPath: [i, ...o.mergeErrorPath]
+        };
+      }
+      n.push(o.data);
+    }
+    return {
+      valid: !0,
+      data: n
+    };
+  }
+  return {
+    valid: !1,
+    mergeErrorPath: []
+  };
+}
+function q7(e, t, n) {
+  const i = new Map();
+  let r;
+  const s = new Map();
+  const o = (u, d) => {
+    let h;
+    if (u.code === "unrecognized_keys" && !u.path?.length) {
+      r ?? (r = u);
+      h = u.keys;
+    } else {
+      if (u.code === "invalid_key" && u.origin === "record" && u.path?.length === 1) {
+        const p = String(u.path[0]);
+        s.has(p) || s.set(p, u);
+        h = [p];
+      } else {
+        return !1;
+      }
+    }
+    for (const p of h) {
+      i.has(p) || i.set(p, {});
+      i.get(p)[d] = !0;
+    }
+    return !0;
+  };
+  for (const u of t.issues) {
+    o(u, "l") || e.issues.push(u);
+  }
+  for (const u of n.issues) {
+    o(u, "r") || e.issues.push(u);
+  }
+  const a = [...i].filter(([, u]) => u.l && u.r).map(([u]) => u);
+  if (a.length) {
+    const u = r ? a.filter(d => r.keys.includes(d)) : [];
+    u.length && e.issues.push({
+      ...r,
+      keys: u
+    });
+    for (const d of a) {
+      !u.includes(d) && s.has(d) && e.issues.push(s.get(d));
+    }
+  }
+  const l = OL(t.value, n.value);
+  if (!l.valid) {
+    if (Vv(e)) {
+      return e;
+    }
+    throw new Error(`Unmergable intersection. Error path: ${JSON.stringify(l.mergeErrorPath)}`);
+  }
+  e.value = l.data;
+  return e;
+}
+var wpe = nn("$ZodRecord", (e, t) => {
+  _l.init(e, t);
+  const n = cm.memoizer;
+  n?.attach(e);
+  e._zod.parse = (i, r) => {
+    const s = i.value;
+    if (!qS(s)) {
+      i.issues.push({
+        expected: "record",
+        code: "invalid_type",
+        input: s,
+        inst: e
+      });
+      return i;
+    }
+    const o = [];
+    const a = t.keyType._zod.values;
+    if (a && !t.partial) {
+      i.value = n ? n.alloc(e, i, {}, r) : {};
+      const l = new Set();
+      for (const d of a) {
+        if (typeof d == "string" || typeof d == "number" || typeof d == "symbol") {
+          l.add(typeof d == "number" ? d.toString() : d);
+          if (d === "__proto__") {
+            continue;
+          }
+          const h = t.keyType._zod.run({
+            value: d,
+            issues: []
+          }, r);
+          if (h instanceof Promise) {
+            throw new Error("Async schemas not supported in object keys currently");
+          }
+          if (h.issues.length) {
+            i.issues.push({
+              code: "invalid_key",
+              origin: "record",
+              issues: h.issues.map(y => X1(y, r, _0())),
+              input: d,
+              path: [d],
+              inst: e
+            });
+            continue;
+          }
+          const p = h.value;
+          if (p === "__proto__") {
+            continue;
+          }
+          const A = t.valueType._zod.run({
+            value: s[d],
+            issues: []
+          }, r);
+          A instanceof Promise ? o.push(A.then(y => {
+            y.issues.length && i.issues.push(...mS(d, y.issues));
+            i.value[p] = y.value;
+          })) : (A.issues.length && i.issues.push(...mS(d, A.issues)), i.value[p] = A.value);
+        }
+      }
+      let u;
+      for (const d in s) {
+        if (!l.has(d)) {
+          if (t.mode === "loose") {
+            if (d === "__proto__") {
+              continue;
+            }
+            i.value[d] = s[d];
+          } else {
+            u = u ?? [];
+            u.push(d);
+          }
+        }
+      }
+      u && u.length > 0 && i.issues.push({
+        code: "unrecognized_keys",
+        input: s,
+        inst: e,
+        keys: u,
+        continue: !0
+      });
+    } else {
+      i.value = n ? n.alloc(e, i, {}, r) : {};
+      let l;
+      for (const u of Reflect.ownKeys(s)) {
+        if (u === "__proto__" || !Object.prototype.propertyIsEnumerable.call(s, u)) {
+          continue;
+        }
+        let d = t.keyType._zod.run({
+          value: u,
+          issues: []
+        }, r);
+        if (d instanceof Promise) {
+          throw new Error("Async schemas not supported in object keys currently");
+        }
+        if (typeof u == "string" && U8.test(u) && d.issues.length) {
+          const A = t.keyType._zod.run({
+            value: Number(u),
+            issues: []
+          }, r);
+          if (A instanceof Promise) {
+            throw new Error("Async schemas not supported in object keys currently");
+          }
+          A.issues.length === 0 && (d = A);
+        }
+        if (d.issues.length) {
+          t.mode === "loose" ? i.value[u] = s[u] : a ? (l = l ?? [], l.push(u)) : i.issues.push({
+            code: "invalid_key",
+            origin: "record",
+            issues: d.issues.map(A => X1(A, r, _0())),
+            input: u,
+            path: [u],
+            inst: e
+          });
+          continue;
+        }
+        const h = d.value;
+        if (h === "__proto__") {
+          continue;
+        }
+        const p = t.valueType._zod.run({
+          value: s[u],
+          issues: []
+        }, r);
+        p instanceof Promise ? o.push(p.then(A => {
+          A.issues.length && i.issues.push(...mS(u, A.issues));
+          i.value[h] = A.value;
+        })) : (p.issues.length && i.issues.push(...mS(u, p.issues)), i.value[h] = p.value);
+      }
+      l && l.length > 0 && i.issues.push({
+        code: "unrecognized_keys",
+        input: s,
+        inst: e,
+        keys: l,
+        continue: !0
+      });
+    }
+    return o.length ? Promise.all(o).then(() => i) : i;
+  };
+});
+var Ipe = nn("$ZodEnum", (e, t) => {
+  _l.init(e, t);
+  const n = PL(t.entries);
+  const i = new Set(n);
+  e._zod.values = i;
+  io(e, "pattern", r => {
+    const s = PL(r.def.entries).filter(o => she.has(typeof o));
+    return new RegExp(s.length ? `^(${s.map(o => $S(o.toString())).join("|")})$` : "^[^\\s\\S]$");
+  });
+  e._zod.parse = (r, s) => {
+    const o = r.value;
+    i.has(o) || r.issues.push({
+      code: "invalid_value",
+      values: n,
+      input: o,
+      inst: e
+    });
+    return r;
+  };
+});
+var _pe = nn("$ZodLiteral", (e, t) => {
+  _l.init(e, t);
+  const n = new Set(t.values);
+  e._zod.values = n;
+  io(e, "pattern", i => {
+    const r = i.def.values;
+    return new RegExp(r.length ? `^(${r.map(s => typeof s == "string" ? $S(s) : s ? $S(s.toString()) : String(s)).join("|")})$` : "^[^\\s\\S]$");
+  });
+  e._zod.parse = (i, r) => {
+    const s = i.value;
+    n.has(s) || i.issues.push({
+      code: "invalid_value",
+      values: t.values,
+      input: s,
+      inst: e
+    });
+    return i;
+  };
+});
+var xpe = nn("$ZodTransform", (e, t) => {
+  _l.init(e, t);
+  e._zod.optin = "optional";
+  cm.memoizer?.guard(e);
+  e._zod.parse = (n, i) => {
+    if (i.direction === "backward") {
+      throw new CX(e.constructor.name);
+    }
+    const r = t.transform(n.value, n);
+    if (i.async) {
+      return (r instanceof Promise ? r : Promise.resolve(r)).then(s => {
+        n.value = s;
+        return n;
+      });
+    }
+    if (r instanceof Promise) {
+      throw new jb();
+    }
+    n.value = r;
+    return n;
+  };
+});
+function $7(e, t) {
+  e.value = t.issues.length ? void 0 : t.value;
+  return e;
+}
+var UX = nn("$ZodOptional", (e, t) => {
+  _l.init(e, t);
+  io(e, "optin", n => n.def.innerType._zod.optin === "defaulted" ? "defaulted" : "optional");
+  e._zod.optout = "optional";
+  io(e, "values", n => {
+    const i = n.def.innerType._zod.values;
+    return i ? new Set([...i, void 0]) : void 0;
+  });
+  io(e, "pattern", n => {
+    const i = n.def.innerType._zod.pattern;
+    return i ? new RegExp(`^(${M8(i.source)})?$`) : void 0;
+  });
+  e._zod.parse = (n, i) => {
+    if (n.value === void 0) {
+      if (t.innerType._zod.optin !== "defaulted") {
+        return n;
+      }
+      const r = t.innerType._zod.run({
+        value: n.value,
+        issues: []
+      }, i);
+      return r instanceof Promise ? r.then(s => $7(n, s)) : $7(n, r);
+    }
+    return t.innerType._zod.run(n, i);
+  };
+});
+var Tpe = nn("$ZodExactOptional", (e, t) => {
+  UX.init(e, t);
+  io(e, "values", n => n.def.innerType._zod.values);
+  io(e, "pattern", n => n.def.innerType._zod.pattern);
+  e._zod.parse = (n, i) => t.innerType._zod.run(n, i);
+});
+var Bpe = nn("$ZodNullable", (e, t) => {
+  _l.init(e, t);
+  io(e, "optin", n => n.def.innerType._zod.optin);
+  io(e, "optout", n => n.def.innerType._zod.optout);
+  io(e, "pattern", n => {
+    const i = n.def.innerType._zod.pattern;
+    return i ? new RegExp(`^(${M8(i.source)}|null)$`) : void 0;
+  });
+  io(e, "values", n => n.def.innerType._zod.values ? new Set([...n.def.innerType._zod.values, null]) : void 0);
+  e._zod.parse = (n, i) => n.value === null ? n : t.innerType._zod.run(n, i);
+});
+var Mpe = nn("$ZodDefault", (e, t) => {
+  _l.init(e, t);
+  e._zod.optin = "defaulted";
+  io(e, "values", n => n.def.innerType._zod.values);
+  e._zod.parse = (n, i) => {
+    if (i.direction === "backward") {
+      return t.innerType._zod.run(n, i);
+    }
+    if (n.value === void 0) {
+      n.value = t.defaultValue;
+      return n;
+    }
+    const r = t.innerType._zod.run(n, i);
+    return r instanceof Promise ? r.then(s => eH(s, t)) : eH(r, t);
+  };
+});
+function eH(e, t) {
+  e.value === void 0 && (e.value = t.defaultValue);
+  return e;
+}
+var Rpe = nn("$ZodPrefault", (e, t) => {
+  _l.init(e, t);
+  e._zod.optin = "defaulted";
+  io(e, "values", n => n.def.innerType._zod.values);
+  e._zod.parse = (n, i) => {
+    i.direction === "backward" || n.value === void 0 && (n.value = t.defaultValue);
+    return t.innerType._zod.run(n, i);
+  };
+});
+var kpe = nn("$ZodNonOptional", (e, t) => {
+  _l.init(e, t);
+  io(e, "values", n => {
+    const i = n.def.innerType._zod.values;
+    return i ? new Set([...i].filter(r => r !== void 0)) : void 0;
+  });
+  e._zod.parse = (n, i) => {
+    const r = t.innerType._zod.run(n, i);
+    return r instanceof Promise ? r.then(s => tH(s, e)) : tH(r, e);
+  };
+});
+function tH(e, t) {
+  !e.issues.length && e.value === void 0 && e.issues.push({
+    code: "invalid_type",
+    expected: "nonoptional",
+    input: e.value,
+    inst: t
+  });
+  return e;
+}
+function nH(e, t, n, i) {
+  return t.issues.length ? (e.value = n.catchValue({
+    ...t,
+    value: e.value,
+    error: {
+      issues: t.issues.map(r => X1(r, i, _0()))
+    },
+    input: e.value
+  }), e) : (e.value = t.value, t.memo && (e.memo = !0), e);
+}
+var Dpe = nn("$ZodCatch", (e, t) => {
+  _l.init(e, t);
+  io(e, "optin", n => n.def.innerType._zod.optin === "defaulted" ? "defaulted" : "optional");
+  io(e, "optout", n => n.def.innerType._zod.optout);
+  io(e, "values", n => n.def.innerType._zod.values);
+  e._zod.parse = (n, i) => {
+    if (i.direction === "backward") {
+      return t.innerType._zod.run(n, i);
+    }
+    const r = t.innerType._zod.run({
+      value: n.value,
+      issues: []
+    }, i);
+    return r instanceof Promise ? r.then(s => nH(n, s, t, i)) : nH(n, r, t, i);
+  };
+});
+var Ppe = nn("$ZodPipe", (e, t) => {
+  _l.init(e, t);
+  io(e, "values", n => n.def.in._zod.values);
+  io(e, "optin", n => n.def.in._zod.optin);
+  io(e, "optout", n => n.def.out._zod.optout);
+  io(e, "propValues", n => n.def.in._zod.propValues);
+  e._zod.parse = (n, i) => {
+    if (i.direction === "backward") {
+      const s = t.out._zod.run(n, i);
+      return s instanceof Promise ? s.then(o => hB(o, t.in, i)) : hB(s, t.in, i);
+    }
+    const r = t.in._zod.run(n, i);
+    return r instanceof Promise ? r.then(s => hB(s, t.out, i)) : hB(r, t.out, i);
+  };
+});
+function hB(e, t, n) {
+  return e.issues.some(i => i.code !== "unrecognized_keys") ? (e.aborted = !0, e) : t._zod.run({
+    value: e.value,
+    issues: e.issues
+  }, n);
+}
+var Lpe = nn("$ZodReadonly", (e, t) => {
+  _l.init(e, t);
+  io(e, "propValues", n => n.def.innerType._zod.propValues);
+  io(e, "values", n => n.def.innerType._zod.values);
+  io(e, "optin", n => n.def.innerType?._zod?.optin);
+  io(e, "optout", n => n.def.innerType?._zod?.optout);
+  e._zod.parse = (n, i) => {
+    if (i.direction === "backward") {
+      return t.innerType._zod.run(n, i);
+    }
+    const r = t.innerType._zod.run(n, i);
+    return r instanceof Promise ? r.then(iH) : iH(r);
+  };
+});
+function iH(e) {
+  e.memo || (e.value = Object.freeze(e.value));
+  return e;
+}
+var Npe = nn("$ZodCustom", (e, t) => {
+  Df.init(e, t);
+  _l.init(e, t);
+  e._zod.parse = (n, i) => n;
+  e._zod.check = n => {
+    const i = n.value;
+    const r = t.fn(i);
+    if (r instanceof Promise) {
+      return r.then(s => rH(s, n, i, e));
+    }
+    rH(r, n, i, e);
+  };
+});
+function rH(e, t, n, i) {
+  if (!e) {
+    const r = {
+      code: "custom",
+      input: n,
+      inst: i,
+      path: [...(i._zod.def.path ?? [])],
+      continue: !i._zod.def.abort
+    };
+    i._zod.def.params && (r.params = i._zod.def.params);
+    t.issues.push(Mx(r));
+  }
+}
+var Ope = class extends Error {
+  constructor() {
+    super("Cannot parse a reference cycle that closes through a transform");
+    this.name = "ZodCyclicError";
+  }
+};
+var UL = "~memo";
+var sH = [];
+function FX(e) {
+  return e !== null && typeof e == "object";
+}
+function n5(e) {
+  return e.map(t => t.path ? {
+    ...t,
+    path: t.path.slice()
+  } : {
+    ...t
+  });
+}
+var QX = new WeakMap();
+var w_ = 0;
+var wM = 1;
+var ex = 2;
+function IM(e, t, n) {
+  const i = QX.get(e);
+  if (i !== void 0) {
+    return i ? ex : w_;
+  }
+  if (t.has(e)) {
+    return ex;
+  }
+  t.add(e);
+  let r = w_;
+  const s = u => {
+    if (r !== ex && u?._zod) {
+      const d = IM(u, t, n);
+      d > r && (r = d);
+    }
+  };
+  const o = (u, d) => {
+    let h = w_;
+    for (const p of Reflect.ownKeys(u)) {
+      const A = Object.getOwnPropertyDescriptor(u, p);
+      if (d && !A.enumerable) {
+        continue;
+      }
+      const y = A.get ? wM : A.value?._zod ? IM(A.value, t, n) : w_;
+      y > h && (h = y);
+    }
+    return h;
+  };
+  const a = u => {
+    u > r && (r = u);
+  };
+  const l = e._zod.def;
+  switch (l.type) {
+    case "object":
+      {
+        const u = R8(l);
+        a(u ? o(u, !0) : wM);
+        s(l.catchall);
+        break;
+      }
+    case "array":
+      s(l.element);
+      break;
+    case "tuple":
+      for (const u of l.items) {
+        s(u);
+      }
+      s(l.rest);
+      break;
+    case "record":
+    case "map":
+      s(l.keyType);
+      s(l.valueType);
+      break;
+    case "set":
+      s(l.valueType);
+      break;
+    case "union":
+      for (const u of l.options) {
+        s(u);
+      }
+      break;
+    case "intersection":
+      s(l.left);
+      s(l.right);
+      break;
+    case "optional":
+    case "nullable":
+    case "default":
+    case "prefault":
+    case "catch":
+    case "readonly":
+    case "nonoptional":
+    case "promise":
+    case "success":
+      s(l.innerType);
+      break;
+    case "pipe":
+      s(l.in);
+      s(l.out);
+      break;
+    case "function":
+      s(l.input);
+      s(l.output);
+      break;
+    case "lazy":
+      {
+        const u = l._cachedInner ?? (n ? e._zod.innerType : void 0);
+        a(u ? IM(u, t, !1) : wM);
+        break;
+      }
+    case "template_literal":
+    case "string":
+    case "number":
+    case "int":
+    case "boolean":
+    case "bigint":
+    case "symbol":
+    case "undefined":
+    case "null":
+    case "void":
+    case "never":
+    case "any":
+    case "unknown":
+    case "date":
+    case "nan":
+    case "enum":
+    case "literal":
+    case "file":
+    case "transform":
+    case "custom":
+      break;
+    default:
+      for (const u in l) {
+        const d = Object.getOwnPropertyDescriptor(l, u);
+        if (!d || d.get) {
+          continue;
+        }
+        const h = d.value;
+        if (!(!h || typeof h != "object")) {
+          if (h._zod) {
+            s(h);
+          } else {
+            if (Array.isArray(h)) {
+              for (const p of h) {
+                s(p);
+              }
+            }
+          }
+        }
+      }
+  }
+  t.delete(e);
+  return Upe(e, r);
+}
+function Upe(e, t) {
+  t !== wM && QX.set(e, t === ex);
+  return t;
+}
+function Fpe(e, t) {
+  let n = e.buckets.get(t);
+  n || (n = new WeakMap(), e.buckets.set(t, n));
+  return n;
+}
+var fB;
+var pB = [];
+var Qpe = {
+  alloc(e, t, n) {
+    const i = fB;
+    if (!i) {
+      return n;
+    }
+    fB = void 0;
+    const r = {
+      value: n,
+      issues: null
+    };
+    i.set(t.value, r);
+    pB.push(r);
+    return n;
+  },
+  guard(e) {
+    var t;
+    (t = e._zod).deferred ?? (t.deferred = []);
+    e._zod.deferred.push(() => {
+      const n = e._zod.parse;
+      const i = (r, s) => {
+        if (s.direction !== "backward" && zpe(s, r.value)) {
+          throw new Ope();
+        }
+        return n(r, s);
+      };
+      e._zod.parse = i;
+      e._zod.run === n && (e._zod.run = i);
+    });
+  },
+  attach(e) {
+    var t;
+    let n;
+    let i = !1;
+    let r;
+    let s;
+    (t = e._zod).deferred ?? (t.deferred = []);
+    e._zod.deferred.push(() => {
+      const o = e._zod.parse;
+      const a = (l, u) => {
+        if (n === void 0) {
+          const w = IM(e, new Set(), !1);
+          if (w === w_) {
+            e._zod.parse = o;
+            e._zod.run === a && (e._zod.run = o);
+            return o(l, u);
+          }
+          w === ex || i ? n = !0 : i = !0;
+        }
+        const d = l.value;
+        if (!FX(d)) {
+          return o(l, u);
+        }
+        let h = u[UL];
+        h || (h = {
+          buckets: new WeakMap(),
+          backEdges: void 0
+        }, u[UL] = h);
+        let p;
+        r === u ? p = s : (p = Fpe(h, e), r = u, s = p);
+        const A = p.get(d);
+        if (A) {
+          l.value = A.value;
+          A.issues ? A.issues.length && l.issues.push(...n5(A.issues)) : (l.memo = !0, h.backEdges ?? (h.backEdges = new WeakSet()), h.backEdges.add(A.value));
+          return l;
+        }
+        fB = p;
+        const y = pB.length;
+        const E = o(l, u);
+        fB = void 0;
+        const b = pB.length > y ? pB.pop() : void 0;
+        return E instanceof Promise ? E.then(w => {
+          b && (b.issues = w.issues.length ? n5(w.issues) : sH);
+          return w;
+        }) : (b && (b.issues = E.issues.length ? n5(E.issues) : sH), E);
+      };
+      e._zod.parse = a;
+      e._zod.run === o && (e._zod.run = a);
+    });
+  }
+};
+function Hpe() {
+  return Qpe;
+}
+function zpe(e, t) {
+  const n = e[UL]?.backEdges;
+  return n !== void 0 && FX(t) && n.has(t);
+}
+var Gpe = () => {
+  const e = {
+    string: {
+      unit: "characters",
+      verb: "to have"
+    },
+    file: {
+      unit: "bytes",
+      verb: "to have"
+    },
+    array: {
+      unit: "items",
+      verb: "to have"
+    },
+    set: {
+      unit: "items",
+      verb: "to have"
+    },
+    map: {
+      unit: "entries",
+      verb: "to have"
+    }
+  };
+  function t(s) {
+    return e[s] ?? null;
+  }
+  const n = {
+    regex: "input",
+    email: "email address",
+    url: "URL",
+    emoji: "emoji",
+    uuid: "UUID",
+    uuidv4: "UUIDv4",
+    uuidv6: "UUIDv6",
+    nanoid: "nanoid",
+    guid: "GUID",
+    cuid: "cuid",
+    cuid2: "cuid2",
+    ulid: "ULID",
+    xid: "XID",
+    ksuid: "KSUID",
+    datetime: "ISO datetime",
+    date: "ISO date",
+    time: "ISO time",
+    duration: "ISO duration",
+    ipv4: "IPv4 address",
+    ipv6: "IPv6 address",
+    mac: "MAC address",
+    cidrv4: "IPv4 range",
+    cidrv6: "IPv6 range",
+    base64: "base64-encoded string",
+    base64url: "base64url-encoded string",
+    json_string: "JSON string",
+    e164: "E.164 number",
+    currency_code: "currency code",
+    credit_card: "credit card number",
+    iban: "IBAN",
+    jwt: "JWT",
+    template_literal: "input"
+  };
+  const i = {
+    nan: "NaN"
+  };
+  function r(s, o) {
+    return s === "number" && typeof o == "number" && !Number.isFinite(o) ? String(o) : i[s] ?? s;
+  }
+  return s => {
+    switch (s.code) {
+      case "invalid_type":
+        return `Invalid input: expected ${r(s.expected)}, received ${r(Ahe(s.input), s.input)}`;
+      case "invalid_value":
+        return s.values.length === 1 ? `Invalid input: expected ${mX(s.values[0])}` : `Invalid option: expected one of ${z7(s.values, "|")}`;
+      case "too_big":
+        {
+          const o = s.exact ? "exactly " : s.inclusive ? "<=" : "<";
+          const a = t(s.origin);
+          return a ? `Too big: expected ${s.origin ?? "value"} to have ${o}${s.maximum.toString()} ${a.unit ?? "elements"}` : `Too big: expected ${s.origin ?? "value"} to be ${o}${s.maximum.toString()}`;
+        }
+      case "too_small":
+        {
+          const o = s.exact ? "exactly " : s.inclusive ? ">=" : ">";
+          const a = t(s.origin);
+          return a ? `Too small: expected ${s.origin} to have ${o}${s.minimum.toString()} ${a.unit}` : `Too small: expected ${s.origin} to be ${o}${s.minimum.toString()}`;
+        }
+      case "invalid_format":
+        {
+          const o = s;
+          return o.format === "starts_with" ? `Invalid string: must start with "${o.prefix}"` : o.format === "ends_with" ? `Invalid string: must end with "${o.suffix}"` : o.format === "includes" ? `Invalid string: must include "${o.includes}"` : o.format === "regex" ? `Invalid string: must match pattern ${o.pattern}` : `Invalid ${n[o.format] ?? s.format}`;
+        }
+      case "not_multiple_of":
+        return `Invalid number: must be a multiple of ${s.divisor}`;
+      case "unrecognized_keys":
+        return `Unrecognized key${s.keys.length > 1 ? "s" : ""}: ${z7(s.keys, ", ")}`;
+      case "invalid_key":
+        return `Invalid key in ${s.origin}`;
+      case "invalid_union":
+        return s.options && Array.isArray(s.options) && s.options.length > 0 ? `Invalid discriminator value. Expected ${s.options.map(o => `'${o}'`).join(" | ")}` : s.inclusive === !1 ? "Invalid input: more than one option matched" : "Invalid input";
+      case "invalid_element":
+        return `Invalid value in ${s.origin}`;
+      default:
+        return "Invalid input";
+    }
+  };
+};
+function Wpe() {
+  return {
+    localeError: Gpe()
+  };
+}
+var oH;
+var Vpe = class {
+  constructor() {
+    this._map = new WeakMap();
+    this._idmap = new Map();
+  }
+  add(e, ...t) {
+    const n = t[0];
+    this._map.set(e, n);
+    n && typeof n == "object" && "id" in n && this._idmap.set(n.id, e);
+    return this;
+  }
+  clear() {
+    this._map = new WeakMap();
+    this._idmap = new Map();
+    return this;
+  }
+  remove(e) {
+    const t = this._map.get(e);
+    t && typeof t == "object" && "id" in t && this._idmap.delete(t.id);
+    this._map.delete(e);
+    return this;
+  }
+  get(e) {
+    const t = e._zod.parent;
+    if (t) {
+      const n = {
+        ...(this.get(t) ?? {})
+      };
+      delete n.id;
+      const i = {
+        ...n,
+        ...this._map.get(e)
+      };
+      return Object.keys(i).length ? i : void 0;
+    }
+    return this._map.get(e);
+  }
+  has(e) {
+    return this._map.has(e);
+  }
+};
+function jpe() {
+  return new Vpe();
+}
+(oH = globalThis).__zod_globalRegistry ?? (oH.__zod_globalRegistry = jpe());
+var I_ = globalThis.__zod_globalRegistry;
+function HX(e) {
+  e.checks && (e.checks = [...e.checks]);
+  return e;
+}
+function Kpe(e, t) {
+  return new e(HX({
+    type: "string",
+    ...Si(t)
+  }));
+}
+function Ype(e, t) {
+  return new e({
+    type: "string",
+    format: "email",
+    check: "string_format",
+    abort: !1,
+    ...Si(t)
+  });
+}
+function Jpe(e, t) {
+  return new e({
+    type: "string",
+    format: "guid",
+    check: "string_format",
+    abort: !1,
+    ...Si(t)
+  });
+}
+function Xpe(e, t) {
+  return new e({
+    type: "string",
+    format: "uuid",
+    check: "string_format",
+    abort: !1,
+    ...Si(t)
+  });
+}
+function Zpe(e, t) {
+  return new e({
+    type: "string",
+    format: "uuid",
+    check: "string_format",
+    abort: !1,
+    version: "v4",
+    ...Si(t)
+  });
+}
+function qpe(e, t) {
+  return new e({
+    type: "string",
+    format: "uuid",
+    check: "string_format",
+    abort: !1,
+    version: "v6",
+    ...Si(t)
+  });
+}
+function $pe(e, t) {
+  return new e({
+    type: "string",
+    format: "uuid",
+    check: "string_format",
+    abort: !1,
+    version: "v7",
+    ...Si(t)
+  });
+}
+function zX(e, t) {
+  return new e({
+    type: "string",
+    format: "url",
+    check: "string_format",
+    abort: !1,
+    ...Si(t)
+  });
+}
+function ege(e, t) {
+  return new e({
+    type: "string",
+    format: "emoji",
+    check: "string_format",
+    abort: !1,
+    ...Si(t)
+  });
+}
+function tge(e, t) {
+  return new e({
+    type: "string",
+    format: "nanoid",
+    check: "string_format",
+    abort: !1,
+    ...Si(t)
+  });
+}
+function nge(e, t) {
+  return new e({
+    type: "string",
+    format: "cuid",
+    check: "string_format",
+    abort: !1,
+    ...Si(t)
+  });
+}
+function ige(e, t) {
+  return new e({
+    type: "string",
+    format: "cuid2",
+    check: "string_format",
+    abort: !1,
+    ...Si(t)
+  });
+}
+function rge(e, t) {
+  return new e({
+    type: "string",
+    format: "ulid",
+    check: "string_format",
+    abort: !1,
+    ...Si(t)
+  });
+}
+function sge(e, t) {
+  return new e({
+    type: "string",
+    format: "xid",
+    check: "string_format",
+    abort: !1,
+    ...Si(t)
+  });
+}
+function oge(e, t) {
+  return new e({
+    type: "string",
+    format: "ksuid",
+    check: "string_format",
+    abort: !1,
+    ...Si(t)
+  });
+}
+function age(e, t) {
+  return new e({
+    type: "string",
+    format: "ipv4",
+    check: "string_format",
+    abort: !1,
+    ...Si(t)
+  });
+}
+function lge(e, t) {
+  return new e({
+    type: "string",
+    format: "ipv6",
+    check: "string_format",
+    abort: !1,
+    ...Si(t)
+  });
+}
+function cge(e, t) {
+  return new e({
+    type: "string",
+    format: "cidrv4",
+    check: "string_format",
+    abort: !1,
+    ...Si(t)
+  });
+}
+function uge(e, t) {
+  return new e({
+    type: "string",
+    format: "cidrv6",
+    check: "string_format",
+    abort: !1,
+    ...Si(t)
+  });
+}
+function dge(e, t) {
+  return new e({
+    type: "string",
+    format: "base64",
+    check: "string_format",
+    abort: !1,
+    ...Si(t)
+  });
+}
+function hge(e, t) {
+  return new e({
+    type: "string",
+    format: "base64url",
+    check: "string_format",
+    abort: !1,
+    ...Si(t)
+  });
+}
+function fge(e, t) {
+  return new e({
+    type: "string",
+    format: "e164",
+    check: "string_format",
+    abort: !1,
+    ...Si(t)
+  });
+}
+function pge(e, t) {
+  return new e({
+    type: "string",
+    format: "jwt",
+    check: "string_format",
+    abort: !1,
+    ...Si(t)
+  });
+}
+function GX(e, t) {
+  return new e({
+    type: "string",
+    format: "datetime",
+    check: "string_format",
+    offset: !1,
+    local: !1,
+    precision: null,
+    ...Si(t)
+  });
+}
+function gge(e, t) {
+  return new e({
+    type: "string",
+    format: "date",
+    check: "string_format",
+    ...Si(t)
+  });
+}
+function Age(e, t) {
+  return new e({
+    type: "string",
+    format: "time",
+    check: "string_format",
+    precision: null,
+    ...Si(t)
+  });
+}
+function mge(e, t) {
+  return new e({
+    type: "string",
+    format: "duration",
+    check: "string_format",
+    ...Si(t)
+  });
+}
+function vge(e, t) {
+  return new e(HX({
+    type: "number",
+    checks: [],
+    ...Si(t)
+  }));
+}
+function yge(e, t) {
+  return new e({
+    type: "number",
+    check: "number_format",
+    abort: !1,
+    format: "safeint",
+    ...Si(t)
+  });
+}
+function Ege(e, t) {
+  return new e({
+    type: "boolean",
+    ...Si(t)
+  });
+}
+function bge(e) {
+  return new e({
+    type: "unknown"
+  });
+}
+function Cge(e, t) {
+  return new e({
+    type: "never",
+    ...Si(t)
+  });
+}
+function aH(e, t) {
+  return new _X({
+    check: "less_than",
+    ...Si(t),
+    value: e,
+    inclusive: !1
+  });
+}
+function i5(e, t) {
+  return new _X({
+    check: "less_than",
+    ...Si(t),
+    value: e,
+    inclusive: !0
+  });
+}
+function lH(e, t) {
+  return new xX({
+    check: "greater_than",
+    ...Si(t),
+    value: e,
+    inclusive: !1
+  });
+}
+function r5(e, t) {
+  return new xX({
+    check: "greater_than",
+    ...Si(t),
+    value: e,
+    inclusive: !0
+  });
+}
+function cH(e, t) {
+  return new Efe({
+    check: "multiple_of",
+    ...Si(t),
+    value: e
+  });
+}
+function WX(e, t) {
+  return new Cfe({
+    check: "max_length",
+    ...Si(t),
+    maximum: e
+  });
+}
+function ER(e, t) {
+  return new Sfe({
+    check: "min_length",
+    ...Si(t),
+    minimum: e
+  });
+}
+function VX(e, t) {
+  return new wfe({
+    check: "length_equals",
+    ...Si(t),
+    length: e
+  });
+}
+function Sge(e, t) {
+  return new Ife({
+    check: "string_format",
+    format: "regex",
+    ...Si(t),
+    pattern: e
+  });
+}
+function wge(e) {
+  return new _fe({
+    check: "string_format",
+    format: "lowercase",
+    ...Si(e)
+  });
+}
+function Ige(e) {
+  return new xfe({
+    check: "string_format",
+    format: "uppercase",
+    ...Si(e)
+  });
+}
+function _ge(e, t) {
+  return new Tfe({
+    check: "string_format",
+    format: "includes",
+    ...Si(t),
+    includes: e
+  });
+}
+function xge(e, t) {
+  return new Bfe({
+    check: "string_format",
+    format: "starts_with",
+    ...Si(t),
+    prefix: e
+  });
+}
+function Tge(e, t) {
+  return new Mfe({
+    check: "string_format",
+    format: "ends_with",
+    ...Si(t),
+    suffix: e
+  });
+}
+function Fw(e) {
+  return new Rfe({
+    check: "overwrite",
+    tx: e
+  });
+}
+function Bge(e) {
+  return Fw(t => t.normalize(e));
+}
+function Mge() {
+  return Fw(e => e.trim());
+}
+function Rge() {
+  return Fw(e => e.toLowerCase());
+}
+function kge() {
+  return Fw(e => e.toUpperCase());
+}
+function Dge() {
+  return Fw(e => ihe(e));
+}
+function Pge(e, t, n) {
+  return new e({
+    type: "array",
+    element: t,
+    ...Si(n)
+  });
+}
+function Lge(e, t, n) {
+  return new e({
+    type: "custom",
+    check: "custom",
+    fn: t,
+    ...Si(n)
+  });
+}
+function Nge(e, t) {
+  const n = Oge(i => {
+    return i.addIssue = r => {
+      if (typeof r == "string") {
+        i.issues.push(Mx(r, i.value, n._zod.def));
+      } else {
+        const s = r;
+        s.fatal && (s.continue = !1);
+        s.code ?? (s.code = "custom");
+        "input" in s || (s.input = i.value);
+        s.inst ?? (s.inst = n);
+        s.continue ?? (s.continue = !n._zod.def.abort);
+        i.issues.push(Mx(s));
+      }
+    }, e(i.value, i);
+  }, t);
+  return n;
+}
+function Oge(e, t) {
+  const n = new Df({
+    check: "custom",
+    ...Si(t)
+  });
+  n._zod.check = e;
+  return n;
+}
+function tx(e, ...t) {
+  for (const n of t) {
+    for (const i of Reflect.ownKeys(n)) {
+      Object.prototype.propertyIsEnumerable.call(n, i) && vy(e, i, n[i]);
+    }
+  }
+  return e;
+}
+function jX(e) {
+  let t = e?.target ?? "draft-2020-12";
+  t === "draft-4" && (t = "draft-04");
+  t === "draft-7" && (t = "draft-07");
+  return {
+    processors: e.processors ?? {},
+    metadataRegistry: e?.metadata ?? I_,
+    target: t,
+    unrepresentable: e?.unrepresentable ?? "throw",
+    override: e?.override ?? (() => {}),
+    io: e?.io ?? "output",
+    counter: 0,
+    seen: new Map(),
+    sharedDefsExtractedFor: void 0,
+    sharedEmitDoneFor: void 0,
+    cycles: e?.cycles ?? "ref",
+    reused: e?.reused ?? "inline",
+    intersections: [],
+    deferred: [],
+    external: e?.external ?? void 0
+  };
+}
+function q1(e, t, n, i, r) {
+  const s = typeof t.unrepresentable == "function" ? t.unrepresentable({
+    zodSchema: e,
+    path: i.path,
+    message: r
+  }) : t.unrepresentable;
+  if (s === "any") {
+    return !1;
+  }
+  if (s === void 0 || s === "throw") {
+    throw new Error(r);
+  }
+  Object.assign(n, s);
+  return !0;
+}
+function eu(e, t, n = {
+  path: [],
+  schemaPath: []
+}) {
+  var i;
+  const r = e._zod.def;
+  const s = t.seen.get(e);
+  if (s) {
+    s.count++;
+    n.schemaPath.includes(e) && (s.cycle = n.path);
+    return s.schema;
+  }
+  const o = {
+    schema: {},
+    count: 1,
+    cycle: void 0,
+    path: n.path
+  };
+  t.seen.set(e, o);
+  t.sharedDefsExtractedFor = void 0;
+  t.sharedEmitDoneFor = void 0;
+  const a = e._zod.toJSONSchema?.();
+  if (a) {
+    o.schema = a;
+  } else {
+    const u = {
+      ...n,
+      schemaPath: [...n.schemaPath, e],
+      path: n.path
+    };
+    if (e._zod.processJSONSchema) {
+      e._zod.processJSONSchema(t, o.schema, u);
+    } else {
+      const h = o.schema;
+      const p = t.processors[r.type];
+      if (!p) {
+        throw new Error(`[toJSONSchema]: Non-representable type encountered: ${r.type}`);
+      }
+      p(e, t, h, u);
+    }
+    const d = e._zod.parent;
+    d && (o.ref || (o.ref = d), eu(d, t, u), t.seen.get(d).isParent = !0);
+  }
+  const l = t.metadataRegistry.get(e);
+  l && tx(o.schema, l);
+  t.io === "input" && kh(e) && (delete o.schema.examples, delete o.schema.default);
+  t.io === "input" && "_prefault" in o.schema && ((i = o.schema).default ?? (i.default = o.schema._prefault));
+  delete o.schema._prefault;
+  return t.seen.get(e).schema;
+}
+function uH(e) {
+  return e.replace(/~/g, "~0").replace(/\//g, "~1");
+}
+function KX(e, t) {
+  const n = e.seen.get(t);
+  if (!n) {
+    throw new Error("Unprocessed schema. This is a bug in Zod.");
+  }
+  if (e.external && e.sharedDefsExtractedFor === e.external) {
+    return;
+  }
+  const i = new Map();
+  for (const o of e.seen.entries()) {
+    const a = e.metadataRegistry.get(o[0])?.id;
+    if (a) {
+      const l = i.get(a);
+      if (l && l !== o[0]) {
+        throw new Error(`Duplicate schema id "${a}" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.`);
+      }
+      i.set(a, o[0]);
+    }
+  }
+  const r = o => {
+    const a = e.target === "draft-2020-12" ? "$defs" : "definitions";
+    if (e.external) {
+      const h = e.external.registry.get(o[0])?.id;
+      const p = e.external.uri ?? (y => y);
+      if (h) {
+        return {
+          ref: p(h)
+        };
+      }
+      const A = o[1].defId ?? o[1].schema.id ?? `schema${e.counter++}`;
+      o[1].defId = A;
+      return {
+        defId: A,
+        ref: `${p("__shared")}#/${a}/${uH(A)}`
+      };
+    }
+    const l = "#";
+    const u = `${l}/${a}/`;
+    if (o[1] === n && !o[1].schema.id) {
+      return {
+        ref: l
+      };
+    }
+    const d = o[1].schema.id ?? `__schema${e.counter++}`;
+    return {
+      defId: d,
+      ref: u + uH(d)
+    };
+  };
+  const s = o => {
+    if (o[1].schema.$ref) {
+      return;
+    }
+    const a = o[1];
+    const {
+      ref: l,
+      defId: u
+    } = r(o);
+    a.def = {
+      ...a.schema
+    };
+    u && (a.defId = u);
+    const d = a.schema;
+    for (const h in d) {
+      delete d[h];
+    }
+    d.$ref = l;
+  };
+  if (e.cycles === "throw") {
+    for (const o of e.seen.entries()) {
+      const a = o[1];
+      if (a.cycle) {
+        throw new Error(`Cycle detected: #/${a.cycle?.join("/")}/<root>
+
+Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.`);
+      }
+    }
+  }
+  for (const o of e.seen.entries()) {
+    const a = o[1];
+    if (t === o[0]) {
+      s(o);
+      continue;
+    }
+    if (e.external) {
+      const l = e.external.registry.get(o[0])?.id;
+      if (t !== o[0] && l) {
+        s(o);
+        continue;
+      }
+    }
+    if (e.metadataRegistry.get(o[0])?.id) {
+      s(o);
+      continue;
+    }
+    if (a.cycle) {
+      s(o);
+      continue;
+    }
+    a.count > 1 && e.reused === "ref" && s(o);
+  }
+  e.external && (e.sharedDefsExtractedFor = e.external);
+}
+function YX(e) {
+  const t = e.anyOf;
+  if (!Array.isArray(t) || t.length === 0 || e.type !== void 0) {
+    return;
+  }
+  const n = [];
+  for (const i of t) {
+    if (!i || typeof i != "object") {
+      return;
+    }
+    YX(i);
+    const r = Object.keys(i);
+    if (r.length !== 1 || r[0] !== "type") {
+      return;
+    }
+    const s = i.type;
+    for (const o of Array.isArray(s) ? s : [s]) {
+      if (typeof o != "string") {
+        return;
+      }
+      n.includes(o) || n.push(o);
+    }
+  }
+  delete e.anyOf;
+  e.type = n.length === 1 ? n[0] : n;
+}
+var JX = new Set(["type", "properties", "required", "additionalProperties"]);
+var dH = ["oneOf", "anyOf"];
+function hH(e) {
+  const t = e.additionalProperties;
+  return t === void 0 || t === !1 || typeof t != "object" || t === null ? null : Object.keys(t).length ? t : null;
+}
+function FL(e) {
+  const t = [];
+  for (const s of e) {
+    if (typeof s != "object" || s.type !== "object") {
+      return null;
+    }
+    for (const o in s) {
+      if (!JX.has(o)) {
+        return null;
+      }
+    }
+    t.push(s);
+  }
+  const n = {};
+  const i = new Set();
+  for (const s of t) {
+    for (const o in s.properties) {
+      if (Object.prototype.hasOwnProperty.call(n, o)) {
+        continue;
+      }
+      const a = [];
+      for (const u of t) {
+        const d = u.properties?.[o] ?? hH(u);
+        d != null && (a.some(h => JSON.stringify(h) === JSON.stringify(d)) || a.push(d));
+      }
+      const l = a.length === 1 ? a[0] : FL(a) ?? {
+        allOf: a
+      };
+      vy(n, o, l);
+    }
+    for (const o of s.required ?? []) {
+      i.add(o);
+    }
+  }
+  const r = {
+    type: "object",
+    properties: n
+  };
+  i.size && (r.required = [...i]);
+  if (t.every(s => s.additionalProperties === !1)) {
+    r.additionalProperties = !1;
+  } else {
+    const s = [];
+    for (const o of t) {
+      const a = hH(o);
+      a && !s.some(l => JSON.stringify(l) === JSON.stringify(a)) && s.push(a);
+    }
+    s.length === 1 ? r.additionalProperties = s[0] : s.length > 1 && (r.additionalProperties = {
+      allOf: s
+    });
+  }
+  return r;
+}
+function Uge(e) {
+  const t = e.allOf;
+  if (!Array.isArray(t) || t.length < 2) {
+    return;
+  }
+  for (const r of JX) {
+    if (r in e) {
+      return;
+    }
+  }
+  const n = t.filter(r => dH.some(s => Array.isArray(r[s])));
+  let i = null;
+  if (!n.length) {
+    i = FL(t);
+  } else {
+    const r = n[0];
+    const s = dH.find(l => Array.isArray(r[l]));
+    if (Object.keys(r).length !== 1) {
+      return;
+    }
+    const o = t.filter(l => l !== r);
+    const a = r[s].map(l => FL([...o, l]));
+    if (a.some(l => !l)) {
+      return;
+    }
+    i = {
+      [s]: a
+    };
+  }
+  i && (delete e.allOf, tx(e, i));
+}
+function XX(e, t) {
+  const n = e.seen.get(t);
+  if (!n) {
+    throw new Error("Unprocessed schema. This is a bug in Zod.");
+  }
+  const i = a => {
+    const l = e.seen.get(a);
+    if (l.ref === null) {
+      return;
+    }
+    const u = l.def ?? l.schema;
+    const d = {
+      ...u
+    };
+    const h = l.ref;
+    l.ref = null;
+    if (h) {
+      i(h);
+      const A = e.seen.get(h);
+      const y = A.schema;
+      y.$ref && (e.target === "draft-07" || e.target === "draft-04" || e.target === "openapi-3.0") ? (u.allOf = u.allOf ?? [], u.allOf.push(y)) : tx(u, y);
+      tx(u, d);
+      if (a._zod.parent === h) {
+        for (const E in u) {
+          E === "$ref" || E === "allOf" || E in d || delete u[E];
+        }
+      }
+      if (y.$ref && A.def) {
+        for (const E in u) {
+          E === "$ref" || E === "allOf" || E in A.def && JSON.stringify(u[E]) === JSON.stringify(A.def[E]) && delete u[E];
+        }
+      }
+    }
+    const p = a._zod.parent;
+    if (p && p !== h) {
+      i(p);
+      const A = e.seen.get(p);
+      if (A?.schema.$ref && (u.$ref = A.schema.$ref, A.def)) {
+        for (const y in u) {
+          y === "$ref" || y === "allOf" || y in A.def && JSON.stringify(u[y]) === JSON.stringify(A.def[y]) && delete u[y];
+        }
+      }
+    }
+    e.override({
+      zodSchema: a,
+      jsonSchema: u,
+      path: l.path ?? []
+    });
+  };
+  if (!e.external || e.sharedEmitDoneFor !== e.external) {
+    for (const a of [...e.seen.entries()].reverse()) {
+      i(a[0]);
+    }
+    if (e.target !== "openapi-3.0") {
+      for (const a of e.seen.entries()) {
+        YX(a[1].def ?? a[1].schema);
+      }
+    }
+    for (const a of e.deferred) {
+      a();
+    }
+    if (e.intersections.length) {
+      const a = new Map();
+      for (const l of e.seen.values()) {
+        for (const u of [l.schema, l.def]) {
+          const d = u?.allOf;
+          if (!Array.isArray(d)) {
+            continue;
+          }
+          const h = a.get(d);
+          h ? h.push(u) : a.set(d, [u]);
+        }
+      }
+      for (const l of e.intersections) {
+        for (const u of a.get(l) ?? []) {
+          Uge(u);
+        }
+      }
+    }
+  }
+  const r = {};
+  e.target === "draft-2020-12" ? r.$schema = "https://json-schema.org/draft/2020-12/schema" : e.target === "draft-07" ? r.$schema = "http://json-schema.org/draft-07/schema#" : e.target === "draft-04" ? r.$schema = "http://json-schema.org/draft-04/schema#" : e.target;
+  if (e.external?.uri) {
+    const a = e.external.registry.get(t)?.id;
+    if (!a) {
+      throw new Error("Schema is missing an `id` property");
+    }
+    r.$id = e.external.uri(a);
+  }
+  tx(r, n.defId ? n.schema : n.def ?? n.schema);
+  const s = e.metadataRegistry.get(t)?.id;
+  s !== void 0 && r.id === s && delete r.id;
+  const o = e.external?.defs ?? {};
+  if (!e.external || e.sharedEmitDoneFor !== e.external) {
+    for (const a of e.seen.entries()) {
+      const l = a[1];
+      l.def && l.defId && (l.def.id === l.defId && delete l.def.id, vy(o, l.defId, l.def));
+    }
+  }
+  e.external && (e.sharedEmitDoneFor = e.external);
+  e.external || Object.keys(o).length > 0 && (e.target === "draft-2020-12" ? r.$defs = o : r.definitions = o);
+  try {
+    const a = JSON.parse(JSON.stringify(r));
+    Object.defineProperty(a, "~standard", {
+      value: {
+        ...t["~standard"],
+        jsonSchema: {
+          input: bR(t, "input", e.processors),
+          output: bR(t, "output", e.processors)
+        }
+      },
+      enumerable: !1,
+      writable: !1
+    });
+    return a;
+  } catch {
+    throw new Error("Error converting schema to JSON.");
+  }
+}
+function kh(e, t) {
+  const n = t ?? {
+    seen: new Set()
+  };
+  if (n.seen.has(e)) {
+    return !1;
+  }
+  n.seen.add(e);
+  const i = e._zod.def;
+  if (i.type === "transform") {
+    return !0;
+  }
+  if (i.type === "array") {
+    return kh(i.element, n);
+  }
+  if (i.type === "set") {
+    return kh(i.valueType, n);
+  }
+  if (i.type === "lazy") {
+    return kh(i.getter(), n);
+  }
+  if (i.type === "promise" || i.type === "optional" || i.type === "nonoptional" || i.type === "nullable" || i.type === "readonly" || i.type === "default" || i.type === "prefault" || i.type === "catch") {
+    return kh(i.innerType, n);
+  }
+  if (i.type === "intersection") {
+    return kh(i.left, n) || kh(i.right, n);
+  }
+  if (i.type === "record" || i.type === "map") {
+    return kh(i.keyType, n) || kh(i.valueType, n);
+  }
+  if (i.type === "pipe") {
+    return e._zod.traits.has("$ZodCodec") ? !0 : kh(i.in, n) || kh(i.out, n);
+  }
+  if (i.type === "object") {
+    for (const r in i.shape) {
+      if (kh(i.shape[r], n)) {
+        return !0;
+      }
+    }
+    return !1;
+  }
+  if (i.type === "union") {
+    for (const r of i.options) {
+      if (kh(r, n)) {
+        return !0;
+      }
+    }
+    return !1;
+  }
+  if (i.type === "tuple") {
+    for (const r of i.items) {
+      if (kh(r, n)) {
+        return !0;
+      }
+    }
+    return !!(i.rest && kh(i.rest, n));
+  }
+  return !1;
+}
+var Fge = (e, t = {}) => n => {
+  const i = jX({
+    ...n,
+    processors: t
+  });
+  eu(e, i);
+  KX(i, e);
+  return XX(i, e);
+};
+var bR = (e, t, n = {}) => i => {
+  const {
+    libraryOptions: r,
+    target: s
+  } = i ?? {};
+  const o = jX({
+    ...(r ?? {}),
+    target: s,
+    io: t,
+    processors: n
+  });
+  eu(e, o);
+  KX(o, e);
+  return XX(o, e);
+};
+var ew = (e, t, n) => {
+  (e[t] === void 0 || n > e[t]) && (e[t] = n);
+};
+var tw = (e, t, n) => {
+  (e[t] === void 0 || n < e[t]) && (e[t] = n);
+};
+var fH = (e, t) => {
+  ew(e, "minimum", t);
+  tw(e, "maximum", t);
+};
+var ZX = (e, t) => {
+  e.multipleOf ?? (e.multipleOf = []);
+  e.multipleOf.includes(t) || e.multipleOf.push(t);
+};
+var qX = (e, t) => {
+  e.patterns ?? (e.patterns = new Set());
+  e.patterns.add(t);
+};
+var $X = (e, t) => {
+  e.mime = e.mime ? e.mime.filter(n => t.includes(n)) : [...t];
+};
+var eZ = (e, t) => {
+  e.format = t;
+  t.includes("int") && (e.isInt = !0);
+};
+var pH = (e, t) => ew(e, "minimum", t.minimum);
+var gH = (e, t) => tw(e, "maximum", t.maximum);
+var AH = e => (t, n) => {
+  eZ(t, n.format);
+  const [i, r] = e[n.format];
+  ew(t, "minimum", i);
+  tw(t, "maximum", r);
+};
+var Qge = {
+  greater_than: (e, t) => ew(e, t.inclusive ? "minimum" : "exclusiveMinimum", t.value),
+  less_than: (e, t) => tw(e, t.inclusive ? "maximum" : "exclusiveMaximum", t.value),
+  multiple_of: (e, t) => ZX(e, t.value),
+  number_format: AH(vX),
+  bigint_format: AH(ahe),
+  min_length: pH,
+  max_length: gH,
+  length_equals: (e, t) => fH(e, t.length),
+  min_size: pH,
+  max_size: gH,
+  size_equals: (e, t) => fH(e, t.size),
+  string_format: (e, t) => {
+    eZ(e, t.format);
+    t.pattern && qX(e, t.pattern);
+    (t.format === "base64" || t.format === "base64url") && (e.contentEncoding = t.format);
+    (t.local || t.precision === -1) && (e.laxFormat = !0);
+  },
+  mime_type: (e, t) => $X(e, t.mime)
+};
+function nm(e) {
+  const t = {};
+  const n = e._zod.def;
+  const i = e._zod.traits.has("$ZodCheck") ? [e, ...(n.checks ?? [])] : n.checks ?? [];
+  for (const s of i) {
+    Qge[s._zod.def.check]?.(t, s._zod.def);
+  }
+  const r = e._zod.bag;
+  r.minimum !== void 0 && ew(t, "minimum", r.minimum);
+  r.exclusiveMinimum !== void 0 && ew(t, "exclusiveMinimum", r.exclusiveMinimum);
+  r.maximum !== void 0 && tw(t, "maximum", r.maximum);
+  r.exclusiveMaximum !== void 0 && tw(t, "exclusiveMaximum", r.exclusiveMaximum);
+  r.multipleOf !== void 0 && ZX(t, r.multipleOf);
+  r.format !== void 0 && (t.format ?? (t.format = r.format), r.format.includes("int") && (t.isInt = !0));
+  r.mime && $X(t, r.mime);
+  for (const s of r.patterns ?? []) {
+    qX(t, s);
+  }
+  return t;
+}
+var Hge = {
+  guid: "uuid",
+  url: "uri",
+  datetime: "date-time",
+  json_string: "json-string",
+  regex: ""
+};
+var zge = new Map([[DX, afe], [H8, lfe]]);
+var tZ = e => zge.get(e) ?? e;
+var Gge = (e, t, n, i) => {
+  const r = n;
+  r.type = "string";
+  const {
+    minimum: s,
+    maximum: o,
+    format: a,
+    patterns: l,
+    contentEncoding: u,
+    laxFormat: d
+  } = nm(e);
+  typeof s == "number" && (r.minLength = s);
+  typeof o == "number" && (r.maxLength = o);
+  a && (r.format = Hge[a] ?? a, r.format === "" && delete r.format, (a === "time" || d) && delete r.format);
+  u && (r.contentEncoding = u);
+  if (l && l.size > 0) {
+    const h = [...l].map(tZ);
+    h.length === 1 ? r.pattern = h[0].source : h.length > 1 && (r.allOf = [...h.map(p => ({
+      ...(t.target === "draft-07" || t.target === "draft-04" || t.target === "openapi-3.0" ? {
+        type: "string"
+      } : {}),
+      pattern: p.source
+    }))]);
+  }
+};
+var Wge = (e, t, n, i) => {
+  const r = n;
+  const {
+    minimum: s,
+    maximum: o,
+    multipleOf: a,
+    exclusiveMaximum: l,
+    exclusiveMinimum: u,
+    isInt: d
+  } = nm(e);
+  r.type = d ? "integer" : "number";
+  const h = typeof u == "number" && u >= (s ?? Number.NEGATIVE_INFINITY);
+  const p = typeof l == "number" && l <= (o ?? Number.POSITIVE_INFINITY);
+  const A = t.target === "draft-04" || t.target === "openapi-3.0";
+  h ? A ? (r.minimum = u, r.exclusiveMinimum = !0) : r.exclusiveMinimum = u : typeof s == "number" && (r.minimum = s);
+  p ? A ? (r.maximum = l, r.exclusiveMaximum = !0) : r.exclusiveMaximum = l : typeof o == "number" && (r.maximum = o);
+  if (a) {
+    const y = new Set();
+    for (const w of a) {
+      Number.isFinite(w) && w !== 0 ? y.add(Math.abs(w)) : q1(e, t, r, i, `A multipleOf divisor of ${w} cannot be represented in JSON Schema`);
+    }
+    const [E, ...b] = y;
+    E !== void 0 && (r.multipleOf = E);
+    b.length && (r.allOf = [...(r.allOf ?? []), ...b.map(w => ({
+      multipleOf: w
+    }))]);
+  }
+};
+var Vge = (e, t, n, i) => {
+  n.type = "boolean";
+};
+var jge = (e, t, n, i) => {
+  n.not = {};
+};
+var Kge = (e, t, n, i) => {};
+var Yge = (e, t, n, i) => {
+  const r = e._zod.def;
+  const s = PL(r.entries);
+  if (s.length === 0) {
+    n.not = {};
+    return;
+  }
+  s.every(o => typeof o == "number") && (n.type = "number");
+  s.every(o => typeof o == "string") && (n.type = "string");
+  n.enum = s;
+};
+var Jge = (e, t, n, i) => {
+  const r = e._zod.def;
+  if (r.values.length === 0) {
+    n.not = {};
+    return;
+  }
+  const s = [];
+  for (const o of r.values) {
+    if (o === void 0) {
+      if (q1(e, t, n, i, "Literal `undefined` cannot be represented in JSON Schema")) {
+        return;
+      }
+    } else {
+      if (typeof o == "bigint") {
+        if (q1(e, t, n, i, "BigInt literals cannot be represented in JSON Schema")) {
+          return;
+        }
+        s.push(Number(o));
+      } else {
+        s.push(o);
+      }
+    }
+  }
+  if (s.length !== 0) {
+    if (s.length === 1) {
+      const o = s[0];
+      n.type = o === null ? "null" : typeof o;
+      t.target === "draft-04" || t.target === "openapi-3.0" ? n.enum = [o] : n.const = o;
+    } else {
+      s.every(o => typeof o == "number") && (n.type = "number");
+      s.every(o => typeof o == "string") && (n.type = "string");
+      s.every(o => typeof o == "boolean") && (n.type = "boolean");
+      s.every(o => o === null) && (n.type = "null");
+      n.enum = s;
+    }
+  }
+};
+var Xge = (e, t, n, i) => {
+  q1(e, t, n, i, "Custom types cannot be represented in JSON Schema");
+};
+var Zge = (e, t, n, i) => {
+  q1(e, t, n, i, "Transforms cannot be represented in JSON Schema");
+};
+var qge = (e, t, n, i) => {
+  const r = n;
+  const s = e._zod.def;
+  const {
+    minimum: o,
+    maximum: a
+  } = nm(e);
+  typeof o == "number" && (r.minItems = o);
+  typeof a == "number" && (r.maxItems = a);
+  r.type = "array";
+  r.items = eu(s.element, t, {
+    ...i,
+    path: [...i.path, "items"]
+  });
+};
+function CR(e) {
+  const t = e._zod.def;
+  return t.type === "pipe" && t.in._zod.traits.has("$ZodTransform") ? CR(t.out) : t.type === "catch" ? CR(t.innerType) : e._zod.optin;
+}
+var $ge = (e, t, n, i) => {
+  const r = n;
+  const s = e._zod.def;
+  const o = s.shape;
+  if (Object.getOwnPropertySymbols(o).length && q1(e, t, r, i, "Symbol keys cannot be represented in JSON Schema")) {
+    return;
+  }
+  r.type = "object";
+  r.properties = {};
+  for (const l in o) {
+    vy(r.properties, l, eu(o[l], t, {
+      ...i,
+      path: [...i.path, "properties", l]
+    }));
+  }
+  const a = [];
+  for (const l of Object.keys(o)) {
+    const u = s.shape[l];
+    (t.io === "input" ? CR(u) === void 0 : u._zod.optout === void 0) && a.push(l);
+  }
+  a.length > 0 && (r.required = a);
+  s.catchall?._zod.def.type === "never" ? r.additionalProperties = !1 : s.catchall ? s.catchall && (r.additionalProperties = eu(s.catchall, t, {
+    ...i,
+    path: [...i.path, "additionalProperties"]
+  })) : t.io === "output" && (r.additionalProperties = !1);
+};
+var eAe = (e, t, n, i) => {
+  const r = e._zod.def;
+  const s = r.inclusive === !1;
+  const o = r.options.map((a, l) => eu(a, t, {
+    ...i,
+    path: [...i.path, s ? "oneOf" : "anyOf", l]
+  }));
+  s ? n.oneOf = o : n.anyOf = o;
+};
+var tAe = (e, t, n, i) => {
+  const r = e._zod.def;
+  const s = eu(r.left, t, {
+    ...i,
+    path: [...i.path, "allOf", 0]
+  });
+  const o = eu(r.right, t, {
+    ...i,
+    path: [...i.path, "allOf", 1]
+  });
+  const a = u => "allOf" in u && Object.keys(u).length === 1;
+  const l = [...(a(s) ? s.allOf : [s]), ...(a(o) ? o.allOf : [o])];
+  n.allOf = l;
+  t.intersections.push(l);
+};
+function QL(e, t, n) {
+  if (t.$ref) {
+    if (n.has(t)) {
+      return t;
+    }
+    n.add(t);
+    const y = e.get(t)?.def;
+    if (!y) {
+      return t;
+    }
+    const E = QL(e, y, n);
+    return E === y ? t : E;
+  }
+  for (const y of ["anyOf", "oneOf"]) {
+    const E = t[y];
+    if (!Array.isArray(E)) {
+      continue;
+    }
+    const b = E.map(w => QL(e, w, n));
+    b.some((w, T) => w !== E[T]) && (t = {
+      ...t,
+      [y]: b
+    });
+  }
+  const i = Array.isArray(t.type) ? t.type : [t.type];
+  const r = !i.includes("string") && i.some(y => y === "number" || y === "integer");
+  const s = t.enum ?? (t.const !== void 0 ? [t.const] : void 0);
+  if (!r && !s?.some(y => typeof y == "number")) {
+    return t;
+  }
+  const {
+    minimum: o,
+    maximum: a,
+    exclusiveMinimum: l,
+    exclusiveMaximum: u,
+    multipleOf: d,
+    format: h,
+    id: p,
+    ...A
+  } = t;
+  A.enum ? A.enum = A.enum.map(y => typeof y == "number" ? String(y) : y) : typeof A.const == "number" && (A.const = String(A.const));
+  r && (A.type = "string", s || (A.pattern = (i.includes("number") ? U8 : Afe).source));
+  return A;
+}
+var HL = new WeakMap();
+function nAe(e) {
+  const t = new Map();
+  for (const i of e.seen.values()) {
+    i.def && !t.has(i.schema) && t.set(i.schema, i);
+  }
+  const n = new Map();
+  for (const i of HL.get(e) ?? []) {
+    const r = e.seen.get(i);
+    const s = (r?.def ?? r?.schema)?.propertyNames;
+    if (!s || s === !0 || n.has(s)) {
+      continue;
+    }
+    const o = QL(t, s, new Set());
+    o !== s && n.set(s, o);
+  }
+  if (n.size) {
+    for (const i of e.seen.values()) {
+      for (const r of [i.schema, i.def]) {
+        const s = r && n.get(r.propertyNames);
+        s && (r.propertyNames = s);
+      }
+    }
+  }
+}
+var iAe = (e, t, n, i) => {
+  const r = n;
+  const s = e._zod.def;
+  r.type = "object";
+  const o = s.keyType;
+  const a = nm(o).patterns;
+  if (s.mode === "loose" && a && a.size > 0) {
+    const d = eu(s.valueType, t, {
+      ...i,
+      path: [...i.path, "patternProperties", "*"]
+    });
+    r.patternProperties = {};
+    for (const h of a) {
+      vy(r.patternProperties, tZ(h).source, d);
+    }
+  } else {
+    if (t.target === "draft-07" || t.target === "draft-2020-12") {
+      r.propertyNames = eu(s.keyType, t, {
+        ...i,
+        path: [...i.path, "propertyNames"]
+      });
+      let d = HL.get(t);
+      d || (d = [], HL.set(t, d), t.deferred.push(() => nAe(t)));
+      d.push(e);
+    }
+    r.additionalProperties = eu(s.valueType, t, {
+      ...i,
+      path: [...i.path, "additionalProperties"]
+    });
+  }
+  const l = o._zod.values;
+  const u = t.io === "input" && CR(s.valueType) !== void 0;
+  if (l && !s.partial && !u) {
+    const d = [...l].filter(h => typeof h == "string" || typeof h == "number");
+    d.length > 0 && (r.required = d.map(String));
+  }
+};
+var rAe = (e, t, n, i) => {
+  const r = e._zod.def;
+  const s = eu(r.innerType, t, i);
+  const o = t.seen.get(e);
+  t.target === "openapi-3.0" ? (o.ref = r.innerType, n.nullable = !0) : n.anyOf = [s, {
+    type: "null"
+  }];
+};
+var sAe = (e, t, n, i) => {
+  const r = e._zod.def;
+  eu(r.innerType, t, i);
+  const s = t.seen.get(e);
+  s.ref = r.innerType;
+};
+var z8 = Symbol();
+function nZ(e, t, n, i, r) {
+  let s = !1;
+  const o = JSON.stringify(e, (a, l) => typeof l != "bigint" ? l : (s = !0, null));
+  return s ? (q1(t, n, i, r, "BigInt defaults cannot be represented in JSON Schema"), z8) : JSON.parse(o);
+}
+var oAe = (e, t, n, i) => {
+  const r = e._zod.def;
+  eu(r.innerType, t, i);
+  const s = t.seen.get(e);
+  s.ref = r.innerType;
+  const o = nZ(r.defaultValue, e, t, n, i);
+  o !== z8 && (n.default = o);
+};
+var aAe = (e, t, n, i) => {
+  const r = e._zod.def;
+  eu(r.innerType, t, i);
+  const s = t.seen.get(e);
+  s.ref = r.innerType;
+  if (t.io !== "input") {
+    return;
+  }
+  const o = nZ(r.defaultValue, e, t, n, i);
+  o !== z8 && (n._prefault = o);
+};
+var lAe = (e, t, n, i) => {
+  const r = e._zod.def;
+  eu(r.innerType, t, i);
+  const s = t.seen.get(e);
+  s.ref = r.innerType;
+  let o;
+  try {
+    o = r.catchValue(void 0);
+  } catch {
+    q1(e, t, n, i, "Dynamic catch values are not supported in JSON Schema");
+    return;
+  }
+  n.default = o;
+};
+var cAe = (e, t, n, i) => {
+  const r = e._zod.def;
+  const s = r.in._zod.traits.has("$ZodTransform");
+  const o = t.io === "input" ? s ? r.out : r.in : r.out;
+  eu(o, t, i);
+  const a = t.seen.get(e);
+  a.ref = o;
+};
+var uAe = (e, t, n, i) => {
+  const r = e._zod.def;
+  eu(r.innerType, t, i);
+  const s = t.seen.get(e);
+  s.ref = r.innerType;
+  n.readOnly = !0;
+};
+var iZ = (e, t, n, i) => {
+  const r = e._zod.def;
+  eu(r.innerType, t, i);
+  const s = t.seen.get(e);
+  s.ref = r.innerType;
+};
+var mH = new WeakSet([Object.prototype, Error.prototype]);
+function gB(e, t, n) {
+  Object.defineProperty(e, t, {
+    configurable: !0,
+    enumerable: !1,
+    get() {
+      const i = n(this);
+      Object.defineProperty(this, t, {
+        value: i,
+        configurable: !0,
+        writable: !0
+      });
+      return i;
+    },
+    set(i) {
+      Object.defineProperty(this, t, {
+        value: i,
+        configurable: !0,
+        writable: !0
+      });
+    }
+  });
+}
+var dAe = (e, t) => {
+  The.init(e, t);
+  e.name = "ZodError";
+  const n = Object.getPrototypeOf(e);
+  mH.has(n) || (mH.add(n), gB(n, "format", i => r => Rhe(i, r)), gB(n, "flatten", i => r => Mhe(i, r)), gB(n, "addIssue", i => r => {
+    i.issues.push(r);
+    i.message = JSON.stringify(i.issues, LL, 2);
+  }), gB(n, "addIssues", i => r => {
+    i.issues.push(...r);
+    i.message = JSON.stringify(i.issues, LL, 2);
+  }), Object.defineProperty(n, "isEmpty", {
+    configurable: !0,
+    enumerable: !1,
+    get() {
+      return this.issues.length === 0;
+    }
+  }));
+};
+var Zg = nn("ZodError", dAe, void 0, {
+  Parent: Error
+});
+var hAe = P8(Zg);
+var fAe = L8(Zg);
+var pAe = N8(Zg);
+var gAe = O8(Zg);
+var AAe = Ohe(Zg);
+var mAe = Uhe(Zg);
+var vAe = Fhe(Zg);
+var yAe = Qhe(Zg);
+var EAe = Hhe(Zg);
+var bAe = zhe(Zg);
+var CAe = Ghe(Zg);
+var SAe = Whe(Zg);
+function wAe() {
+  cm.localeError || _0(Wpe());
+}
+function D4() {
+  cm.memoizer || _0({
+    memoizer: Hpe()
+  });
+}
+var xl = nn("ZodType", (e, t) => {
+  wAe();
+  _l.init(e, t);
+  e.def = t;
+  e.type = t.type;
+  return e;
+}, {
+  check(...e) {
+    const t = this.def;
+    return this.clone(Sp(t, {
+      checks: [...(t.checks ?? []), ...e.map(n => typeof n == "function" ? {
+        _zod: {
+          check: n,
+          def: {
+            check: "custom"
+          },
+          onattach: []
+        }
+      } : n)]
+    }), {
+      parent: !0
+    });
+  },
+  with(...e) {
+    return this.check(...e);
+  },
+  clone(e, t) {
+    return cE(this, e, t);
+  },
+  brand() {
+    return this;
+  },
+  register(e, t) {
+    e.add(this, t);
+    return this;
+  },
+  refine(e, t) {
+    return this.check(yme(e, t));
+  },
+  superRefine(e, t) {
+    return this.check(Eme(e, t));
+  },
+  overwrite(e) {
+    return this.check(Fw(e));
+  },
+  optional() {
+    return CH(this);
+  },
+  exactOptional() {
+    return ome(this);
+  },
+  nullable() {
+    return SH(this);
+  },
+  nullish() {
+    return CH(SH(this));
+  },
+  nonoptional(e) {
+    return hme(this, e);
+  },
+  array() {
+    return Qw(this);
+  },
+  or(e) {
+    return W8([this, e]);
+  },
+  and(e) {
+    return nme(this, e);
+  },
+  transform(e) {
+    return wH(this, sme(e));
+  },
+  default(e) {
+    return cme(this, e);
+  },
+  prefault(e) {
+    return dme(this, e);
+  },
+  catch(e) {
+    return pme(this, e);
+  },
+  pipe(e) {
+    return wH(this, e);
+  },
+  readonly() {
+    return mme(this);
+  },
+  describe(e) {
+    const t = this.clone();
+    I_.add(t, {
+      description: e
+    });
+    return t;
+  },
+  meta(...e) {
+    if (e.length === 0) {
+      return I_.get(this);
+    }
+    const t = this.clone();
+    I_.add(t, e[0]);
+    return t;
+  },
+  isOptional() {
+    return this.safeParse(void 0).success;
+  },
+  isNullable() {
+    return this.safeParse(null).success;
+  },
+  apply(e, ...t) {
+    return t.length === 0 ? e(this) : e(this, ...t);
+  },
+  get "~standard"() {
+    return EX(this, "~standard", {
+      ...BX(this),
+      jsonSchema: {
+        input: bR(this, "input"),
+        output: bR(this, "output")
+      }
+    });
+  },
+  set "~standard"(e) {
+    Z1(this, "~standard", e);
+  },
+  parse: function e(t, n) {
+    return hAe(this, t, n, {
+      callee: e
+    });
+  },
+  parseAsync: async function e(t, n) {
+    return await fAe(this, t, n, {
+      callee: e
+    });
+  },
+  safeParse(e, t) {
+    return pAe(this, e, t);
+  },
+  async safeParseAsync(e, t) {
+    return gAe(this, e, t);
+  },
+  get spa() {
+    return this?.safeParseAsync;
+  },
+  set spa(e) {
+    Z1(this, "spa", e);
+  },
+  validate(e, t) {
+    return Phe(this, e, t);
+  },
+  validateAsync(e, t) {
+    return Nhe(this, e, t);
+  },
+  encode: function e(t, n) {
+    return AAe(this, t, n, {
+      callee: e
+    });
+  },
+  decode: function e(t, n) {
+    return mAe(this, t, n, {
+      callee: e
+    });
+  },
+  encodeAsync: async function e(t, n) {
+    return await vAe(this, t, n, {
+      callee: e
+    });
+  },
+  decodeAsync: async function e(t, n) {
+    return await yAe(this, t, n, {
+      callee: e
+    });
+  },
+  safeEncode(e, t) {
+    return EAe(this, e, t);
+  },
+  safeDecode(e, t) {
+    return bAe(this, e, t);
+  },
+  async safeEncodeAsync(e, t) {
+    return CAe(this, e, t);
+  },
+  async safeDecodeAsync(e, t) {
+    return SAe(this, e, t);
+  },
+  toJSONSchema(e) {
+    return Fge(this, {})(e);
+  },
+  get description() {
+    return I_.get(this)?.description;
+  },
+  get _def() {
+    return this._zod.def;
+  }
+});
+var rZ = nn("_ZodString", (e, t) => {
+  Q8.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => Gge(e, n, i, r);
+}, bX({
+  format: e => nm(e).format ?? null,
+  minLength: e => nm(e).minimum ?? null,
+  maxLength: e => nm(e).maximum ?? null
+}, {
+  regex(...e) {
+    return this.check(Sge(...e));
+  },
+  includes(...e) {
+    return this.check(_ge(...e));
+  },
+  startsWith(...e) {
+    return this.check(xge(...e));
+  },
+  endsWith(...e) {
+    return this.check(Tge(...e));
+  },
+  min(...e) {
+    return this.check(ER(...e));
+  },
+  max(...e) {
+    return this.check(WX(...e));
+  },
+  length(...e) {
+    return this.check(VX(...e));
+  },
+  nonempty(...e) {
+    return this.check(ER(1, ...e));
+  },
+  lowercase(e) {
+    return this.check(wge(e));
+  },
+  uppercase(e) {
+    return this.check(Ige(e));
+  },
+  trim() {
+    return this.check(Mge());
+  },
+  normalize(...e) {
+    return this.check(Bge(...e));
+  },
+  toLowerCase() {
+    return this.check(Rge());
+  },
+  toUpperCase() {
+    return this.check(kge());
+  },
+  slugify() {
+    return this.check(Dge());
+  }
+}));
+var IAe = nn("ZodString", (e, t) => {
+  Q8.init(e, t);
+  rZ.init(e, t);
+}, {
+  email(e) {
+    return this.check(Ype(BAe, e));
+  },
+  url(e) {
+    return this.check(zX(oZ, e));
+  },
+  jwt(e) {
+    return this.check(pge(jAe, e));
+  },
+  emoji(e) {
+    return this.check(ege(kAe, e));
+  },
+  guid(e) {
+    return this.check(Jpe(MAe, e));
+  },
+  uuid(e) {
+    return this.check(Xpe(AB, e));
+  },
+  uuidv4(e) {
+    return this.check(Zpe(AB, e));
+  },
+  uuidv6(e) {
+    return this.check(qpe(AB, e));
+  },
+  uuidv7(e) {
+    return this.check($pe(AB, e));
+  },
+  nanoid(e) {
+    return this.check(tge(DAe, e));
+  },
+  cuid(e) {
+    return this.check(nge(PAe, e));
+  },
+  cuid2(e) {
+    return this.check(ige(LAe, e));
+  },
+  ulid(e) {
+    return this.check(rge(NAe, e));
+  },
+  base64(e) {
+    return this.check(dge(GAe, e));
+  },
+  base64url(e) {
+    return this.check(hge(WAe, e));
+  },
+  xid(e) {
+    return this.check(sge(OAe, e));
+  },
+  ksuid(e) {
+    return this.check(oge(UAe, e));
+  },
+  ipv4(e) {
+    return this.check(age(FAe, e));
+  },
+  ipv6(e) {
+    return this.check(lge(QAe, e));
+  },
+  cidrv4(e) {
+    return this.check(cge(HAe, e));
+  },
+  cidrv6(e) {
+    return this.check(uge(zAe, e));
+  },
+  e164(e) {
+    return this.check(fge(VAe, e));
+  },
+  datetime(e) {
+    return this.check(GX(sZ, e));
+  },
+  date(e) {
+    return this.check(gge(_Ae, e));
+  },
+  time(e) {
+    return this.check(Age(xAe, e));
+  },
+  duration(e) {
+    return this.check(mge(TAe, e));
+  }
+});
+function Vi(e) {
+  return Kpe(IAe, e);
+}
+var Tl = nn("ZodStringFormat", (e, t) => {
+  sl.init(e, t);
+  rZ.init(e, t);
+});
+var sZ = nn("ZodISODateTime", (e, t) => {
+  Zfe.init(e, t);
+  Tl.init(e, t);
+});
+var _Ae = nn("ZodISODate", (e, t) => {
+  qfe.init(e, t);
+  Tl.init(e, t);
+});
+var xAe = nn("ZodISOTime", (e, t) => {
+  $fe.init(e, t);
+  Tl.init(e, t);
+});
+var TAe = nn("ZodISODuration", (e, t) => {
+  epe.init(e, t);
+  Tl.init(e, t);
+});
+var BAe = nn("ZodEmail", (e, t) => {
+  Ofe.init(e, t);
+  Tl.init(e, t);
+});
+var MAe = nn("ZodGUID", (e, t) => {
+  Lfe.init(e, t);
+  Tl.init(e, t);
+});
+var AB = nn("ZodUUID", (e, t) => {
+  Nfe.init(e, t);
+  Tl.init(e, t);
+});
+var oZ = nn("ZodURL", (e, t) => {
+  Gfe.init(e, t);
+  Tl.init(e, t);
+});
+function RAe(e) {
+  return zX(oZ, e);
+}
+var kAe = nn("ZodEmoji", (e, t) => {
+  Wfe.init(e, t);
+  Tl.init(e, t);
+});
+var DAe = nn("ZodNanoID", (e, t) => {
+  Vfe.init(e, t);
+  Tl.init(e, t);
+});
+var PAe = nn("ZodCUID", (e, t) => {
+  jfe.init(e, t);
+  Tl.init(e, t);
+});
+var LAe = nn("ZodCUID2", (e, t) => {
+  Kfe.init(e, t);
+  Tl.init(e, t);
+});
+var NAe = nn("ZodULID", (e, t) => {
+  Yfe.init(e, t);
+  Tl.init(e, t);
+});
+var OAe = nn("ZodXID", (e, t) => {
+  Jfe.init(e, t);
+  Tl.init(e, t);
+});
+var UAe = nn("ZodKSUID", (e, t) => {
+  Xfe.init(e, t);
+  Tl.init(e, t);
+});
+var FAe = nn("ZodIPv4", (e, t) => {
+  tpe.init(e, t);
+  Tl.init(e, t);
+});
+var QAe = nn("ZodIPv6", (e, t) => {
+  ipe.init(e, t);
+  Tl.init(e, t);
+});
+var HAe = nn("ZodCIDRv4", (e, t) => {
+  rpe.init(e, t);
+  Tl.init(e, t);
+});
+var zAe = nn("ZodCIDRv6", (e, t) => {
+  ope.init(e, t);
+  Tl.init(e, t);
+});
+var GAe = nn("ZodBase64", (e, t) => {
+  ape.init(e, t);
+  Tl.init(e, t);
+});
+var WAe = nn("ZodBase64URL", (e, t) => {
+  cpe.init(e, t);
+  Tl.init(e, t);
+});
+var VAe = nn("ZodE164", (e, t) => {
+  upe.init(e, t);
+  Tl.init(e, t);
+});
+var jAe = nn("ZodJWT", (e, t) => {
+  hpe.init(e, t);
+  Tl.init(e, t);
+});
+var aZ = nn("ZodNumber", (e, t) => {
+  PX.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => Wge(e, n, i, r);
+  e.isFinite = !0;
+}, bX({
+  minValue: e => {
+    const {
+      minimum: t,
+      exclusiveMinimum: n
+    } = nm(e);
+    return Math.max(t ?? Number.NEGATIVE_INFINITY, n ?? Number.NEGATIVE_INFINITY);
+  },
+  maxValue: e => {
+    const {
+      maximum: t,
+      exclusiveMaximum: n
+    } = nm(e);
+    return Math.min(t ?? Number.POSITIVE_INFINITY, n ?? Number.POSITIVE_INFINITY);
+  },
+  isInt: e => {
+    const {
+      isInt: t,
+      multipleOf: n
+    } = nm(e);
+    return !!t || !!n?.some(Number.isSafeInteger);
+  },
+  format: e => nm(e).format ?? null
+}, {
+  gt(e, t) {
+    return this.check(lH(e, t));
+  },
+  gte(e, t) {
+    return this.check(r5(e, t));
+  },
+  min(e, t) {
+    return this.check(r5(e, t));
+  },
+  lt(e, t) {
+    return this.check(aH(e, t));
+  },
+  lte(e, t) {
+    return this.check(i5(e, t));
+  },
+  max(e, t) {
+    return this.check(i5(e, t));
+  },
+  int(e) {
+    return this.check(vH(e));
+  },
+  safe(e) {
+    return this.check(vH(e));
+  },
+  positive(e) {
+    return this.check(lH(0, e));
+  },
+  nonnegative(e) {
+    return this.check(r5(0, e));
+  },
+  negative(e) {
+    return this.check(aH(0, e));
+  },
+  nonpositive(e) {
+    return this.check(i5(0, e));
+  },
+  multipleOf(e, t) {
+    return this.check(cH(e, t));
+  },
+  step(e, t) {
+    return this.check(cH(e, t));
+  },
+  finite() {
+    return this;
+  }
+}));
+function Ls(e) {
+  return vge(aZ, e);
+}
+var KAe = nn("ZodNumberFormat", (e, t) => {
+  fpe.init(e, t);
+  aZ.init(e, t);
+});
+function vH(e) {
+  return yge(KAe, e);
+}
+var YAe = nn("ZodBoolean", (e, t) => {
+  ppe.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => Vge(e, n, i, r);
+});
+function G8(e) {
+  return Ege(YAe, e);
+}
+var JAe = nn("ZodUnknown", (e, t) => {
+  gpe.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => Kge(e, n, i, r);
+});
+function yH() {
+  return bge(JAe);
+}
+var XAe = nn("ZodNever", (e, t) => {
+  Ape.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => jge(e, n, i, r);
+});
+function ZAe(e) {
+  return Cge(XAe, e);
+}
+var qAe = nn("ZodArray", (e, t) => {
+  D4();
+  mpe.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => qge(e, n, i, r);
+  e.element = t.element;
+}, {
+  min(e, t) {
+    return this.check(ER(e, t));
+  },
+  nonempty(e) {
+    return this.check(ER(1, e));
+  },
+  max(e, t) {
+    return this.check(WX(e, t));
+  },
+  length(e, t) {
+    return this.check(VX(e, t));
+  },
+  unwrap() {
+    return this.element;
+  }
+});
+function Qw(e, t) {
+  return Pge(qAe, e, t);
+}
+var $Ae = nn("ZodObject", (e, t) => {
+  D4();
+  Epe.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => $ge(e, n, i, r);
+  bhe(e, "shape", n => n._zod.def.shape, !1);
+}, {
+  keyof() {
+    return Su(Object.keys(this._zod.def.shape));
+  },
+  catchall(e) {
+    return this.clone(Sp(this._zod.def, {
+      catchall: e
+    }));
+  },
+  passthrough() {
+    return this.clone(Sp(this._zod.def, {
+      catchall: yH()
+    }));
+  },
+  loose() {
+    return this.clone(Sp(this._zod.def, {
+      catchall: yH()
+    }));
+  },
+  strict() {
+    return this.clone(Sp(this._zod.def, {
+      catchall: ZAe()
+    }));
+  },
+  strip() {
+    return this.clone(Sp(this._zod.def, {
+      catchall: void 0
+    }));
+  },
+  extend(e) {
+    return uhe(this, e);
+  },
+  safeExtend(e) {
+    return dhe(this, e);
+  },
+  merge(e) {
+    return hhe(this, e);
+  },
+  pick(e) {
+    return lhe(this, e);
+  },
+  omit(e) {
+    return che(this, e);
+  },
+  partial(...e) {
+    return G7(cZ, this, e[0]);
+  },
+  exactPartial(...e) {
+    return G7(uZ, this, e[0], "exactPartial");
+  },
+  required(...e) {
+    return fhe(dZ, this, e[0]);
+  }
+});
+function Un(e, t) {
+  const n = {
+    type: "object",
+    shape: e ?? {},
+    ...Si(t)
+  };
+  return new $Ae(n);
+}
+var lZ = nn("ZodUnion", (e, t) => {
+  OX.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => eAe(e, n, i, r);
+  e.options = t.options;
+});
+function W8(e, t) {
+  return new lZ({
+    type: "union",
+    options: e,
+    ...Si(t)
+  });
+}
+var eme = nn("ZodDiscriminatedUnion", (e, t) => {
+  lZ.init(e, t);
+  Cpe.init(e, t);
+});
+function gT(e, t, n) {
+  return new eme({
+    type: "union",
+    options: t,
+    discriminator: e,
+    ...Si(n)
+  });
+}
+var tme = nn("ZodIntersection", (e, t) => {
+  Spe.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => tAe(e, n, i, r);
+});
+function nme(e, t) {
+  return new tme({
+    type: "intersection",
+    left: e,
+    right: t
+  });
+}
+var EH = nn("ZodRecord", (e, t) => {
+  D4();
+  wpe.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => iAe(e, n, i, r);
+  e.keyType = t.keyType;
+  e.valueType = t.valueType;
+});
+function bH(e, t, n) {
+  return !t || !t._zod ? new EH({
+    type: "record",
+    keyType: Vi(),
+    valueType: e,
+    ...Si(t)
+  }) : new EH({
+    type: "record",
+    keyType: e,
+    valueType: t,
+    ...Si(n)
+  });
+}
+var zL = nn("ZodEnum", (e, t) => {
+  Ipe.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (i, r, s) => Yge(e, i, r, s);
+  e.enum = t.entries;
+  e.options = [...e._zod.values];
+  const n = new Set(Object.keys(t.entries));
+  e.extract = (i, r) => {
+    const s = {};
+    for (const o of i) {
+      if (n.has(o)) {
+        s[o] = t.entries[o];
+      } else {
+        throw new Error(`Key ${o} not found in enum`);
+      }
+    }
+    return new zL({
+      ...t,
+      checks: [],
+      ...Si(r),
+      entries: s
+    });
+  };
+  e.exclude = (i, r) => {
+    const s = {
+      ...t.entries
+    };
+    for (const o of i) {
+      if (n.has(o)) {
+        delete s[o];
+      } else {
+        throw new Error(`Key ${o} not found in enum`);
+      }
+    }
+    return new zL({
+      ...t,
+      checks: [],
+      ...Si(r),
+      entries: s
+    });
+  };
+});
+function Su(e, t) {
+  const n = Array.isArray(e) ? Object.fromEntries(e.map(i => [i, i])) : e;
+  return new zL({
+    type: "enum",
+    entries: n,
+    ...Si(t)
+  });
+}
+var ime = nn("ZodLiteral", (e, t) => {
+  _pe.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => Jge(e, n, i, r);
+  e.values = new Set(t.values);
+  Object.defineProperty(e, "value", {
+    get() {
+      if (t.values.length > 1) {
+        throw new Error("This schema contains multiple valid literal values. Use `.values` instead.");
+      }
+      return t.values[0];
+    }
+  });
+});
+function Wu(e, t) {
+  return new ime({
+    type: "literal",
+    values: Array.isArray(e) ? e : [e],
+    ...Si(t)
+  });
+}
+var rme = nn("ZodTransform", (e, t) => {
+  D4();
+  xpe.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => Zge(e, n, i, r);
+  e._zod.parse = (n, i) => {
+    if (i.direction === "backward") {
+      throw new CX(e.constructor.name);
+    }
+    n.addIssue = s => {
+      if (typeof s == "string") {
+        n.issues.push(Mx(s, n.value, t));
+      } else {
+        const o = s;
+        o.fatal && (o.continue = !1);
+        o.code ?? (o.code = "custom");
+        "input" in o || (o.input = n.value);
+        o.inst ?? (o.inst = e);
+        n.issues.push(Mx(o));
+      }
+    };
+    const r = t.transform(n.value, n);
+    return r instanceof Promise ? r.then(s => {
+      n.value = s;
+      return n;
+    }) : (n.value = r, n);
+  };
+});
+function sme(e) {
+  return new rme({
+    type: "transform",
+    transform: e
+  });
+}
+var cZ = nn("ZodOptional", (e, t) => {
+  UX.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => iZ(e, n, i, r);
+  e.unwrap = () => e._zod.def.innerType;
+});
+function CH(e) {
+  return new cZ({
+    type: "optional",
+    innerType: e
+  });
+}
+var uZ = nn("ZodExactOptional", (e, t) => {
+  Tpe.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => iZ(e, n, i, r);
+  e.unwrap = () => e._zod.def.innerType;
+});
+function ome(e) {
+  return new uZ({
+    type: "optional",
+    innerType: e
+  });
+}
+var ame = nn("ZodNullable", (e, t) => {
+  Bpe.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => rAe(e, n, i, r);
+  e.unwrap = () => e._zod.def.innerType;
+});
+function SH(e) {
+  return new ame({
+    type: "nullable",
+    innerType: e
+  });
+}
+var lme = nn("ZodDefault", (e, t) => {
+  Mpe.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => oAe(e, n, i, r);
+  e.unwrap = () => e._zod.def.innerType;
+  e.removeDefault = e.unwrap;
+});
+function cme(e, t) {
+  return new lme({
+    type: "default",
+    innerType: e,
+    get defaultValue() {
+      return typeof t == "function" ? t() : AX(t);
+    }
+  });
+}
+var ume = nn("ZodPrefault", (e, t) => {
+  Rpe.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => aAe(e, n, i, r);
+  e.unwrap = () => e._zod.def.innerType;
+});
+function dme(e, t) {
+  return new ume({
+    type: "prefault",
+    innerType: e,
+    get defaultValue() {
+      return typeof t == "function" ? t() : AX(t);
+    }
+  });
+}
+var dZ = nn("ZodNonOptional", (e, t) => {
+  kpe.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => sAe(e, n, i, r);
+  e.unwrap = () => e._zod.def.innerType;
+});
+function hme(e, t) {
+  return new dZ({
+    type: "nonoptional",
+    innerType: e,
+    ...Si(t)
+  });
+}
+var fme = nn("ZodCatch", (e, t) => {
+  Dpe.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => lAe(e, n, i, r);
+  e.unwrap = () => e._zod.def.innerType;
+  e.removeCatch = e.unwrap;
+});
+function pme(e, t) {
+  return new fme({
+    type: "catch",
+    innerType: e,
+    catchValue: typeof t == "function" ? t : She(t)
+  });
+}
+var gme = nn("ZodPipe", (e, t) => {
+  Ppe.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => cAe(e, n, i, r);
+  e.in = t.in;
+  e.out = t.out;
+});
+function wH(e, t) {
+  return new gme({
+    type: "pipe",
+    in: e,
+    out: t
+  });
+}
+var Ame = nn("ZodReadonly", (e, t) => {
+  Lpe.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => uAe(e, n, i, r);
+  e.unwrap = () => e._zod.def.innerType;
+});
+function mme(e) {
+  return new Ame({
+    type: "readonly",
+    innerType: e
+  });
+}
+var vme = nn("ZodCustom", (e, t) => {
+  Npe.init(e, t);
+  xl.init(e, t);
+  e._zod.processJSONSchema = (n, i, r) => Xge(e, n, i, r);
+});
+function yme(e, t = {}) {
+  return Lge(vme, e, t);
+}
+function Eme(e, t) {
+  return Nge(e, t);
+}
+function bme(e) {
+  return GX(sZ, e);
+}
+var GL = Un({
+  VITE_WEB_APP_URL: RAe(),
+  VITE_GAME_SERVER_URL: Vi().min(1),
+  VITE_LIVEKIT_URL: Vi().min(1),
+  VITE_AVATAR_URL: Vi().min(1),
+  VITE_TURNSTILE_SITE_KEY: Vi().min(1)
+}).safeParse({
+  BASE_URL: "/",
+  DEV: !1,
+  MODE: "production",
+  PROD: !0,
+  SSR: !1,
+  VITE_AVATAR_URL: "https://us-east-1.telnyxcloudstorage.com/br.public-prod",
+  VITE_GAME_SERVER_URL: "wss://game.betroom.gg",
+  VITE_LIVEKIT_URL: "wss://voice.betroom.gg",
+  VITE_TURNSTILE_SITE_KEY: "0x4AAAAAAEPACYRas2iYjE7l",
+  VITE_WEB_APP_URL: "https://betroom.gg"
+});
+if (!GL.success) {
+  const e = GL.error.issues.map(t => `${t.path.join(".") || "(root)"}: ${t.message}`).join("; ");
+  throw new Error(`invalid client environment - ${e}`);
+}
+var $l = GL.data;
+function hZ() {
+  window.location.replace(`${$l.VITE_WEB_APP_URL}/login`);
+  return new Promise(() => {});
+}
+ArrayBuffer.isView || (ArrayBuffer.isView = e => e !== null && typeof e == "object" && e.buffer instanceof ArrayBuffer);
+typeof globalThis > "u" && typeof window < "u" && (window.globalThis = window);
+typeof FormData > "u" && (globalThis.FormData = class {});
+var Xc = {
+  JOIN_ROOM: 10,
+  ERROR: 11,
+  LEAVE_ROOM: 12,
+  ROOM_DATA: 13,
+  ROOM_STATE: 14,
+  ROOM_STATE_PATCH: 15,
+  ROOM_DATA_SCHEMA: 16,
+  ROOM_DATA_BYTES: 17,
+  PING: 18,
+  ROOM_INPUT_RELIABLE: 19,
+  ROOM_INPUT_UNRELIABLE: 20,
+  ROOM_REQUEST: 21,
+  ROOM_RESPONSE: 22
+};
+var WL = {
+  TIMED: 128,
+  UNRELIABLE: 64
+};
+var IH = {
+  OK: 0,
+  REJECTED: 1,
+  ERROR: 2
+};
+var _H = {
+  INPUT_REFLECTION: 1,
+  INPUT_OPTIONS: 2
+};
+var xI = {
+  RENDER_TIME: 1,
+  FIXED_TIMESTEP: 2,
+  PATCH_RATE: 4,
+  SUB_STEPS: 8,
+  RECKON_TIME: 16
+};
+var jA = {
+  NORMAL_CLOSURE: 1e3,
+  GOING_AWAY: 1001,
+  NO_STATUS_RECEIVED: 1005,
+  ABNORMAL_CLOSURE: 1006,
+  CONSENTED: 4e3,
+  SERVER_SHUTDOWN: 4001,
+  WITH_ERROR: 4002,
+  FAILED_TO_RECONNECT: 4003,
+  MAY_TRY_RECONNECT: 4010
+};
+var nx = class extends Error {
+  code;
+  headers;
+  status;
+  response;
+  data;
+  constructor(e, t, n) {
+    super(t);
+    this.name = "ServerError";
+    this.code = e;
+    n && (this.headers = n.headers, this.status = n.status, this.response = n.response, this.data = n.data);
+  }
+};
+var Cme = class fZ extends Error {
+  code;
+  constructor(t, n) {
+    super(t);
+    this.code = n;
+    this.name = "MatchMakeError";
+    Object.setPrototypeOf(this, fZ.prototype);
+  }
+};
+var xH = 255;
+var Sme = 213;
+var Rt;
+(function (e) {
+  e[e.ADD = 128] = "ADD";
+  e[e.REPLACE = 0] = "REPLACE";
+  e[e.DELETE = 64] = "DELETE";
+  e[e.DELETE_AND_MOVE = 96] = "DELETE_AND_MOVE";
+  e[e.MOVE_AND_ADD = 160] = "MOVE_AND_ADD";
+  e[e.DELETE_AND_ADD = 192] = "DELETE_AND_ADD";
+  e[e.CLEAR = 10] = "CLEAR";
+  e[e.REVERSE = 15] = "REVERSE";
+  e[e.MOVE = 32] = "MOVE";
+  e[e.DELETE_BY_REFID = 33] = "DELETE_BY_REFID";
+  e[e.ADD_BY_REFID = 129] = "ADD_BY_REFID";
+})(Rt || (Rt = {}));
+Symbol.metadata ??= Symbol.for("Symbol.metadata");
+function pZ(e) {
+  Object.defineProperty(e, Symbol.metadata, {
+    value: void 0,
+    writable: !0,
+    configurable: !0,
+    enumerable: !1
+  });
+}
+var TH = function () {
+  return typeof globalThis < "u" || typeof globalThis < "u" ? globalThis : typeof self < "u" ? self : typeof window < "u" ? window : {};
+}();
+if (typeof Symbol == "function" && typeof Symbol.for != "function") {
+  const e = "colyseus.symbolRegistry";
+  const t = TH[e] || (TH[e] = Object.create(null));
+  Symbol.for = function (n) {
+    return t[n] || (t[n] = Symbol(n));
+  };
+  Symbol.keyFor = function (n) {
+    for (const i in t) {
+      if (t[i] === n) {
+        return i;
+      }
+    }
+  };
+}
+var si = Symbol.for("$refId");
+var ry = "~track";
+var sy = "~encoder";
+var x0 = "~decoder";
+var _C = "~filter";
+var Sd = "~getByIndex";
+var um = "~deleteByIndex";
+var Hw = "~resyncPrune";
+var _t = Symbol.for("$changes");
+var dr = Symbol.for("$childType");
+var Jc = Symbol.for("$proxyTarget");
+var F1 = "~onEncodeEnd";
+var sm = "~reset";
+var SR = "~onDecodeEnd";
+var _p = Symbol.for("$values");
+var gZ = "~builder";
+var mp = "~descriptors";
+var ix = "~__encodeDescriptor";
+var Vg = "~encoders";
+var R1 = "~__numFields";
+var Q1 = "~__refTypeFieldIndexes";
+var KA = "~__viewFieldIndexes";
+var hv = "$__fieldIndexesByViewTag";
+var Ob = "~__unreliableFieldIndexes";
+var Rx = "~__patchOnlyFieldIndexes";
+var wR = "~__fullSyncSkipIndexes";
+var nw = "~__fullStateOnlyFieldIndexes";
+var vp = "~__streamFieldIndexes";
+var mB = "~__streamPriorities";
+try {
+  new TextEncoder();
+} catch {}
+var P4 = new ArrayBuffer(8);
+var nC = new Int32Array(P4);
+var VL = new Float32Array(P4);
+var wme = new Float64Array(P4);
+var AZ = new BigInt64Array(P4);
+var mZ = typeof Buffer < "u" && Buffer.byteLength ? Buffer.byteLength : function (e, t) {
+  for (var n = 0, i = 0, r = 0, s = e.length; r < s; r++) {
+    n = e.charCodeAt(r);
+    n < 128 ? i += 1 : n < 2048 ? i += 2 : n < 55296 || n >= 57344 ? i += 3 : (r++, i += 4);
+  }
+  return i;
+};
+function vZ(e, t, n) {
+  for (var i = 0, r = 0, s = t.length; r < s; r++) {
+    i = t.charCodeAt(r);
+    i < 128 ? e[n.offset++] = i : i < 2048 ? (e[n.offset] = 192 | i >> 6, e[n.offset + 1] = 128 | i & 63, n.offset += 2) : i < 55296 || i >= 57344 ? (e[n.offset] = 224 | i >> 12, e[n.offset + 1] = 128 | i >> 6 & 63, e[n.offset + 2] = 128 | i & 63, n.offset += 3) : (r++, i = 65536 + ((i & 1023) << 10 | t.charCodeAt(r) & 1023), e[n.offset] = 240 | i >> 18, e[n.offset + 1] = 128 | i >> 12 & 63, e[n.offset + 2] = 128 | i >> 6 & 63, e[n.offset + 3] = 128 | i & 63, n.offset += 4);
+  }
+}
+function yZ(e, t, n) {
+  e[n.offset++] = t & 255;
+}
+function Ime(e, t, n) {
+  e[n.offset++] = t & 255;
+}
+function EZ(e, t, n) {
+  e[n.offset++] = t & 255;
+  e[n.offset++] = t >> 8 & 255;
+}
+function V8(e, t, n) {
+  e[n.offset++] = t & 255;
+  e[n.offset++] = t >> 8 & 255;
+}
+function oy(e, t, n) {
+  e[n.offset++] = t & 255;
+  e[n.offset++] = t >> 8 & 255;
+  e[n.offset++] = t >> 16 & 255;
+  e[n.offset++] = t >> 24 & 255;
+}
+function iC(e, t, n) {
+  const i = t >> 24;
+  const r = t >> 16;
+  const s = t >> 8;
+  const o = t;
+  e[n.offset++] = o & 255;
+  e[n.offset++] = s & 255;
+  e[n.offset++] = r & 255;
+  e[n.offset++] = i & 255;
+}
+function bZ(e, t, n) {
+  const i = Math.floor(t / Math.pow(2, 32));
+  iC(e, t >>> 0, n);
+  iC(e, i, n);
+}
+function CZ(e, t, n) {
+  const i = t / Math.pow(2, 32) >> 0;
+  iC(e, t >>> 0, n);
+  iC(e, i, n);
+}
+function _me(e, t, n) {
+  AZ[0] = BigInt.asIntN(64, t);
+  oy(e, nC[0], n);
+  oy(e, nC[1], n);
+}
+function xme(e, t, n) {
+  AZ[0] = BigInt.asIntN(64, t);
+  oy(e, nC[0], n);
+  oy(e, nC[1], n);
+}
+function SZ(e, t, n) {
+  VL[0] = t;
+  oy(e, nC[0], n);
+}
+function wZ(e, t, n) {
+  wme[0] = t;
+  oy(e, nC[0], n);
+  oy(e, nC[1], n);
+}
+function Tme(e, t, n) {
+  e[n.offset++] = t ? 1 : 0;
+}
+function Bme(e, t, n) {
+  t || (t = "");
+  let i = mZ(t, "utf8");
+  let r = 0;
+  if (i < 32) {
+    e[n.offset++] = i | 160;
+    r = 1;
+  } else {
+    if (i < 256) {
+      e[n.offset++] = 217;
+      e[n.offset++] = i;
+      r = 2;
+    } else {
+      if (i < 65536) {
+        e[n.offset++] = 218;
+        V8(e, i, n);
+        r = 3;
+      } else {
+        if (i < 4294967296) {
+          e[n.offset++] = 219;
+          iC(e, i, n);
+          r = 5;
+        } else {
+          throw new Error("String too long");
+        }
+      }
+    }
+  }
+  vZ(e, t, n);
+  return r + i;
+}
+function jL(e, t, n) {
+  if (isNaN(t)) {
+    return jL(e, 0, n);
+  }
+  if (isFinite(t)) {
+    if (t !== (t | 0)) {
+      return Math.abs(t) <= 34028235e31 && (VL[0] = t, Math.abs(Math.abs(VL[0]) - Math.abs(t)) < 1e-4) ? (e[n.offset++] = 202, SZ(e, t, n), 5) : (e[n.offset++] = 203, wZ(e, t, n), 9);
+    }
+  } else {
+    return jL(e, t > 0 ? Number.MAX_SAFE_INTEGER : -Number.MAX_SAFE_INTEGER, n);
+  }
+  return t >= 0 ? t < 128 ? (e[n.offset++] = t & 255, 1) : t < 256 ? (e[n.offset++] = 204, e[n.offset++] = t & 255, 2) : t < 65536 ? (e[n.offset++] = 205, V8(e, t, n), 3) : t < 4294967296 ? (e[n.offset++] = 206, iC(e, t, n), 5) : (e[n.offset++] = 207, CZ(e, t, n), 9) : t >= -32 ? (e[n.offset++] = 224 | t + 32, 1) : t >= -128 ? (e[n.offset++] = 208, yZ(e, t, n), 2) : t >= -32768 ? (e[n.offset++] = 209, EZ(e, t, n), 3) : t >= -2147483648 ? (e[n.offset++] = 210, oy(e, t, n), 5) : (e[n.offset++] = 211, bZ(e, t, n), 9);
+}
+var Hr = {
+  int8: yZ,
+  uint8: Ime,
+  int16: EZ,
+  uint16: V8,
+  int32: oy,
+  uint32: iC,
+  int64: bZ,
+  uint64: CZ,
+  bigint64: _me,
+  biguint64: xme,
+  float32: SZ,
+  float64: wZ,
+  boolean: Tme,
+  string: Bme,
+  number: jL,
+  utf8Write: vZ,
+  utf8Length: mZ
+};
+var AT = new ArrayBuffer(8);
+var rC = new Int32Array(AT);
+var Mme = new Float32Array(AT);
+var Rme = new Float64Array(AT);
+var kme = new BigUint64Array(AT);
+var Dme = new BigInt64Array(AT);
+function IZ(e, t, n) {
+  n > e.length - t.offset && (n = e.length - t.offset);
+  for (var i = "", r = 0, s = t.offset, o = t.offset + n; s < o; s++) {
+    var a = e[s];
+    if ((a & 128) === 0) {
+      i += String.fromCharCode(a);
+      continue;
+    }
+    if ((a & 224) === 192) {
+      i += String.fromCharCode((a & 31) << 6 | e[++s] & 63);
+      continue;
+    }
+    if ((a & 240) === 224) {
+      i += String.fromCharCode((a & 15) << 12 | (e[++s] & 63) << 6 | (e[++s] & 63) << 0);
+      continue;
+    }
+    if ((a & 248) === 240) {
+      r = (a & 7) << 18 | (e[++s] & 63) << 12 | (e[++s] & 63) << 6 | (e[++s] & 63) << 0;
+      r >= 65536 ? (r -= 65536, i += String.fromCharCode((r >>> 10) + 55296, (r & 1023) + 56320)) : i += String.fromCharCode(r);
+      continue;
+    }
+    console.error("decode.utf8Read(): Invalid byte " + a + " at offset " + s + ". Skip to end of string: " + (t.offset + n));
+    break;
+  }
+  t.offset += n;
+  return i;
+}
+function _Z(e, t) {
+  return mT(e, t) << 24 >> 24;
+}
+function mT(e, t) {
+  return e[t.offset++];
+}
+function xZ(e, t) {
+  return L4(e, t) << 16 >> 16;
+}
+function L4(e, t) {
+  return e[t.offset++] | e[t.offset++] << 8;
+}
+function dm(e, t) {
+  return e[t.offset++] | e[t.offset++] << 8 | e[t.offset++] << 16 | e[t.offset++] << 24;
+}
+function iw(e, t) {
+  return dm(e, t) >>> 0;
+}
+function TZ(e, t) {
+  rC[0] = dm(e, t);
+  return Mme[0];
+}
+function BZ(e, t) {
+  rC[0] = dm(e, t);
+  rC[1] = dm(e, t);
+  return Rme[0];
+}
+function MZ(e, t) {
+  const n = iw(e, t);
+  return dm(e, t) * Math.pow(2, 32) + n;
+}
+function RZ(e, t) {
+  const n = iw(e, t);
+  return iw(e, t) * Math.pow(2, 32) + n;
+}
+function Pme(e, t) {
+  rC[0] = dm(e, t);
+  rC[1] = dm(e, t);
+  return Dme[0];
+}
+function Lme(e, t) {
+  rC[0] = dm(e, t);
+  rC[1] = dm(e, t);
+  return kme[0];
+}
+function Nme(e, t) {
+  return mT(e, t) > 0;
+}
+function Ome(e, t) {
+  const n = e[t.offset++];
+  let i;
+  n < 192 ? i = n & 31 : n === 217 ? i = mT(e, t) : n === 218 ? i = L4(e, t) : n === 219 && (i = iw(e, t));
+  return IZ(e, t, i);
+}
+function Ume(e, t) {
+  const n = e[t.offset++];
+  if (n < 128) {
+    return n;
+  }
+  if (n === 202) {
+    return TZ(e, t);
+  }
+  if (n === 203) {
+    return BZ(e, t);
+  }
+  if (n === 204) {
+    return mT(e, t);
+  }
+  if (n === 205) {
+    return L4(e, t);
+  }
+  if (n === 206) {
+    return iw(e, t);
+  }
+  if (n === 207) {
+    return RZ(e, t);
+  }
+  if (n === 208) {
+    return _Z(e, t);
+  }
+  if (n === 209) {
+    return xZ(e, t);
+  }
+  if (n === 210) {
+    return dm(e, t);
+  }
+  if (n === 211) {
+    return MZ(e, t);
+  }
+  if (n > 223) {
+    return (255 - n + 1) * -1;
+  }
+}
+function Fme(e, t) {
+  const n = e[t.offset];
+  return n < 192 && n > 160 || n === 217 || n === 218 || n === 219;
+}
+var Ws = {
+  utf8Read: IZ,
+  int8: _Z,
+  uint8: mT,
+  int16: xZ,
+  uint16: L4,
+  int32: dm,
+  uint32: iw,
+  float32: TZ,
+  float64: BZ,
+  int64: MZ,
+  uint64: RZ,
+  bigint64: Pme,
+  biguint64: Lme,
+  boolean: Nme,
+  string: Ome,
+  number: Ume,
+  stringCheck: Fme
+};
+var j8 = {};
+var Qme = new Map();
+function yy(e, t) {
+  t.constructor && (Object.prototype.hasOwnProperty.call(t, "constructor") && t.constructor[Symbol.metadata] == null && pZ(t.constructor), Qme.set(t.constructor, e), j8[e] = t);
+  t.encode && (Hr[e] = t.encode);
+  t.decode && (Ws[e] = t.decode);
+}
+function kZ(e) {
+  return j8[e];
+}
+var DZ = "ArraySchema does not support streaming ÔÇö positional ops (splice / unshift / reverse) shift subsequent indexes, so holding ADDs back for a later tick under `maxPerTick` would desync the decoder. Use `t.stream(X)` (stable monotonic positions) or `t.map(X).stream()` (stable keys) instead.";
+function ay() {
+  return {
+    pendingByView: new Map(),
+    sentByView: new Map(),
+    broadcastPending: new Set(),
+    sentBroadcast: new Set(),
+    broadcastDeletes: new Set(),
+    maxPerTick: 32
+  };
+}
+function K8(e) {
+  return e._stream ??= ay();
+}
+function N4(e, t, n) {
+  t.activeViews.size === 0 && K8(e).broadcastPending.add(n);
+}
+function O4(e, t, n, i) {
+  const r = e._stream;
+  if (r === void 0) {
+    return !0;
+  }
+  let s = !1;
+  r.broadcastPending.delete(i) ? s = !0 : r.sentBroadcast.delete(i) && r.broadcastDeletes.add(i);
+  t.forEachActiveView(o => {
+    const a = r.pendingByView.get(o.id);
+    if (a?.has(i)) {
+      a.delete(i);
+      s = !0;
+      return;
+    }
+    const l = r.sentByView.get(o.id);
+    if (l?.has(i)) {
+      l.delete(i);
+      let u = o.changes.get(n);
+      u === void 0 && (u = new Map(), o.changes.set(n, u));
+      u.set(i, Rt.DELETE);
+    }
+  });
+  return s;
+}
+function Hme(e, t, n) {
+  const i = e._stream;
+  if (i !== void 0) {
+    i.broadcastPending.clear();
+    for (const r of i.sentBroadcast) {
+      i.broadcastDeletes.add(r);
+    }
+    i.sentBroadcast.clear();
+    t.forEachActiveView(r => {
+      i.pendingByView.get(r.id)?.clear();
+      const s = i.sentByView.get(r.id);
+      if (s !== void 0 && s.size > 0) {
+        let o = r.changes.get(n);
+        o === void 0 && (o = new Map(), r.changes.set(n, o));
+        for (const a of s) {
+          o.set(a, Rt.DELETE);
+        }
+        s.clear();
+      }
+    });
+  }
+}
+function zme(e, t) {
+  const n = e._stream?.pendingByView;
+  if (n === void 0) {
+    return !1;
+  }
+  for (const [i, r] of n) {
+    if (r.size > 0 && t.activeViews.get(i)?.deref() !== void 0) {
+      return !0;
+    }
+  }
+  return !1;
+}
+function Gme(e) {
+  const t = e._stream;
+  return t !== void 0 && (t.broadcastPending.size > 0 || t.broadcastDeletes.size > 0);
+}
+function Wme(e, t, n) {
+  const i = K8(e);
+  let r = i.pendingByView.get(t);
+  r === void 0 && (r = new Set(), i.pendingByView.set(t, r));
+  r.add(n);
+}
+function U4(e, t) {
+  const n = e._stream;
+  n !== void 0 && (n.pendingByView.delete(t), n.sentByView.delete(t), n.priorityByView?.delete(t));
+}
+var Vme = {
+  8: "uint8",
+  16: "uint16",
+  32: "uint32"
+};
+function Y8(e) {
+  if (e == null || typeof e != "object") {
+    throw new Error("t.quantized(): options object with { min, max } is required.");
+  }
+  const {
+    min: t,
+    max: n
+  } = e;
+  if (typeof t != "number" || typeof n != "number" || !(n > t) || !Number.isFinite(t) || !Number.isFinite(n)) {
+    throw new Error(`t.quantized(): require finite min < max (got min=${t}, max=${n}).`);
+  }
+  const i = e.bits ?? 16;
+  if (i !== 8 && i !== 16 && i !== 32) {
+    throw new Error(`t.quantized(): bits must be 8, 16 or 32 (got ${i}).`);
+  }
+  const r = e.mode ?? "clamp";
+  if (r !== "clamp" && r !== "wrap") {
+    throw new Error(`t.quantized(): mode must be "clamp" or "wrap" (got ${JSON.stringify(r)}).`);
+  }
+  const s = r === "wrap";
+  const o = Math.pow(2, i);
+  return {
+    min: t,
+    max: n,
+    bits: i,
+    wrap: s,
+    wire: Vme[i],
+    range: n - t,
+    span: s ? o : t === -n ? o - 2 : o - 1
+  };
+}
+function $1(e) {
+  return e !== null && typeof e == "object" && e.quantized !== void 0;
+}
+function PZ(e, t) {
+  if (e.wrap) {
+    if (!Number.isFinite(t)) {
+      return 0;
+    }
+    const i = e.range;
+    let r = (t - e.min) % i;
+    r < 0 && (r += i);
+    const s = e.span;
+    return Math.floor(r / i * s + .5) % s;
+  }
+  if (t !== t) {
+    return 0;
+  }
+  const n = t < e.min ? e.min : t > e.max ? e.max : t;
+  return Math.floor((n - e.min) / e.range * e.span + .5);
+}
+function LZ(e, t) {
+  return e.min + t / e.span * e.range;
+}
+function NZ(e) {
+  const t = Hr[e.wire];
+  return (n, i, r) => t(n, PZ(e, i), r);
+}
+function jme(e, t, n) {
+  const i = Ws[e.wire];
+  return LZ(e, i(t, n));
+}
+var rw = class wb {
+  types = {};
+  schemas = new Map();
+  hasFilters = !1;
+  static inheritedTypes = new Map();
+  static cachedContexts = new Map();
+  static register(t) {
+    const n = Object.getPrototypeOf(t);
+    if (n !== Ln) {
+      let i = wb.inheritedTypes.get(n);
+      i || (i = new Set(), wb.inheritedTypes.set(n, i));
+      i.add(t);
+    }
+  }
+  static cache(t) {
+    let n = wb.cachedContexts.get(t);
+    n || (n = new wb(t), wb.cachedContexts.set(t, n));
+    return n;
+  }
+  constructor(t) {
+    t && this.discoverTypes(t);
+  }
+  has(t) {
+    return this.schemas.has(t);
+  }
+  get(t) {
+    return this.types[t];
+  }
+  add(t, n = this.schemas.size) {
+    return this.schemas.has(t) ? !1 : (this.types[n] = t, t[Symbol.metadata] == null && Ns.initialize(t), this.schemas.set(t, n), !0);
+  }
+  getTypeId(t) {
+    return this.schemas.get(t);
+  }
+  discoverTypes(t) {
+    if (!this.add(t)) {
+      return;
+    }
+    wb.inheritedTypes.get(t)?.forEach(r => {
+      this.discoverTypes(r);
+    });
+    let n = t;
+    for (; (n = Object.getPrototypeOf(n)) && n !== Ln && n !== Function.prototype;) {
+      this.discoverTypes(n);
+    }
+    const i = t[Symbol.metadata];
+    (i[KA] || i[vp]) && (this.hasFilters = !0);
+    for (const r in i) {
+      const s = i[r].type;
+      if (typeof s != "string" && !$1(s)) {
+        if (typeof s == "function") {
+          this.discoverTypes(s);
+        } else {
+          const o = Object.values(s)[0];
+          if (typeof o == "string") {
+            continue;
+          }
+          this.discoverTypes(o);
+        }
+      }
+    }
+  }
+  debug() {
+    return `TypeContext ->
+	Schema types: ${this.schemas.size}
+	hasFilters: ${this.hasFilters}`;
+  }
+};
+var BH = 63;
+function OZ(e) {
+  const t = typeof Object.keys(e)[0] == "string" && kZ(Object.keys(e)[0]);
+  return {
+    complexTypeKlass: t,
+    childType: t ? Object.values(e)[0] : e
+  };
+}
+function sC(e) {
+  if (Array.isArray(e)) {
+    return {
+      array: sC(e[0])
+    };
+  }
+  if ($1(e)) {
+    return typeof e.quantized.wire == "string" ? e : {
+      quantized: Y8(e.quantized)
+    };
+  }
+  if (typeof e.type < "u") {
+    return e.type;
+  }
+  if (Kme(e)) {
+    return Object.keys(e).every(t => typeof e[t] == "string") ? "string" : "number";
+  }
+  if (typeof e == "object" && e !== null) {
+    const t = Object.keys(e).find(n => j8[n] !== void 0);
+    if (t) {
+      e[t] = sC(e[t]);
+      return e;
+    }
+  }
+  return e;
+}
+function Kme(e) {
+  if (typeof e == "function" && e[Symbol.metadata]) {
+    return !1;
+  }
+  const t = Object.keys(e);
+  const n = t.filter(i => /\d+/.test(i));
+  return !!(n.length > 0 && n.length === t.length / 2 && e[e[n[0]]] == n[0] || t.length > 0 && t.every(i => typeof e[i] == "string" && e[i] === i));
+}
+var Yme = [Q1, Ob, Rx, wR, nw, vp, Vg];
+function vB(e, t, n) {
+  e[t] || Object.defineProperty(e, t, {
+    value: [],
+    enumerable: !1,
+    configurable: !0,
+    writable: !0
+  });
+  e[t].push(n);
+}
+var Ns = {
+  addField(e, t, n, i, r) {
+    if (t >= BH) {
+      throw new Error(`Can't define field '${n}'.
+Schema instances may only have up to ${BH} fields.`);
+    }
+    e[t] = Object.assign(e[t] || {}, {
+      type: sC(i),
+      index: t,
+      name: n
+    });
+    Object.defineProperty(e, mp, {
+      value: e[mp] || {},
+      enumerable: !1,
+      configurable: !0
+    });
+    r ? e[mp][n] = r : e[mp][n] = {
+      value: void 0,
+      writable: !0,
+      enumerable: !0,
+      configurable: !0
+    };
+    Object.defineProperty(e, R1, {
+      value: t,
+      enumerable: !1,
+      configurable: !0
+    });
+    Object.defineProperty(e, n, {
+      value: t,
+      enumerable: !1,
+      configurable: !0
+    });
+    typeof e[t].type != "string" && !$1(e[t].type) && (e[Q1] === void 0 && Object.defineProperty(e, Q1, {
+      value: [],
+      enumerable: !1,
+      configurable: !0
+    }), e[Q1].push(t));
+    const s = e[t].type;
+    if (s && typeof s == "object" && s.stream !== void 0) {
+      if (s.array !== void 0) {
+        throw new Error(DZ);
+      }
+      e[t].stream = !0;
+      e[vp] || Object.defineProperty(e, vp, {
+        value: [],
+        enumerable: !1,
+        configurable: !0,
+        writable: !0
+      });
+      e[vp].includes(t) || e[vp].push(t);
+      const o = i?.priority;
+      typeof o == "function" && Ns.setStreamPriority(e, n, o);
+    }
+  },
+  setTag(e, t, n) {
+    const i = e[t];
+    const r = e[i];
+    r.tag = n;
+    e[KA] || (Object.defineProperty(e, KA, {
+      value: [],
+      enumerable: !1,
+      configurable: !0
+    }), Object.defineProperty(e, hv, {
+      value: {},
+      enumerable: !1,
+      configurable: !0
+    }));
+    e[KA].push(i);
+    if (n < 0) {
+      e[hv][n] || (e[hv][n] = []);
+      e[hv][n].push(i);
+    } else {
+      for (let s = n; s > 0; s &= s - 1) {
+        const o = s & -s;
+        e[hv][o] || (e[hv][o] = []);
+        e[hv][o].push(i);
+      }
+    }
+  },
+  setUnreliable(e, t) {
+    const n = e[t];
+    if (typeof e[n].type != "string") {
+      throw new Error(`@unreliable cannot be applied to ref-type field "${t}". For ref-type fields, mark each primitive sub-field with @unreliable instead. See README "Limitations and best practices".`);
+    }
+    e[n].unreliable = !0;
+    e[Ob] || Object.defineProperty(e, Ob, {
+      value: [],
+      enumerable: !1,
+      configurable: !0,
+      writable: !0
+    });
+    e[Ob].push(n);
+  },
+  setPatchOnly(e, t) {
+    const n = e[t];
+    if (e[n].fullStateOnly) {
+      throw new Error(`field "${t}" cannot be both patchOnly and fullStateOnly ÔÇö those are the only two delivery channels, so the field would never reach a client.`);
+    }
+    e[n].patchOnly = !0;
+    vB(e, Rx, n);
+    vB(e, wR, n);
+  },
+  setDeprecated(e, t) {
+    const n = e[t];
+    e[n].deprecated = !0;
+    vB(e, wR, n);
+    Object.defineProperty(e, n, {
+      value: e[n],
+      enumerable: !1,
+      configurable: !0
+    });
+  },
+  setFullStateOnly(e, t) {
+    const n = e[t];
+    if (e[n].patchOnly) {
+      throw new Error(`field "${t}" cannot be both patchOnly and fullStateOnly ÔÇö those are the only two delivery channels, so the field would never reach a client.`);
+    }
+    e[n].fullStateOnly = !0;
+    vB(e, nw, n);
+  },
+  setStream(e, t) {
+    const n = e[t];
+    e[n].stream = !0;
+    e[vp] || Object.defineProperty(e, vp, {
+      value: [],
+      enumerable: !1,
+      configurable: !0,
+      writable: !0
+    });
+    e[vp].push(n);
+  },
+  setStreamPriority(e, t, n) {
+    const i = e[t];
+    e[mB] || Object.defineProperty(e, mB, {
+      value: {},
+      enumerable: !1,
+      configurable: !0,
+      writable: !0
+    });
+    e[mB][i] = n;
+  },
+  getStreamPriority(e, t) {
+    return e?.[mB]?.[t];
+  },
+  defineField(e, t, n, i, r) {
+    const s = sC(r);
+    const {
+      complexTypeKlass: o,
+      childType: a
+    } = OZ(s);
+    Ns.addField(t, n, i, s, YZ(i, n, a, o));
+    t[mp][i] && Object.defineProperty(e.prototype, i, t[mp][i]);
+    (typeof s == "string" || $1(s)) && (t[Vg] || Object.defineProperty(t, Vg, {
+      value: [],
+      enumerable: !1,
+      configurable: !0,
+      writable: !0
+    }), t[Vg][n] = typeof s == "string" ? Hr[s] : NZ(s.quantized));
+  },
+  setFields(e, t) {
+    const n = e.prototype.constructor;
+    rw.register(n);
+    const i = Object.getPrototypeOf(n);
+    const r = i && i[Symbol.metadata];
+    const s = Ns.initialize(n);
+    n["~track"] || (n[ry] = Ln[ry]);
+    n["~encoder"] || (n[sy] = Ln[sy]);
+    n["~decoder"] || (n[x0] = Ln[x0]);
+    n.prototype.toJSON || (n.prototype.toJSON = Ln.prototype.toJSON);
+    let o = s["~__numFields"] ?? (r && r["~__numFields"]) ?? -1;
+    o++;
+    s[Vg] || Object.defineProperty(s, Vg, {
+      value: r?.[Vg] ? [...r[Vg]] : [],
+      enumerable: !1,
+      configurable: !0,
+      writable: !0
+    });
+    for (const a in t) {
+      if (s[a] !== void 0) {
+        throw new Error(`@colyseus/schema: Duplicate '${a}' definition on '${n.name || "(anonymous)"}'.`);
+      }
+      Ns.defineField(n, s, o, a, t[a]);
+      o++;
+    }
+    return e;
+  },
+  isDeprecated(e, t) {
+    return e[t].deprecated === !0;
+  },
+  initialize(e) {
+    const t = Object.getPrototypeOf(e);
+    const n = t[Symbol.metadata];
+    let i = e[Symbol.metadata] ?? Object.create(null);
+    if (t !== Ln && i === n && (i = Object.create(null), n)) {
+      Object.setPrototypeOf(i, n);
+      Object.defineProperty(i, R1, {
+        value: n[R1],
+        enumerable: !1,
+        configurable: !0,
+        writable: !0
+      });
+      n[KA] !== void 0 && (Object.defineProperty(i, KA, {
+        value: [...n[KA]],
+        enumerable: !1,
+        configurable: !0,
+        writable: !0
+      }), Object.defineProperty(i, hv, {
+        value: {
+          ...n[hv]
+        },
+        enumerable: !1,
+        configurable: !0,
+        writable: !0
+      }));
+      for (const r of Yme) {
+        const s = n[r];
+        s !== void 0 && Object.defineProperty(i, r, {
+          value: [...s],
+          enumerable: !1,
+          configurable: !0,
+          writable: !0
+        });
+      }
+      Object.defineProperty(i, mp, {
+        value: {
+          ...n[mp]
+        },
+        enumerable: !1,
+        configurable: !0,
+        writable: !0
+      });
+    }
+    Object.defineProperty(e, Symbol.metadata, {
+      value: i,
+      writable: !1,
+      configurable: !0
+    });
+    return i;
+  },
+  isValidInstance(e) {
+    return e.constructor[Symbol.metadata] && Object.prototype.hasOwnProperty.call(e.constructor[Symbol.metadata], "~__numFields");
+  },
+  getFields(e) {
+    const t = e[Symbol.metadata];
+    const n = {};
+    for (let i = 0; i <= t[R1]; i++) {
+      n[t[i].name] = t[i].type;
+    }
+    return n;
+  },
+  hasViewTagAtIndex(e, t) {
+    return e?.[KA]?.includes(t);
+  },
+  hasUnreliableAtIndex(e, t) {
+    return e?.[Ob]?.includes(t);
+  },
+  hasPatchOnlyAtIndex(e, t) {
+    return e?.[Rx]?.includes(t);
+  },
+  hasFullStateOnlyAtIndex(e, t) {
+    return e?.[nw]?.includes(t);
+  },
+  hasStreamAtIndex(e, t) {
+    return e?.[vp]?.includes(t);
+  }
+};
+var UZ = (e, t, n) => e(t, n);
+var Jme = class {
+  dirtyLow = 0;
+  dirtyHigh = 0;
+  ops;
+  constructor(e) {
+    this.ops = new Uint8Array(Math.max(e + 1, 1));
+  }
+  record(e, t) {
+    const n = this.ops[e];
+    n === 0 ? this.ops[e] = t : n === Rt.DELETE ? this.ops[e] = Rt.DELETE_AND_ADD : n === Rt.ADD && t === Rt.DELETE_AND_ADD && (this.ops[e] = Rt.DELETE_AND_ADD);
+    e < 32 ? this.dirtyLow |= 1 << e : this.dirtyHigh |= 1 << e - 32;
+  }
+  recordDelete(e, t) {
+    this.ops[e] = t;
+    e < 32 ? this.dirtyLow |= 1 << e : this.dirtyHigh |= 1 << e - 32;
+  }
+  recordRaw(e, t) {
+    this.record(e, t);
+  }
+  operationAt(e) {
+    const t = this.ops[e];
+    return t === 0 ? void 0 : t;
+  }
+  setOperationAt(e, t) {
+    this.ops[e] = t;
+  }
+  forEach(e) {
+    this.forEachWithCtx(e, UZ);
+  }
+  forEachWithCtx(e, t) {
+    let n = this.dirtyLow;
+    let i = this.dirtyHigh;
+    const r = this.ops;
+    for (; n !== 0;) {
+      const s = n & -n;
+      const o = 31 - Math.clz32(s);
+      n ^= s;
+      t(e, o, r[o]);
+    }
+    for (; i !== 0;) {
+      const s = i & -i;
+      const o = 31 - Math.clz32(s) + 32;
+      i ^= s;
+      t(e, o, r[o]);
+    }
+  }
+  size() {
+    return IR(this.dirtyLow) + IR(this.dirtyHigh);
+  }
+  has() {
+    return (this.dirtyLow | this.dirtyHigh) !== 0;
+  }
+  reset() {
+    this.dirtyLow = 0;
+    this.dirtyHigh = 0;
+    this.ops.fill(0);
+  }
+};
+var Xme = class {
+  dirty = new Map();
+  pureOps = [];
+  record(e, t) {
+    const n = this.dirty.get(e);
+    n === void 0 ? this.dirty.set(e, t) : n === Rt.DELETE ? this.dirty.set(e, Rt.DELETE_AND_ADD) : n === Rt.ADD && t === Rt.DELETE_AND_ADD && this.dirty.set(e, Rt.DELETE_AND_ADD);
+  }
+  recordDelete(e, t) {
+    this.dirty.set(e, t);
+  }
+  recordRaw(e, t) {
+    this.dirty.set(e, t);
+  }
+  recordPure(e) {
+    this.pureOps.push([this.dirty.size, e]);
+  }
+  operationAt(e) {
+    return this.dirty.get(e);
+  }
+  setOperationAt(e, t) {
+    this.dirty.has(e) && this.dirty.set(e, t);
+  }
+  forEach(e) {
+    this.forEachWithCtx(e, UZ);
+  }
+  forEachWithCtx(e, t) {
+    const n = this.pureOps;
+    if (n.length > 0) {
+      let i = 0;
+      let r = 0;
+      for (const [s, o] of this.dirty) {
+        for (; i < n.length && n[i][0] <= r;) {
+          const a = n[i++][1];
+          t(e, -a, a);
+        }
+        t(e, s, o);
+        r++;
+      }
+      for (; i < n.length;) {
+        const s = n[i++][1];
+        t(e, -s, s);
+      }
+    } else {
+      for (const [i, r] of this.dirty) {
+        t(e, i, r);
+      }
+    }
+  }
+  size() {
+    return this.dirty.size + this.pureOps.length;
+  }
+  has() {
+    return this.dirty.size > 0 || this.pureOps.length > 0;
+  }
+  reset() {
+    this.dirty.clear();
+    this.pureOps.length = 0;
+  }
+  shift(e) {
+    const t = new Map();
+    for (const [n, i] of this.dirty) {
+      t.set(n + e, i);
+    }
+    this.dirty = t;
+  }
+};
+function IR(e) {
+  e = e - (e >>> 1 & 1431655765);
+  e = (e & 858993459) + (e >>> 2 & 858993459);
+  return (e + (e >>> 4) & 252645135) * 16843009 >>> 24;
+}
+function yB(e) {
+  if (e === void 0) {
+    return 0;
+  }
+  let t = 0;
+  for (let n = 0, i = e.length; n < i; n++) {
+    const r = e[n];
+    r < 32 && (t |= 1 << r);
+  }
+  return t;
+}
+function Zme(e) {
+  const t = [];
+  const n = [];
+  const i = [];
+  const r = [];
+  const s = e?.[R1];
+  if (s === void 0) {
+    return {
+      names: t,
+      types: n,
+      tags: i,
+      encoders: r
+    };
+  }
+  const o = e[Vg];
+  for (let a = 0; a <= s; a++) {
+    const l = e[a];
+    if (l === void 0) {
+      t[a] = void 0;
+      n[a] = void 0;
+      i[a] = void 0;
+      r[a] = void 0;
+      continue;
+    }
+    t[a] = l.name;
+    n[a] = l.type;
+    i[a] = l.tag;
+    r[a] = o?.[a];
+  }
+  return {
+    names: t,
+    types: n,
+    tags: i,
+    encoders: r
+  };
+}
+function FZ(e) {
+  const t = e.constructor;
+  if (Object.prototype.hasOwnProperty.call(t, ix)) {
+    return t[ix];
+  }
+  const n = t[Symbol.metadata];
+  const i = Ns.isValidInstance(e);
+  const r = (n?.[KA]?.length ?? 0) > 0;
+  const s = Zme(n);
+  const o = i && !r ? void 0 : t[_C];
+  const a = {
+    encoder: t[sy],
+    filter: o,
+    metadata: n,
+    isSchema: i,
+    filterBitmask: i ? yB(n?.[KA]) : 0,
+    hasAnyFullStateOnly: (n?.[nw]?.length ?? 0) > 0,
+    hasAnyUnreliable: (n?.[Ob]?.length ?? 0) > 0,
+    hasAnyStream: (n?.[vp]?.length ?? 0) > 0,
+    hasAnyView: r,
+    fullStateOnlyBitmask: yB(n?.[nw]),
+    unreliableBitmask: yB(n?.[Ob]),
+    streamBitmask: yB(n?.[vp]),
+    names: s.names,
+    types: s.types,
+    tags: s.tags,
+    encoders: s.encoders
+  };
+  Object.defineProperty(t, ix, {
+    value: a,
+    enumerable: !1,
+    writable: !0,
+    configurable: !0
+  });
+  return a;
+}
+function qme(e, t, n) {
+  if (e.parentRef) {
+    if (e.parentRef[_t] === t[_t]) {
+      e._parentIndex = n;
+      return;
+    }
+    if (QZ(e, (i, r) => i[_t] === t[_t])) {
+      e._parentIndex = n;
+      return;
+    }
+  }
+  e.parentRef === void 0 ? (e.parentRef = t, e._parentIndex = n) : (e.extraParents = {
+    ref: e.parentRef,
+    index: e._parentIndex,
+    next: e.extraParents
+  }, e.parentRef = t, e._parentIndex = n);
+}
+function $me(e, t, n) {
+  if (e.extraParents === void 0) {
+    e._parentIndex = n;
+    return;
+  }
+  if (e.parentRef[_t] === t[_t]) {
+    e._parentIndex = n;
+    return;
+  }
+  for (let i = e.extraParents; i !== void 0; i = i.next) {
+    if (i.ref[_t] === t[_t]) {
+      i.index = n;
+      return;
+    }
+  }
+}
+function e0e(e, t) {
+  if (e.parentRef && e.parentRef[_t] === t[_t]) {
+    e.extraParents ? (e.parentRef = e.extraParents.ref, e._parentIndex = e.extraParents.index, e.extraParents = e.extraParents.next) : (e.parentRef = void 0, e._parentIndex = void 0);
+    return !0;
+  }
+  let n = e.extraParents;
+  let i = null;
+  for (; n;) {
+    if (n.ref[_t] === t[_t]) {
+      i ? i.next = n.next : e.extraParents = n.next;
+      return !0;
+    }
+    i = n;
+    n = n.next;
+  }
+  return e.parentRef === void 0;
+}
+function t0e(e, t) {
+  if (e.parentRef !== void 0 && t(e.parentRef, e._parentIndex)) {
+    return {
+      ref: e.parentRef,
+      index: e._parentIndex
+    };
+  }
+  for (let n = e.extraParents; n !== void 0; n = n.next) {
+    if (t(n.ref, n.index)) {
+      return {
+        ref: n.ref,
+        index: n.index
+      };
+    }
+  }
+}
+function QZ(e, t) {
+  if (e.parentRef !== void 0 && t(e.parentRef, e._parentIndex)) {
+    return !0;
+  }
+  for (let n = e.extraParents; n !== void 0; n = n.next) {
+    if (t(n.ref, n.index)) {
+      return !0;
+    }
+  }
+  return !1;
+}
+function n0e(e, t) {
+  if (e.parentRef && e.parentRef[_t] === t[_t]) {
+    return e._parentIndex;
+  }
+  for (let n = e.extraParents; n !== void 0; n = n.next) {
+    if (n.ref[_t] === t[_t]) {
+      return n.index;
+    }
+  }
+}
+function i0e(e) {
+  const t = [];
+  e.parentRef && t.push({
+    ref: e.parentRef,
+    index: e._parentIndex
+  });
+  let n = e.extraParents;
+  for (; n;) {
+    t.push({
+      ref: n.ref,
+      index: n.index
+    });
+    n = n.next;
+  }
+  return t;
+}
+function r0e(e, t, n) {
+  const i = t.refTarget;
+  if (t.isArray) {
+    const s = i.items;
+    const o = s[n];
+    if (o !== void 0 && o[_t] === e) {
+      return !0;
+    }
+    for (let a = 0, l = s.length; a < l; a++) {
+      const u = s[a];
+      if (u !== void 0 && u[_t] === e) {
+        return !0;
+      }
+    }
+    return !1;
+  }
+  const r = t.getValue(n);
+  return r !== void 0 && r[_t] === e;
+}
+var HZ = (e, t) => {
+  e.isFieldUnreliable(t) ? e.ensureUnreliableRecorder().record(t, Rt.ADD) : e.record(t, Rt.ADD);
+};
+var s0e = (e, t) => e(t);
+function o0e(e, t) {
+  J8(e, t, s0e);
+}
+function J8(e, t, n) {
+  const i = e.refTarget;
+  if (i[dr] !== void 0) {
+    if (e.isPatchOnly) {
+      return;
+    }
+    if (Array.isArray(i.items)) {
+      const r = i.items;
+      for (let s = 0, o = r.length; s < o; s++) {
+        r[s] !== void 0 && n(t, s);
+      }
+    } else {
+      if (i.journal !== void 0) {
+        for (const [r, s] of i.journal.keyByIndex) {
+          i.$items.has(s) && n(t, r);
+        }
+      } else {
+        if (i.$items !== void 0) {
+          for (const r of i.$items.keys()) {
+            n(t, r);
+          }
+        }
+      }
+    }
+  } else {
+    const r = e.metadata;
+    if (!r) {
+      return;
+    }
+    const s = r["~__numFields"] ?? -1;
+    const o = r[wR];
+    const a = e.encDescriptor.names;
+    for (let l = 0; l <= s; l++) {
+      const u = a[l];
+      if (u === void 0 || o && o.includes(l)) {
+        continue;
+      }
+      const d = i[u];
+      d != null && n(t, l);
+    }
+  }
+}
+function zZ(e, t, n, i) {
+  a0e(e, t, n);
+  !e.isFullStateOnly && (e.has() && e.root?.enqueueChangeTree(e), e.unreliableRecorder?.has() && e.root?.enqueueUnreliable(e), !e.has() && !e.unreliableRecorder?.has() && e.root?.enqueueChangeTree(e));
+}
+function a0e(e, t, n) {
+  if (!t) {
+    return;
+  }
+  const i = t[_t];
+  const r = !i._isSchema;
+  let s;
+  r ? (t = i.parent, n = i.parentIndex, s = t?.[_t].metadata) : s = i.metadata;
+  const o = (s?.[Rx]?.includes(n) ? JL : 0) | (s?.[nw]?.includes(n) ? _R : 0);
+  const a = i.flags & b0e | o;
+  const l = e.flags;
+  e.flags = l | a;
+  a & ~l & _R && (e.reset(), e.unreliableRecorder?.reset());
+  if (!e.root?.types?.hasFilters) {
+    return;
+  }
+  const u = s?.[KA]?.includes(n) ?? !1;
+  const d = s?.[vp]?.includes(n) ?? !1;
+  const h = i.isFiltered || u || d;
+  e.isFiltered = h;
+  if (d && !r) {
+    e.isStreamCollection = !0;
+    const p = K8(e.ref);
+    if (p.priority === void 0) {
+      const A = Ns.getStreamPriority(s, n);
+      A !== void 0 && (p.priority = A);
+    }
+    e.root?.registerStream(e.ref);
+  }
+  if (h) {
+    const p = GZ(e);
+    e.isVisibilitySharedWithParent = i.isFiltered && p && !d && (!u || r && s[n].tag !== z4);
+  }
+}
+function MH(e) {
+  const t = e.pendingFilterRefresh;
+  for (let n = 0; n < t.length; n++) {
+    const i = t[n];
+    (i.flags & kx) !== 0 && X8(i);
+  }
+  t.length = 0;
+}
+function GZ(e) {
+  return e._isSchema || typeof e.refTarget[dr] != "string";
+}
+function X8(e) {
+  e.flags &= ~kx;
+  const t = e.root;
+  if (t === void 0 || e.parentRef === void 0) {
+    return;
+  }
+  const n = GZ(e);
+  let i = RH(e, e.parentRef, e._parentIndex, n);
+  for (let s = e.extraParents; s !== void 0 && i !== c0e; s = s.next) {
+    i |= RH(e, s.ref, s.index, n);
+  }
+  if (i === 0) {
+    return;
+  }
+  e.isVisibilitySharedWithParent = (i & YL) !== 0;
+  const r = (i & KL) === 0;
+  r !== e.isFiltered && (e.isFiltered = r, !r && !e.isFullStateOnly && (e.forEachLiveWithCtx(e, HZ), e.has() && t.enqueueChangeTree(e), e.unreliableRecorder?.has() && t.enqueueUnreliable(e)), e.forEachChildWithCtx(e, u0e));
+}
+var l0e = 1;
+var KL = 2;
+var YL = 4;
+var c0e = 7;
+function RH(e, t, n, i) {
+  const r = t[_t];
+  if (r.root !== e.root || !r0e(e, r, n)) {
+    return 0;
+  }
+  r.flags & kx && X8(r);
+  let s = l0e;
+  if (r._isSchema) {
+    r.encDescriptor.tags[n] !== void 0 || r.isFieldStream(n) || (r.isFiltered ? i && (s |= YL) : s |= KL);
+  } else {
+    if (!r.isFiltered) {
+      s |= KL;
+    } else {
+      if (i && !r.isStreamCollection) {
+        const o = r.parent?.[_t];
+        (o?._isSchema ? o.encDescriptor.tags[r.parentIndex] : void 0) !== z4 && (s |= YL);
+      }
+    }
+  }
+  return s;
+}
+var u0e = (e, t, n) => {
+  X8(t);
+};
+function d0e(e, t, n, i) {
+  const r = e.subscribedViews;
+  if (r === void 0) {
+    return;
+  }
+  const s = e.isStreamCollection;
+  const o = s ? e.ref : void 0;
+  const a = s ? void 0 : n[_t];
+  for (let l = 0, u = r.length; l < u; l++) {
+    let d = r[l];
+    for (; d !== 0;) {
+      const h = d & -d;
+      d ^= h;
+      const p = l * 32 + (31 - Math.clz32(h));
+      const A = i.activeViews.get(p)?.deref();
+      if (A === void 0) {
+        r[l] &= ~h;
+        continue;
+      }
+      s ? Wme(o, p, t) : a !== void 0 && A.markVisible(a);
+    }
+  }
+}
+function h0e(e, t) {
+  e.root = t;
+  const n = t.add(e);
+  zZ(e, e.parent, e.parentIndex);
+  n && vT(e, t, A0e);
+}
+function f0e(e, t, n, i) {
+  e.addParent(t, i);
+  if (!n) {
+    return;
+  }
+  const r = n.add(e);
+  n !== e.root && (e.root = n, zZ(e, t, i));
+  const s = t?.[_t];
+  s !== void 0 && s.subscribedViews !== void 0 && t[dr] !== void 0 && d0e(s, i, e.ref, n);
+  if (r) {
+    let o = kH[EB];
+    o === void 0 && (o = {
+      parentRef: void 0,
+      root: void 0
+    }, kH[EB] = o);
+    o.parentRef = e.ref;
+    o.root = n;
+    EB++;
+    vT(e, o, m0e);
+    EB--;
+  }
+}
+function p0e(e, t) {
+  vT(e, t, g0e);
+}
+function g0e(e, t, n) {
+  e(t, n);
+}
+function vT(e, t, n) {
+  const i = e.refTarget;
+  if (i[dr]) {
+    if (typeof i[dr] != "string") {
+      const r = i.items;
+      if (r !== void 0) {
+        for (let s = 0, o = r.length; s < o; s++) {
+          const a = r[s];
+          a && n(t, a[_t], s);
+        }
+      } else {
+        const s = i.$items;
+        const o = i._collectionIndexes;
+        for (const a of s.keys()) {
+          const l = s.get(a);
+          l && n(t, l[_t], o?.[a] ?? a);
+        }
+      }
+    }
+  } else {
+    const r = e.metadata?.[Q1];
+    if (!r) {
+      return;
+    }
+    const s = e.encDescriptor.names;
+    for (let o = 0, a = r.length; o < a; o++) {
+      const l = r[o];
+      const u = i[s[l]];
+      u && n(t, u[_t], l);
+    }
+  }
+}
+function A0e(e, t, n) {
+  t.root !== e ? t.setRoot(e) : e.add(t);
+}
+var kH = [];
+var EB = 0;
+function m0e(e, t, n) {
+  if (t.root === e.root) {
+    e.root.add(t);
+    e.root.moveNextToParent(t);
+    return;
+  }
+  t.setParent(e.parentRef, e.root, n);
+}
+function v0e(e, t, n) {
+  const i = (n & 3) << 3;
+  return n < 4 ? e >>> i & 255 : t >>> i & 255;
+}
+var y0e = (e, t, n) => e(t, n);
+function DH() {
+  return {
+    next: void 0,
+    tail: void 0,
+    nextPosition: 0
+  };
+}
+var PH = 1;
+var LH = 2;
+var s5 = 4;
+var NH = 8;
+var JL = 16;
+var _R = 32;
+var OH = 64;
+var UH = 128;
+var kx = 256;
+var E0e = 512;
+var b0e = 48;
+var zw = class {
+  ref;
+  refTarget;
+  get isArray() {
+    return this.refTarget !== this.ref;
+  }
+  metadata;
+  encDescriptor;
+  root;
+  parentRef;
+  _parentIndex;
+  extraParents;
+  flags = s5;
+  _fullSyncGen = 0;
+  _isSchema = !1;
+  dirtyLow = 0;
+  dirtyHigh = 0;
+  opsLow = 0;
+  opsHigh = 0;
+  ops;
+  collDirty;
+  collPureOps;
+  unreliableRecorder;
+  paused = !1;
+  changesNode;
+  unreliableChangesNode;
+  visibleViews;
+  tagViews;
+  subscribedViews;
+  get isFiltered() {
+    return (this.flags & PH) !== 0;
+  }
+  set isFiltered(e) {
+    this.flags = e ? this.flags | PH : this.flags & -2;
+  }
+  get isVisibilitySharedWithParent() {
+    return (this.flags & LH) !== 0;
+  }
+  set isVisibilitySharedWithParent(e) {
+    this.flags = e ? this.flags | LH : this.flags & -3;
+  }
+  get isNew() {
+    return (this.flags & s5) !== 0;
+  }
+  set isNew(e) {
+    this.flags = e ? this.flags | s5 : this.flags & -5;
+  }
+  get isUnreliable() {
+    return (this.flags & NH) !== 0;
+  }
+  set isUnreliable(e) {
+    this.flags = e ? this.flags | NH : this.flags & -9;
+  }
+  get isPatchOnly() {
+    return (this.flags & JL) !== 0;
+  }
+  set isPatchOnly(e) {
+    this.flags = e ? this.flags | JL : this.flags & -17;
+  }
+  get isFullStateOnly() {
+    return (this.flags & _R) !== 0;
+  }
+  set isFullStateOnly(e) {
+    this.flags = e ? this.flags | _R : this.flags & -33;
+  }
+  get isStreamCollection() {
+    return (this.flags & OH) !== 0;
+  }
+  set isStreamCollection(e) {
+    this.flags = e ? this.flags | OH : this.flags & -65;
+  }
+  get needsRestage() {
+    return (this.flags & UH) !== 0;
+  }
+  set needsRestage(e) {
+    this.flags = e ? this.flags | UH : this.flags & -129;
+  }
+  get hasFilteredFields() {
+    return this.isFiltered || this.encDescriptor.hasAnyView;
+  }
+  ensureUnreliableRecorder() {
+    this.unreliableRecorder === void 0 && (this.unreliableRecorder = this._isSchema ? new Jme(this.metadata?.["~__numFields"] ?? 0) : new Xme());
+    return this.unreliableRecorder;
+  }
+  isFieldUnreliable(e) {
+    const t = this.encDescriptor;
+    return t.hasAnyUnreliable ? e < 32 ? (t.unreliableBitmask & 1 << e) !== 0 : Ns.hasUnreliableAtIndex(this.metadata, e) : !1;
+  }
+  isFieldFullStateOnly(e) {
+    if (this.isFullStateOnly) {
+      return !0;
+    }
+    const t = this.encDescriptor;
+    return t.hasAnyFullStateOnly ? e < 32 ? (t.fullStateOnlyBitmask & 1 << e) !== 0 : Ns.hasFullStateOnlyAtIndex(this.metadata, e) : !1;
+  }
+  isFieldStream(e) {
+    const t = this.encDescriptor;
+    return t.hasAnyStream ? e < 32 ? (t.streamBitmask & 1 << e) !== 0 : Ns.hasStreamAtIndex(this.metadata, e) : !1;
+  }
+  constructor(e, t = e) {
+    this.ref = e;
+    this.refTarget = t;
+    const n = FZ(e);
+    this.encDescriptor = n;
+    this.metadata = n.metadata;
+    const i = n.isSchema;
+    this._isSchema = i;
+    this.ops = void 0;
+    this.collDirty = void 0;
+    this.collPureOps = void 0;
+    if (i) {
+      const r = this.metadata?.["~__numFields"] ?? 0;
+      r > 7 && (this.ops = new Uint8Array(r + 1));
+    } else {
+      this.collDirty = new Map();
+    }
+  }
+  _opAt(e) {
+    const t = this.ops;
+    if (t !== void 0) {
+      return t[e];
+    }
+    const n = (e & 3) << 3;
+    return e < 4 ? this.opsLow >>> n & 255 : this.opsHigh >>> n & 255;
+  }
+  _opPut(e, t) {
+    const n = this.ops;
+    if (n !== void 0) {
+      n[e] = t;
+      return;
+    }
+    const i = (e & 3) << 3;
+    const r = ~(255 << i);
+    e < 4 ? this.opsLow = this.opsLow & r | t << i : this.opsHigh = this.opsHigh & r | t << i;
+  }
+  _markDirty(e) {
+    e < 32 ? this.dirtyLow |= 1 << e : this.dirtyHigh |= 1 << e - 32;
+  }
+  record(e, t) {
+    if (this._isSchema) {
+      const n = this._opAt(e);
+      n === 0 ? this._opPut(e, t) : n === Rt.DELETE ? this._opPut(e, Rt.DELETE_AND_ADD) : n === Rt.ADD && t === Rt.DELETE_AND_ADD && this._opPut(e, Rt.DELETE_AND_ADD);
+      this._markDirty(e);
+    } else {
+      const n = this.collDirty;
+      const i = n.get(e);
+      let r;
+      i === void 0 ? r = t : i === Rt.DELETE || i === Rt.ADD && t === Rt.DELETE_AND_ADD ? r = Rt.DELETE_AND_ADD : r = i;
+      n.set(e, r);
+    }
+  }
+  recordDelete(e, t) {
+    this._isSchema ? (this._opPut(e, t), this._markDirty(e)) : this.collDirty.set(e, t);
+  }
+  recordRaw(e, t) {
+    this._isSchema ? (this._opPut(e, t), this._markDirty(e)) : this.collDirty.set(e, t);
+  }
+  recordPure(e) {
+    if (this._isSchema) {
+      throw new Error("ChangeTree (Schema): pure operations are not supported");
+    }
+    (this.collPureOps ??= []).push([this.collDirty.size, e]);
+  }
+  operationAt(e) {
+    if (this._isSchema) {
+      const t = this._opAt(e);
+      return t === 0 ? void 0 : t;
+    }
+    return this.collDirty.get(e);
+  }
+  setOperationAt(e, t) {
+    if (this._isSchema) {
+      this._opPut(e, t);
+    } else {
+      const n = this.collDirty;
+      n.has(e) && n.set(e, t);
+    }
+  }
+  forEach(e) {
+    this.forEachWithCtx(e, y0e);
+  }
+  forEachWithCtx(e, t) {
+    if (this._isSchema) {
+      let r = this.dirtyLow;
+      let s = this.dirtyHigh;
+      const o = this.ops;
+      if (o !== void 0) {
+        for (; r !== 0;) {
+          const a = r & -r;
+          const l = 31 - Math.clz32(a);
+          r ^= a;
+          t(e, l, o[l]);
+        }
+        for (; s !== 0;) {
+          const a = s & -s;
+          const l = 31 - Math.clz32(a) + 32;
+          s ^= a;
+          t(e, l, o[l]);
+        }
+      } else {
+        const a = this.opsLow;
+        const l = this.opsHigh;
+        for (; r !== 0;) {
+          const u = r & -r;
+          const d = 31 - Math.clz32(u);
+          r ^= u;
+          t(e, d, v0e(a, l, d));
+        }
+      }
+      return;
+    }
+    const n = this.collDirty;
+    const i = this.collPureOps;
+    if (i !== void 0 && i.length > 0) {
+      let r = 0;
+      let s = 0;
+      for (const [o, a] of n) {
+        for (; r < i.length && i[r][0] <= s;) {
+          const l = i[r++][1];
+          t(e, -l, l);
+        }
+        t(e, o, a);
+        s++;
+      }
+      for (; r < i.length;) {
+        const o = i[r++][1];
+        t(e, -o, o);
+      }
+    } else {
+      for (const [r, s] of n) {
+        t(e, r, s);
+      }
+    }
+  }
+  size() {
+    return this._isSchema ? IR(this.dirtyLow) + IR(this.dirtyHigh) : this.collDirty.size + (this.collPureOps?.length ?? 0);
+  }
+  has() {
+    return this._isSchema ? (this.dirtyLow | this.dirtyHigh) !== 0 : this.collDirty.size > 0 || this.collPureOps !== void 0 && this.collPureOps.length > 0;
+  }
+  reset() {
+    if (this._isSchema) {
+      this.dirtyLow = 0;
+      this.dirtyHigh = 0;
+      this.ops !== void 0 ? this.ops.fill(0) : (this.opsLow = 0, this.opsHigh = 0);
+      return;
+    }
+    this.collDirty.clear();
+    this.collPureOps !== void 0 && (this.collPureOps.length = 0);
+    this.flags &= -513;
+  }
+  recycle() {
+    if (this.root !== void 0) {
+      throw new Error(`@colyseus/schema: cannot recycle an attached ChangeTree (${this.ref?.constructor?.name}). Remove the instance from its parent collection before releasing it to a pool.`);
+    }
+    this.reset();
+    this.unreliableRecorder?.reset();
+    this.flags = 132;
+    this._fullSyncGen = 0;
+    this.parentRef = void 0;
+    this._parentIndex = void 0;
+    this.extraParents = void 0;
+    this.changesNode = void 0;
+    this.unreliableChangesNode = void 0;
+    this.paused = !1;
+    this.visibleViews = void 0;
+    this.tagViews = void 0;
+    this.subscribedViews = void 0;
+  }
+  insertAt(e, t) {
+    if (this._isSchema) {
+      throw new Error("ChangeTree (Schema): insertAt is not supported");
+    }
+    const n = this.collDirty;
+    const i = new Map();
+    const r = !this.paused && !this.isFullStateOnly;
+    if (e > 0) {
+      for (const [s, o] of n) {
+        s < e && i.set(s, o);
+      }
+    }
+    if (r) {
+      for (let s = 0; s < t; s++) {
+        i.set(e + s, Rt.ADD);
+      }
+    }
+    for (const [s, o] of n) {
+      s >= e && i.set(s + t, o);
+    }
+    this.collDirty = i;
+    r && this.root?.enqueueChangeTree(this);
+  }
+  removeAt(e, t) {
+    if (this._isSchema) {
+      throw new Error("ChangeTree (Schema): removeAt is not supported");
+    }
+    const n = this.collDirty;
+    const i = e + t;
+    let r = !1;
+    for (const o of n.keys()) {
+      if (o >= i) {
+        r = !0;
+        break;
+      }
+    }
+    if (!r) {
+      for (let o = e; o < i; o++) {
+        n.delete(o);
+      }
+      return;
+    }
+    const s = new Map();
+    for (const [o, a] of n) {
+      o < e ? s.set(o, a) : o >= i && s.set(o - t, a);
+    }
+    this.collDirty = s;
+  }
+  unshift(e) {
+    this.insertAt(0, e);
+  }
+  setRoot(e) {
+    h0e(this, e);
+  }
+  setParent(e, t, n) {
+    f0e(this, e, t, n);
+  }
+  forEachChild(e) {
+    p0e(this, e);
+  }
+  forEachChildWithCtx(e, t) {
+    vT(this, e, t);
+  }
+  forEachLive(e) {
+    o0e(this, e);
+  }
+  forEachLiveWithCtx(e, t) {
+    J8(this, e, t);
+  }
+  operation(e) {
+    this.paused || this.isFullStateOnly || (this.recordPure(e), this.root?.enqueueChangeTree(this));
+  }
+  _routeAndRecord(e, t, n) {
+    if (!(this.paused || this.isFieldFullStateOnly(e))) {
+      if (this.isFieldUnreliable(e) && !this.isNew) {
+        const i = this.ensureUnreliableRecorder();
+        n ? i.recordRaw(e, t) : i.record(e, t);
+        this.root?.enqueueUnreliable(this);
+        return;
+      }
+      n ? this.recordRaw(e, t) : this.record(e, t);
+      this.root?.enqueueChangeTree(this);
+    }
+  }
+  change(e, t = Rt.ADD) {
+    this._routeAndRecord(e, t, !1);
+  }
+  indexedOperation(e, t) {
+    this._routeAndRecord(e, t, !0);
+  }
+  getChange(e) {
+    return this.operationAt(e);
+  }
+  pause() {
+    this.paused = !0;
+  }
+  resume() {
+    this.paused = !1;
+  }
+  untracked(e) {
+    const t = this.paused;
+    this.paused = !0;
+    try {
+      return e();
+    } finally {
+      this.paused = t;
+    }
+  }
+  markDirty(e, t = Rt.ADD) {
+    const n = this.paused;
+    this.paused = !1;
+    try {
+      this.change(e, t);
+    } finally {
+      this.paused = n;
+    }
+  }
+  getValue(e, t = !1) {
+    return this.refTarget[Sd](e, t);
+  }
+  delete(e, t) {
+    if (e === void 0) {
+      try {
+        throw new Error(`@colyseus/schema ${this.ref.constructor.name}: trying to delete non-existing index '${e}'`);
+      } catch (r) {
+        console.warn(r);
+      }
+      return;
+    }
+    if (this.paused || this.isFieldFullStateOnly(e)) {
+      return this.getValue(e);
+    }
+    const n = this.isFieldUnreliable(e) && !this.isNew;
+    n ? this.ensureUnreliableRecorder().recordDelete(e, t ?? Rt.DELETE) : this.recordDelete(e, t ?? Rt.DELETE);
+    const i = this.getValue(e);
+    i && i[_t] && this.root?.remove(i[_t]);
+    n ? this.root?.enqueueUnreliable(this) : this.root?.enqueueChangeTree(this);
+    return i;
+  }
+  endEncode() {
+    this.reset();
+    this.changesNode = void 0;
+    this._isSchema || this.refTarget[F1]?.();
+    this.isNew = !1;
+  }
+  endEncodeUnreliable() {
+    this.unreliableRecorder?.reset();
+    this.unreliableChangesNode = void 0;
+    this._isSchema || this.refTarget[F1]?.();
+  }
+  discard() {
+    this._isSchema || this.refTarget[F1]?.();
+    this.reset();
+    this.unreliableRecorder?.reset();
+  }
+  discardAll() {
+    const e = t => {
+      if (t < 0) {
+        return;
+      }
+      const n = this.getValue(t);
+      n && n[_t] && n[_t].discardAll();
+    };
+    this.forEach(e);
+    this.unreliableRecorder?.forEach(e);
+    this.discard();
+  }
+  get changed() {
+    return this.has() || (this.unreliableRecorder?.has() ?? !1);
+  }
+  get parent() {
+    return this.parentRef;
+  }
+  get parentIndex() {
+    return this._parentIndex;
+  }
+  addParent(e, t) {
+    qme(this, e, t);
+  }
+  setParentIndex(e, t) {
+    $me(this, e, t);
+  }
+  removeParent(e = this.parent) {
+    return e0e(this, e);
+  }
+  findParent(e) {
+    return t0e(this, e);
+  }
+  hasParent(e) {
+    return QZ(this, e);
+  }
+  indexInParent(e) {
+    return n0e(this, e);
+  }
+  getAllParents() {
+    return i0e(this);
+  }
+};
+var C0e = class {
+  ref;
+  root = void 0;
+  parentRef = void 0;
+  paused = !1;
+  isNew = !1;
+  flags = 0;
+  constructor(e) {
+    this.ref = e;
+  }
+  change() {}
+  delete() {}
+  indexedOperation() {}
+  operation() {}
+  setParent() {}
+  addParent() {}
+  setParentIndex() {}
+  removeParent() {
+    return !1;
+  }
+  getChange() {
+    return 0;
+  }
+  discard() {}
+  discardAll() {}
+  pause() {}
+  resume() {}
+  untracked(e) {
+    return e();
+  }
+  markDirty() {}
+  forEachChild(e) {
+    const t = this.ref;
+    if (t[dr]) {
+      if (typeof t[dr] != "string") {
+        for (const [r, s] of t.entries()) {
+          s && e(s[_t], t._collectionIndexes?.[r] ?? r);
+        }
+      }
+      return;
+    }
+    const n = t.constructor?.[Symbol.metadata];
+    if (!n) {
+      return;
+    }
+    const i = n[Q1] ?? [];
+    for (let r = 0; r < i.length; r++) {
+      const s = i[r];
+      const o = t[n[s].name];
+      o && e(o[_t], s);
+    }
+  }
+  forEachChildWithCtx(e, t) {
+    this.forEachChild((n, i) => t(e, n, i));
+  }
+  forEachLive() {}
+  forEachLiveWithCtx() {}
+  forEach() {}
+};
+function S0e(e) {
+  return new C0e(e);
+}
+function Gw(e, t = e) {
+  Object.defineProperty(e, _t, {
+    value: S0e(t),
+    enumerable: !1,
+    writable: !0
+  });
+}
+function F4(e, t, n, i, r, s, o) {
+  o !== void 0 ? o(t, i, s) : typeof n == "string" ? Hr[n]?.(t, i, s) : n[Symbol.metadata] != null ? (Hr.number(t, i[si], s), (r & Rt.ADD) === Rt.ADD && e.tryEncodeTypeId(t, n, i.constructor, s)) : Hr.number(t, i[si], s);
+}
+function w0e(e, t, n, i, r, s, o, a) {
+  t[s.offset++] = (i | r) & 255;
+  if (r === Rt.DELETE) {
+    return;
+  }
+  const l = n.encDescriptor;
+  const u = n.ref;
+  const d = u[_p][i] ?? u[l.names[i]];
+  F4(e, t, l.types[i], d, r, s, l.encoders[i]);
+}
+function I0e(e, t, n, i, r, s) {
+  t[s.offset++] = r & 255;
+  Hr.number(t, i, s);
+  if (r === Rt.DELETE) {
+    return;
+  }
+  const o = n.ref;
+  if ((r & Rt.ADD) === Rt.ADD) {
+    const a = o.$indexes.get(i);
+    Hr.string(t, a, s);
+  }
+  F4(e, t, o[dr], o[Sd](i), r, s);
+}
+function Z8(e, t, n, i, r, s) {
+  t[s.offset++] = r & 255;
+  Hr.number(t, i, s);
+  if (r === Rt.DELETE) {
+    return;
+  }
+  const o = n.ref;
+  F4(e, t, o[dr], o[Sd](i), r, s);
+}
+function _0e(e, t, n, i, r, s, o, a) {
+  const l = n.refTarget;
+  const u = l[dr];
+  const d = typeof u != "string";
+  const h = a && n.isFiltered && d;
+  let p;
+  if (h) {
+    const A = l.tmpItems[i];
+    if (!A) {
+      return;
+    }
+    p = A[si];
+    if (r === Rt.DELETE) {
+      r = Rt.DELETE_BY_REFID;
+    } else {
+      if ((r & Rt.ADD) === Rt.ADD) {
+        r = Rt.ADD_BY_REFID;
+      } else {
+        if ((r & Rt.MOVE) === Rt.MOVE) {
+          return;
+        }
+      }
+    }
+  } else {
+    if (r === Rt.DELETE && d) {
+      const A = l.tmpItems[i];
+      if (!A) {
+        return;
+      }
+      p = A[si];
+      r = Rt.DELETE_BY_REFID;
+    } else {
+      p = i;
+    }
+  }
+  t[s.offset++] = r & 255;
+  Hr.number(t, p, s);
+  !(r === Rt.DELETE || r === Rt.DELETE_BY_REFID) && F4(e, t, u, l[Sd](i, o), r, s);
+}
+function WZ(e, t, n, i, r, s, o) {
+  const a = e.resyncVisited;
+  let l = a.get(e.currentRefId);
+  l === void 0 && a.set(e.currentRefId, l = new Set());
+  l.add(i);
+  if (r !== void 0 && n === Rt.ADD && r !== s) {
+    const u = r[si];
+    u !== void 0 && (e.root.removeRef(u), o?.push({
+      ref: t,
+      refId: e.currentRefId,
+      op: Rt.DELETE,
+      dynamicIndex: i,
+      value: void 0,
+      previousValue: r
+    }));
+  }
+}
+function x0e(e, t) {
+  const n = e.resyncVisited;
+  n.has(t) || n.set(t, new Set());
+}
+function T0e(e, t) {
+  if (e.resyncDamaged) {
+    console.warn("@colyseus/schema: resync sweep skipped ÔÇö parts of the payload could not be decoded. Stale entries may persist until the next resync.");
+    return;
+  }
+  q8(e, e.state, new Set(), t);
+}
+function q8(e, t, n, i) {
+  const r = t[si];
+  if (r === void 0 || n.has(r)) {
+    return;
+  }
+  n.add(r);
+  const s = t.constructor[Symbol.metadata];
+  const o = s?.[Q1];
+  if (o === void 0) {
+    return;
+  }
+  const a = s[Rx];
+  for (let l = 0; l < o.length; l++) {
+    const u = o[l];
+    if (a !== void 0 && a.includes(u)) {
+      continue;
+    }
+    const d = s[u];
+    const h = t[d.name];
+    h && (Ln.is(d.type) ? q8(e, h, n, i) : B0e(e, h, n, i));
+  }
+}
+function B0e(e, t, n, i) {
+  const r = t[Jc] ?? t;
+  const s = r[si];
+  if (s === void 0 || n.has(s)) {
+    return;
+  }
+  n.add(s);
+  const o = e.resyncVisited.get(s);
+  if (o === void 0) {
+    return;
+  }
+  const a = e.root;
+  r[Hw](o, (l, u) => {
+    i?.push({
+      ref: t,
+      refId: s,
+      op: Rt.DELETE,
+      dynamicIndex: u,
+      value: void 0,
+      previousValue: l
+    });
+    const d = l?.[si];
+    d !== void 0 && a.removeRef(d);
+  }, l => {
+    Ln.isSchema(l) && q8(e, l, n, i);
+  });
+}
+var VZ = -1;
+var ZA = {
+  Map: 1,
+  Array: 2,
+  Set: 3,
+  Collection: 4,
+  Stream: 5
+};
+function $8(e, t, n, i, r, s, o, a, l) {
+  const u = e.root;
+  let d;
+  if ((t & Rt.DELETE) === Rt.DELETE) {
+    const h = r?.[si];
+    h !== void 0 && u.removeRef(h);
+    t !== Rt.DELETE_AND_ADD && n[um](i);
+    d = void 0;
+  }
+  if (t !== Rt.DELETE) {
+    if (typeof s == "string") {
+      d = Ws[s](o, a);
+    } else {
+      if ($1(s)) {
+        d = jme(s.quantized, o, a);
+      } else {
+        if (Ln.is(s)) {
+          const h = Ws.number(o, a);
+          d = u.refs.get(h);
+          if ((t & Rt.ADD) === Rt.ADD) {
+            const p = e.getInstanceType(o, a, s);
+            d || (d = e.createInstanceOfType(p));
+            u.addRef(h, d, d !== r || t === Rt.DELETE_AND_ADD && d === r);
+          }
+        } else {
+          const h = kZ(Object.keys(s)[0]);
+          const p = Ws.number(o, a);
+          e.resyncVisited !== null && x0e(e, p);
+          const A = u.refs.has(p) ? r || u.refs.get(p) : h.constructor.initializeForDecoder();
+          d = A.clone(!0);
+          d[dr] = Object.values(s)[0];
+          if (r) {
+            let y = r[si];
+            if (y !== void 0 && p !== y) {
+              (t & Rt.DELETE) !== Rt.DELETE && u.removeRef(y);
+              const E = r.entries();
+              let b;
+              for (; (b = E.next()) && !b.done;) {
+                const [w, T] = b.value;
+                typeof T == "object" && (y = T[si]);
+                l?.push({
+                  ref: r,
+                  refId: y,
+                  op: Rt.DELETE,
+                  field: w,
+                  value: void 0,
+                  previousValue: T
+                });
+              }
+            }
+          }
+          u.addRef(p, d, A !== r || t === Rt.DELETE_AND_ADD && A === r);
+        }
+      }
+    }
+  }
+  return d;
+}
+function M0e(e, t, n, i, r) {
+  const s = t[n.offset++];
+  const o = i.constructor[Symbol.metadata];
+  const a = s >> 6 << 6;
+  const l = s % (a || 255);
+  const u = o[l];
+  if (u === void 0) {
+    console.warn("@colyseus/schema: field not defined at", {
+      index: l,
+      ref: i.constructor.name,
+      metadata: o
+    });
+    return VZ;
+  }
+  const d = u.deprecated === !0;
+  const h = d ? void 0 : i[Sd](l);
+  const p = $8(e, a, i, l, h, u.type, t, n, r);
+  d || (p != null && (i[u.name] = p), h !== p && r?.push({
+    ref: i,
+    refId: e.currentRefId,
+    op: a,
+    field: u.name,
+    value: p,
+    previousValue: h
+  }));
+}
+function Q4(e, t, n, i, r) {
+  const s = i[Jc] ?? i;
+  const o = t[n.offset++];
+  if (o === Rt.CLEAR) {
+    e.removeChildRefs(s, r);
+    s.clear();
+    return;
+  }
+  const a = Ws.number(t, n);
+  const l = s[dr];
+  const u = s.constructor.COLLECTION_KIND;
+  let d;
+  (o & Rt.ADD) === Rt.ADD ? u === ZA.Map ? (d = Ws.string(t, n), s.setIndex(a, d)) : d = a : d = s.getIndex(a);
+  const h = s[Sd](a);
+  const p = $8(e, o, i, a, h, l, t, n, r);
+  e.resyncVisited !== null && WZ(e, i, o, d, h, p, r);
+  if (p != null) {
+    switch (u) {
+      case ZA.Map:
+        s.$items.set(d, p);
+        break;
+      case ZA.Array:
+        s.$setAt(a, p, e.resyncVisited !== null && o === Rt.ADD ? Rt.REPLACE : o);
+        break;
+      case ZA.Set:
+      case ZA.Collection:
+      case ZA.Stream:
+        s.$items.has(a) || (s.$items.set(a, p), typeof s.$refId == "number" && a >= s.$refId && (s.$refId = a + 1));
+        break;
+      default:
+        console.warn(`@colyseus/schema: missing COLLECTION_KIND on ${s.constructor?.name} ÔÇö item at index ${a} was not stored.`);
+    }
+  }
+  h !== p && r?.push({
+    ref: i,
+    refId: e.currentRefId,
+    op: o,
+    dynamicIndex: d,
+    value: p,
+    previousValue: h
+  });
+}
+function R0e(e, t, n, i, r) {
+  const s = i[Jc] ?? i;
+  let o = t[n.offset++];
+  let a;
+  if (o === Rt.CLEAR) {
+    e.removeChildRefs(s, r);
+    s.clear();
+    return;
+  } else {
+    if (o === Rt.REVERSE) {
+      s.items.reverse();
+      return;
+    } else {
+      if (o === Rt.DELETE_BY_REFID) {
+        const p = Ws.number(t, n);
+        const A = e.root.refs.get(p);
+        if (A === void 0 || (e.root.removeRef(p), a = s.findIndex(y => y === A), a === -1)) {
+          return;
+        }
+        s[um](a);
+        r?.push({
+          ref: i,
+          refId: e.currentRefId,
+          op: Rt.DELETE,
+          dynamicIndex: a,
+          value: void 0,
+          previousValue: A
+        });
+        return;
+      } else {
+        if (o === Rt.ADD_BY_REFID) {
+          const p = Ws.number(t, n);
+          const A = e.root.refs.get(p);
+          A && (a = s.findIndex(y => y === A));
+          (a === -1 || a === void 0) && (a = s.length);
+        } else {
+          a = Ws.number(t, n);
+        }
+      }
+    }
+  }
+  const l = s[dr];
+  let u = a;
+  const d = s.items[a];
+  const h = $8(e, o, i, a, d, l, t, n, r);
+  e.resyncVisited !== null && WZ(e, i, o, a, d, h, r);
+  h != null && h !== d && s.$setAt(a, h, e.resyncVisited !== null && o === Rt.ADD ? Rt.REPLACE : o);
+  d !== h && r?.push({
+    ref: i,
+    refId: e.currentRefId,
+    op: o,
+    dynamicIndex: u,
+    value: h,
+    previousValue: d
+  });
+}
+var eU = class extends Error {};
+function H4(e, t, n, i) {
+  if (!(e instanceof t)) {
+    throw new eU(`a '${t.name}' was expected, but '${e && e.constructor.name}' was provided in ${n.constructor.name}#${i}`);
+  }
+}
+var k0e = (e, t) => {
+  const n = e.toString();
+  const i = t.toString();
+  return n < i ? -1 : n > i ? 1 : 0;
+};
+var FH = {
+  get: (e, t) => typeof t != "symbol" && !isNaN(t) ? e.items[t] : Reflect.get(e, t),
+  set: (e, t, n) => {
+    if (typeof t != "symbol" && !isNaN(t)) {
+      if (n == null) {
+        e.$deleteAt(t);
+      } else {
+        let i;
+        if (n[_t]) {
+          H4(n, e[dr], e, t);
+          const r = e.items[t];
+          e.isMovingItems ? (i = e.$wireIndex(Number(t)), r !== void 0 ? n[_t].isNew ? e[_t].indexedOperation(i, Rt.MOVE_AND_ADD) : (e[_t].getChange(i) & Rt.DELETE) === Rt.DELETE ? e[_t].indexedOperation(i, Rt.DELETE_AND_MOVE) : e[_t].indexedOperation(i, Rt.MOVE) : n[_t].isNew && e[_t].indexedOperation(i, Rt.ADD), n[_t].setParent(e, e[_t].root, i)) : i = e.$changeAt(Number(t), n);
+          r !== void 0 && r[_t].root?.remove(r[_t]);
+        } else {
+          i = e.$changeAt(Number(t), n);
+        }
+        e.items[t] = n;
+        i !== void 0 && (e.tmpItems[i] = n);
+      }
+      return !0;
+    }
+    return Reflect.set(e, t, n);
+  },
+  deleteProperty: (e, t) => {
+    typeof t == "number" ? e.$deleteAt(t) : delete e[t];
+    return !0;
+  },
+  has: (e, t) => typeof t != "symbol" && !isNaN(Number(t)) ? Reflect.has(e.items, t) : Reflect.has(e, t)
+};
+var yr = class Tv {
+  [_t];
+  [si];
+  [Jc];
+  [dr];
+  items = [];
+  tmpItems = [];
+  deletedIndexes = [];
+  isMovingItems = !1;
+  _needsCompaction = !1;
+  static [sy] = _0e;
+  static [x0] = R0e;
+  static COLLECTION_KIND = ZA.Array;
+  static [_C](t, n, i) {
+    if (!i) {
+      return !0;
+    }
+    const r = t[Jc] ?? t;
+    return typeof r[dr] == "string" || i.isChangeTreeVisible(r.tmpItems[n]?.[_t]);
+  }
+  static is(t) {
+    return Array.isArray(t) || t.array !== void 0;
+  }
+  static from(t) {
+    return new Tv(...Array.from(t));
+  }
+  constructor(...t) {
+    this[dr] = void 0;
+    this[Jc] = this;
+    const n = new Proxy(this, FH);
+    Object.defineProperty(this, _t, {
+      value: new zw(n, this),
+      enumerable: !1,
+      writable: !0
+    });
+    t.length > 0 && this.push(...t);
+    return n;
+  }
+  static initializeForDecoder() {
+    const t = Object.create(Tv.prototype);
+    t.items = [];
+    t.isMovingItems = !1;
+    t._needsCompaction = !1;
+    t[dr] = void 0;
+    t[Jc] = t;
+    const n = new Proxy(t, FH);
+    Gw(t, n);
+    return n;
+  }
+  set length(t) {
+    t === 0 ? this.clear() : t < this.items.length ? this.splice(t, this.length - t) : console.warn("ArraySchema: can't set .length to a higher value than its length.");
+  }
+  get length() {
+    return this.items.length;
+  }
+  pauseTracking() {
+    this[_t].pause();
+  }
+  resumeTracking() {
+    this[_t].resume();
+  }
+  untracked(t) {
+    return this[_t].untracked(t);
+  }
+  get isTrackingPaused() {
+    return this[_t].paused;
+  }
+  push(...t) {
+    const n = this[Jc];
+    const i = n.items;
+    const r = n.tmpItems;
+    const s = n[_t];
+    const o = n[dr];
+    let a = r.length;
+    for (let l = 0, u = t.length; l < u; l++, a++) {
+      const d = t[l];
+      if (d == null) {
+        return;
+      }
+      typeof d == "object" && o && H4(d, o, n, l);
+      s.indexedOperation(a, Rt.ADD);
+      i.push(d);
+      r.push(d);
+      d[_t]?.setParent(this, s.root, a);
+    }
+    return a;
+  }
+  pop() {
+    const t = this[Jc];
+    const n = t.tmpItems;
+    const i = t.deletedIndexes;
+    let r = -1;
+    for (let o = n.length - 1; o >= 0; o--) {
+      if (i[o] !== !0) {
+        r = o;
+        break;
+      }
+    }
+    if (r < 0) {
+      return;
+    }
+    const s = t.$isUnsentAdd(r);
+    t[_t].delete(r);
+    s ? t.$cancelAdd(r) : i[r] = !0;
+    return t.items.pop();
+  }
+  at(t) {
+    t < 0 && (t += this.length);
+    return this.items[t];
+  }
+  $wireIndex(t) {
+    const n = this.deletedIndexes;
+    if (n.length === 0) {
+      return t;
+    }
+    const i = this.tmpItems;
+    let r = 0;
+    for (let s = 0; s < i.length; s++) {
+      if (n[s] !== !0) {
+        if (r === t) {
+          return s;
+        }
+        r++;
+      }
+    }
+    return i.length + (t - r);
+  }
+  $isUnsentAdd(t) {
+    const n = this[_t];
+    return (n.flags & 576) === 0 && !n.paused && typeof this[dr] != "string" && n.operationAt(t) === Rt.ADD;
+  }
+  $cancelAdd(t, n = !0) {
+    const i = this[_t];
+    const r = this.tmpItems[t];
+    this.tmpItems.splice(t, 1);
+    this.deletedIndexes.length > 0 && this.deletedIndexes.splice(t, 1);
+    i.removeAt(t, 1);
+    const s = r?.[_t];
+    s !== void 0 && s.root === void 0 && s.removeParent(this);
+    n && this.$reindexChildren(t);
+  }
+  $reindexChildren(t, n) {
+    if (!this[_t].hasFilteredFields || typeof this[dr] == "string") {
+      return;
+    }
+    const i = this.tmpItems;
+    const r = i.length;
+    if (n !== void 0) {
+      for (; t < r && i[t] === n[t];) {
+        t++;
+      }
+    }
+    for (let s = t; s < r; s++) {
+      i[s]?.[_t]?.setParentIndex(this, s);
+    }
+  }
+  $changeAt(t, n) {
+    if (n == null) {
+      console.error("ArraySchema items cannot be null nor undefined; Use `splice(index, 1)` instead.");
+      return;
+    }
+    if (this.items[t] === n) {
+      return;
+    }
+    const i = this.items[t] !== void 0 ? typeof n == "object" ? Rt.DELETE_AND_ADD : Rt.REPLACE : Rt.ADD;
+    const r = this.$wireIndex(t);
+    const s = this[_t];
+    s.change(r, i);
+    n[_t]?.setParent(this, s.root, r);
+    return r;
+  }
+  $deleteAt(t, n) {
+    this[_t].delete(this.$wireIndex(t), n);
+  }
+  $setAt(t, n, i) {
+    i === Rt.ADD && this.items[t] !== void 0 ? this.items.splice(t, 0, n) : i === Rt.DELETE_AND_MOVE ? (this.items.splice(t, 1), this.items[t] = n) : (t > this.items.length && (this._needsCompaction = !0), this.items[t] = n);
+  }
+  clear() {
+    const t = this[Jc];
+    if (t.items.length === 0) {
+      return;
+    }
+    const n = t[_t];
+    n.forEachChild((i, r) => {
+      n.root?.remove(i);
+    });
+    n.discard();
+    n.operation(Rt.CLEAR);
+    t.items.length = 0;
+    t.tmpItems.length = 0;
+  }
+  [sm]() {
+    const t = this[Jc] ?? this;
+    const n = t[_t];
+    if (n.isStreamCollection) {
+      throw new Error("@colyseus/schema: cannot reset a streamed ArraySchema (pooling not supported).");
+    }
+    const i = t.items;
+    for (let r = 0; r < i.length; r++) {
+      i[r]?.[sm]?.();
+    }
+    t.items.length = 0;
+    t.tmpItems.length = 0;
+    t.deletedIndexes.length = 0;
+    n.recycle();
+    t[si] = void 0;
+  }
+  concat(...t) {
+    return new Tv(...this.items.concat(...t));
+  }
+  join(t) {
+    return this.items.join(t);
+  }
+  reverse() {
+    const t = this[Jc];
+    const n = t[_t];
+    if (n.has() || t.deletedIndexes.length > 0) {
+      const i = t.items.slice().reverse();
+      this.clear();
+      this.push(...i);
+      return this;
+    }
+    n.operation(Rt.REVERSE);
+    t.items.reverse();
+    t.tmpItems.reverse();
+    t.$reindexChildren(0);
+    return this;
+  }
+  shift() {
+    const t = this[Jc];
+    const n = t.items;
+    if (n.length === 0) {
+      return;
+    }
+    const i = t[_t];
+    const r = t.deletedIndexes;
+    let s = 0;
+    for (; r[s] === !0;) {
+      s++;
+    }
+    const o = t.$isUnsentAdd(s);
+    i.delete(s, Rt.DELETE);
+    o ? t.$cancelAdd(s) : r[s] = !0;
+    return n.shift();
+  }
+  slice(t, n) {
+    const i = new Tv();
+    i.push(...this.items.slice(t, n));
+    return i;
+  }
+  sort(t = k0e) {
+    const n = this[Jc];
+    n.isMovingItems = !0;
+    const i = n[_t];
+    n.items.sort(t).forEach((r, s) => i.change(s, Rt.REPLACE));
+    n.tmpItems.sort(t);
+    n.$reindexChildren(0);
+    n.isMovingItems = !1;
+    return this;
+  }
+  splice(t, n, ...i) {
+    const r = this[Jc];
+    const s = r[_t];
+    const o = r.items;
+    const a = r.tmpItems;
+    const l = r.deletedIndexes;
+    const u = o.length;
+    const d = a.length;
+    const h = i.length;
+    const p = [];
+    for (let y = 0; y < d; y++) {
+      l[y] !== !0 && p.push(y);
+    }
+    let A;
+    if (u > t) {
+      n === void 0 && (n = u - t);
+      for (let y = t; y < t + n; y++) {
+        const E = p[y];
+        const b = r.$isUnsentAdd(E);
+        s.delete(E, Rt.DELETE);
+        b ? (A ??= []).push(E) : l[E] = !0;
+      }
+    } else {
+      n = 0;
+    }
+    if (h > 0) {
+      const y = p[t] ?? u;
+      const E = Math.min(h, n);
+      for (let w = 0; w < E; w++) {
+        const T = y + w;
+        let x;
+        const R = A !== void 0 ? A.indexOf(T) : -1;
+        R !== -1 ? (A.splice(R, 1), x = Rt.ADD) : x = l[T] ? Rt.DELETE_AND_ADD : Rt.ADD;
+        s.indexedOperation(T, x);
+        a[T] = i[w];
+        l[T] = !1;
+        i[w][_t]?.setParent(this, s.root, T);
+      }
+      const b = h - E;
+      if (b > 0) {
+        const w = y + E;
+        s.insertAt(w, b);
+        for (let T = 0; T < b; T++) {
+          i[E + T][_t]?.setParent(this, s.root, w + T);
+        }
+        l.length > 0 && l.splice(w, 0, ...new Array(b).fill(!1));
+        a.splice(w, 0, ...i.slice(E));
+        r.$reindexChildren(w + b);
+      }
+    }
+    if (A !== void 0 && A.length > 0) {
+      for (let y = A.length - 1; y >= 0; y--) {
+        r.$cancelAdd(A[y], !1);
+      }
+      r.$reindexChildren(A[0]);
+    }
+    s.root?.enqueueChangeTree(s);
+    return o.splice(t, n, ...i);
+  }
+  unshift(...t) {
+    const n = this[Jc];
+    const i = n[_t];
+    i.unshift(t.length);
+    for (let s = 0; s < t.length; s++) {
+      t[s]?.[_t]?.setParent(this, i.root, s);
+    }
+    const r = n.deletedIndexes;
+    r.length > 0 && r.unshift(...new Array(t.length).fill(!1));
+    n.tmpItems.unshift(...t);
+    n.$reindexChildren(t.length);
+    return n.items.unshift(...t);
+  }
+  indexOf(t, n) {
+    return this.items.indexOf(t, n);
+  }
+  lastIndexOf(t, n = this.length - 1) {
+    return this.items.lastIndexOf(t, n);
+  }
+  every(t, n) {
+    return this.items.every(t, n);
+  }
+  some(t, n) {
+    return this.items.some(t, n);
+  }
+  forEach(t, n) {
+    return this.items.forEach(t, n);
+  }
+  map(t, n) {
+    return this.items.map(t, n);
+  }
+  filter(t, n) {
+    return this.items.filter(t, n);
+  }
+  reduce(t, n) {
+    return this.items.reduce(t, n);
+  }
+  reduceRight(t, n) {
+    return this.items.reduceRight(t, n);
+  }
+  find(t, n) {
+    return this.items.find(t, n);
+  }
+  findIndex(t, n) {
+    return this.items.findIndex(t, n);
+  }
+  fill(t, n, i) {
+    throw new Error("ArraySchema#fill() not implemented");
+  }
+  copyWithin(t, n, i) {
+    throw new Error("ArraySchema#copyWithin() not implemented");
+  }
+  toString() {
+    return this.items.toString();
+  }
+  toLocaleString() {
+    return this.items.toLocaleString();
+  }
+  [Symbol.iterator]() {
+    return this.items[Symbol.iterator]();
+  }
+  static get [Symbol.species]() {
+    return Tv;
+  }
+  [Symbol.unscopables];
+  entries() {
+    return this.items.entries();
+  }
+  keys() {
+    return this.items.keys();
+  }
+  values() {
+    return this.items.values();
+  }
+  includes(t, n) {
+    return this.items.includes(t, n);
+  }
+  flatMap(t, n) {
+    throw new Error("ArraySchema#flatMap() is not supported.");
+  }
+  flat(t) {
+    throw new Error("ArraySchema#flat() is not supported.");
+  }
+  findLast() {
+    return this.items.findLast.apply(this.items, arguments);
+  }
+  findLastIndex(...t) {
+    return this.items.findLastIndex.apply(this.items, arguments);
+  }
+  with(t, n) {
+    const i = this.items.slice();
+    t < 0 && (t += this.length);
+    i[t] = n;
+    return new Tv(...i);
+  }
+  toReversed() {
+    return this.items.slice().reverse();
+  }
+  toSorted(t) {
+    return this.items.slice().sort(t);
+  }
+  toSpliced(t, n, ...i) {
+    return this.items.toSpliced.apply(copy, arguments);
+  }
+  shuffle() {
+    return this.move(t => {
+      let n = this.items.length;
+      for (; n != 0;) {
+        let i = Math.floor(Math.random() * n);
+        n--;
+        [this[n], this[i]] = [this[i], this[n]];
+      }
+    });
+  }
+  move(t) {
+    this.isMovingItems = !0;
+    t(this);
+    this.isMovingItems = !1;
+    return this;
+  }
+  [Sd](t, n = !1) {
+    const i = this[Jc] ?? this;
+    return n || i.deletedIndexes[t] ? i.items[t] : i.tmpItems[t] || i.items[t];
+  }
+  [um](t) {
+    const n = this[Jc] ?? this;
+    n.items[t] = void 0;
+    n._needsCompaction = !0;
+  }
+  [F1]() {
+    const t = this.tmpItems;
+    this.tmpItems = this.items.slice();
+    this.deletedIndexes.length > 0 && (this.$reindexChildren(0, t), this.deletedIndexes.length = 0);
+  }
+  [SR]() {
+    const t = this[Jc] ?? this;
+    t._needsCompaction && (t._needsCompaction = !1, t.items = t.items.filter(n => n !== void 0));
+  }
+  [Hw](t, n, i) {
+    const r = this[Jc] ?? this;
+    const s = r.items;
+    let o = !1;
+    for (let a = 0; a < s.length; a++) {
+      const l = s[a];
+      if (t.has(a)) {
+        i(l);
+        continue;
+      }
+      o = !0;
+      n(l, a);
+      r[um](a);
+    }
+    o && r[SR]();
+  }
+  toArray() {
+    return this.items.slice(0);
+  }
+  toJSON() {
+    return this.toArray().map(t => typeof t.toJSON == "function" ? t.toJSON() : t);
+  }
+  clone(t) {
+    let n;
+    t ? (n = new Tv(), n.push(...this.items)) : n = new Tv(...this.map(i => i[_t] ? i.clone() : i));
+    return n;
+  }
+};
+yy("array", {
+  constructor: yr
+});
+var QH = class {
+  keyByIndex = new Map();
+  indexByKey = Object.create(null);
+  nextIndex = 0;
+  snapshots;
+  indexOf(e) {
+    const t = this.indexByKey[e];
+    return t === void 0 ? void 0 : t;
+  }
+  assign(e) {
+    const t = this.nextIndex++;
+    this.indexByKey[e] = t;
+    this.keyByIndex.set(t, e);
+    return t;
+  }
+  snapshot(e, t) {
+    (this.snapshots ??= new Map()).set(e, t);
+  }
+  forgetSnapshot(e) {
+    this.snapshots?.delete(e);
+  }
+  snapshotAt(e) {
+    return this.snapshots?.get(e);
+  }
+  setIndex(e, t) {
+    this.keyByIndex.set(e, t);
+    this.indexByKey[t] = e;
+  }
+  keyOf(e) {
+    return this.keyByIndex.get(e);
+  }
+  cleanupAfterEncode() {
+    if (this.snapshots !== void 0) {
+      for (const [e] of this.snapshots) {
+        const t = this.keyByIndex.get(e);
+        t !== void 0 && (delete this.indexByKey[t], this.keyByIndex.delete(e));
+      }
+      this.snapshots.clear();
+    }
+  }
+  reset() {
+    this.indexByKey = Object.create(null);
+    this.keyByIndex.clear();
+    this.snapshots?.clear();
+    this.nextIndex = 0;
+  }
+};
+var to = class aS {
+  [_t];
+  [si];
+  childType;
+  [dr];
+  $items = new Map();
+  journal = new QH();
+  _stream;
+  get maxPerTick() {
+    return this._stream?.maxPerTick ?? 32;
+  }
+  set maxPerTick(t) {
+    (this._stream ??= ay()).maxPerTick = t;
+  }
+  get priority() {
+    return this._stream?.priority;
+  }
+  set priority(t) {
+    (this._stream ??= ay()).priority = t;
+  }
+  get $indexes() {
+    return this.journal.keyByIndex;
+  }
+  get _collectionIndexes() {
+    return this.journal.indexByKey;
+  }
+  static [sy] = I0e;
+  static [x0] = Q4;
+  static COLLECTION_KIND = ZA.Map;
+  static [_C](t, n, i) {
+    if (!i || typeof t[dr] == "string") {
+      return !0;
+    }
+    const r = t["~getByIndex"](n) ?? t.journal.snapshotAt(n);
+    return i.isChangeTreeVisible(r[_t]);
+  }
+  static is(t) {
+    return t.map !== void 0;
+  }
+  constructor(t) {
+    Object.defineProperty(this, _t, {
+      value: new zw(this),
+      enumerable: !1,
+      writable: !0
+    });
+    this[dr] = void 0;
+    if (t) {
+      if (t instanceof Map || t instanceof aS) {
+        t.forEach((n, i) => this.set(i, n));
+      } else {
+        for (const n in t) {
+          this.set(n, t[n]);
+        }
+      }
+    }
+  }
+  static initializeForDecoder() {
+    const t = Object.create(aS.prototype);
+    t.$items = new Map();
+    t.journal = new QH();
+    t[dr] = void 0;
+    Gw(t);
+    return t;
+  }
+  [Symbol.iterator]() {
+    return this.$items[Symbol.iterator]();
+  }
+  get [Symbol.toStringTag]() {
+    return this.$items[Symbol.toStringTag];
+  }
+  static get [Symbol.species]() {
+    return aS;
+  }
+  set(t, n) {
+    if (n == null) {
+      throw new Error(`MapSchema#set('${t}', ${n}): trying to set ${n} value on '${t}'.`);
+    }
+    typeof n == "object" && this[dr] && H4(n, this[dr], this, t);
+    t = t.toString();
+    const i = this[_t];
+    const r = n[_t] !== void 0;
+    const s = this.journal;
+    let o = s.indexOf(t);
+    let a;
+    if (o !== void 0) {
+      a = Rt.REPLACE;
+      const l = this.$items.get(t);
+      if (l === n) {
+        return;
+      }
+      r && (a = Rt.DELETE_AND_ADD, l !== void 0 && l[_t].root?.remove(l[_t]));
+      s.snapshotAt(o) !== void 0 && s.forgetSnapshot(o);
+    } else {
+      o = s.assign(t);
+      a = Rt.ADD;
+    }
+    this.$items.set(t, n);
+    a === Rt.ADD && i.isStreamCollection ? i.root !== void 0 && N4(this, i.root, o) : i.change(o, a);
+    r && n[_t].setParent(this, i.root, o);
+    return this;
+  }
+  get(t) {
+    return this.$items.get(t);
+  }
+  getOrInsert(t, n) {
+    return this.$items.has(t) ? this.$items.get(t) : (this.set(t, n), n);
+  }
+  getOrInsertComputed(t, n) {
+    if (this.$items.has(t)) {
+      return this.$items.get(t);
+    }
+    const i = n(t);
+    this.set(t, i);
+    return i;
+  }
+  delete(t) {
+    if (!this.$items.has(t)) {
+      return !1;
+    }
+    const n = this.journal.indexOf(t);
+    const i = this.$items.get(t);
+    const r = this[_t];
+    if (r.isStreamCollection) {
+      const s = r.root;
+      let o = !1;
+      s !== void 0 && (o = O4(this, s, this[si], n));
+      i?.[_t] !== void 0 && s?.remove(i[_t]);
+      this.$items.delete(t);
+      o || this.journal.snapshot(n, i);
+      return !0;
+    }
+    this.journal.snapshot(n, i);
+    r.delete(n);
+    return this.$items.delete(t);
+  }
+  clear() {
+    const t = this[_t];
+    t.discard();
+    t.forEachChild((n, i) => {
+      t.root?.remove(n);
+    });
+    this.journal.reset();
+    this.$items.clear();
+    t.operation(Rt.CLEAR);
+  }
+  [sm]() {
+    const t = this[_t];
+    if (t.isStreamCollection) {
+      throw new Error("@colyseus/schema: cannot reset a streamed MapSchema (pooling not supported).");
+    }
+    this.$items.forEach(n => n?.[sm]?.());
+    this.$items.clear();
+    this.journal.reset();
+    t.recycle();
+    this[si] = void 0;
+  }
+  has(t) {
+    return this.$items.has(t);
+  }
+  forEach(t) {
+    this.$items.forEach(t);
+  }
+  entries() {
+    return this.$items.entries();
+  }
+  keys() {
+    return this.$items.keys();
+  }
+  values() {
+    return this.$items.values();
+  }
+  get size() {
+    return this.$items.size;
+  }
+  pauseTracking() {
+    this[_t].pause();
+  }
+  resumeTracking() {
+    this[_t].resume();
+  }
+  untracked(t) {
+    return this[_t].untracked(t);
+  }
+  get isTrackingPaused() {
+    return this[_t].paused;
+  }
+  setIndex(t, n) {
+    this.journal.setIndex(t, n);
+  }
+  getIndex(t) {
+    return this.journal.keyOf(t);
+  }
+  [Sd](t) {
+    const n = this.journal.keyOf(t);
+    return n !== void 0 ? this.$items.get(n) : void 0;
+  }
+  [um](t) {
+    const n = this.journal.keyOf(t);
+    n !== void 0 && (this.$items.delete(n), this.journal.keyByIndex.delete(t));
+  }
+  [Hw](t, n, i) {
+    let r = null;
+    this.$items.forEach((s, o) => {
+      if (t.has(o)) {
+        i(s);
+        return;
+      }
+      (r ??= new Set()).add(o);
+      n(s, o);
+    });
+    if (r !== null) {
+      r.forEach(o => {
+        this.$items.delete(o);
+        delete this.journal.indexByKey[o];
+      });
+      const s = [];
+      this.journal.keyByIndex.forEach((o, a) => {
+        r.has(o) && s.push(a);
+      });
+      for (let o = 0; o < s.length; o++) {
+        this.journal.keyByIndex.delete(s[o]);
+      }
+    }
+  }
+  [F1]() {
+    this.journal.cleanupAfterEncode();
+  }
+  _dropView(t) {
+    U4(this, t);
+  }
+  _unregister() {}
+  toJSON() {
+    return Object.fromEntries(Array.from(this, ([t, n]) => [t, typeof n.toJSON == "function" ? n.toJSON() : n]));
+  }
+  clone(t) {
+    let n;
+    t ? n = Object.assign(new aS(), this) : (n = new aS(), this.forEach((i, r) => {
+      i[_t] ? n.set(r, i.clone()) : n.set(r, i);
+    }));
+    return n;
+  }
+};
+yy("map", {
+  constructor: to
+});
+var tU = class _M {
+  [_t];
+  [si];
+  [dr];
+  $items = new Map();
+  deletedItems = {};
+  $refId = 0;
+  _stream;
+  get maxPerTick() {
+    return this._stream?.maxPerTick ?? 32;
+  }
+  set maxPerTick(t) {
+    (this._stream ??= ay()).maxPerTick = t;
+  }
+  get priority() {
+    return this._stream?.priority;
+  }
+  set priority(t) {
+    (this._stream ??= ay()).priority = t;
+  }
+  static [sy] = Z8;
+  static [x0] = Q4;
+  static COLLECTION_KIND = ZA.Collection;
+  static [_C](t, n, i) {
+    return !i || typeof t[dr] == "string" || i.isChangeTreeVisible((t["~getByIndex"](n) ?? t.deletedItems[n])[_t]);
+  }
+  static is(t) {
+    return t.collection !== void 0;
+  }
+  constructor(t) {
+    Object.defineProperty(this, _t, {
+      value: new zw(this),
+      enumerable: !1,
+      writable: !0
+    });
+    this[dr] = void 0;
+    t && t.forEach(n => this.add(n));
+  }
+  static initializeForDecoder() {
+    const t = Object.create(_M.prototype);
+    t.$items = new Map();
+    t.deletedItems = {};
+    t.$refId = 0;
+    t[dr] = void 0;
+    Gw(t);
+    return t;
+  }
+  add(t) {
+    const n = this.$refId++;
+    const i = this[_t];
+    this.$items.set(n, t);
+    i.isStreamCollection ? i.root !== void 0 && N4(this, i.root, n) : i.change(n);
+    t[_t] !== void 0 && t[_t].setParent(this, i.root, n);
+    return n;
+  }
+  at(t) {
+    const n = Array.from(this.$items.keys())[t];
+    return this.$items.get(n);
+  }
+  entries() {
+    return this.$items.entries();
+  }
+  delete(t) {
+    const n = this.$items.entries();
+    let i;
+    let r;
+    for (; (r = n.next()) && !r.done;) {
+      if (t === r.value[1]) {
+        i = r.value[0];
+        break;
+      }
+    }
+    if (i === void 0) {
+      return !1;
+    }
+    const s = this[_t];
+    if (s.isStreamCollection) {
+      const o = s.root;
+      const a = this.$items.get(i);
+      o !== void 0 && O4(this, o, this[si], i);
+      a?.[_t] !== void 0 && o?.remove(a[_t]);
+      this.deletedItems[i] = a;
+      return this.$items.delete(i);
+    }
+    this.deletedItems[i] = s.delete(i);
+    return this.$items.delete(i);
+  }
+  clear() {
+    const t = this[_t];
+    t.discard();
+    t.forEachChild((n, i) => {
+      t.root?.remove(n);
+    });
+    this.$items.clear();
+    t.operation(Rt.CLEAR);
+  }
+  [sm]() {
+    const t = this[_t];
+    if (t.isStreamCollection) {
+      throw new Error("@colyseus/schema: cannot reset a streamed CollectionSchema (pooling not supported).");
+    }
+    this.$items.forEach(n => n?.[sm]?.());
+    this.$items.clear();
+    this.deletedItems = {};
+    this.$refId = 0;
+    t.recycle();
+    this[si] = void 0;
+  }
+  has(t) {
+    return Array.from(this.$items.values()).some(n => n === t);
+  }
+  forEach(t) {
+    this.$items.forEach((n, i, r) => t(n, i, this));
+  }
+  values() {
+    return this.$items.values();
+  }
+  get size() {
+    return this.$items.size;
+  }
+  pauseTracking() {
+    this[_t].pause();
+  }
+  resumeTracking() {
+    this[_t].resume();
+  }
+  untracked(t) {
+    return this[_t].untracked(t);
+  }
+  get isTrackingPaused() {
+    return this[_t].paused;
+  }
+  [Symbol.iterator]() {
+    return this.$items.values();
+  }
+  setIndex(t, n) {}
+  getIndex(t) {
+    return t;
+  }
+  [Sd](t) {
+    return this.$items.get(t);
+  }
+  [um](t) {
+    this.$items.delete(t);
+  }
+  [Hw](t, n, i) {
+    let r = null;
+    this.$items.forEach((s, o) => {
+      if (t.has(o)) {
+        i(s);
+        return;
+      }
+      (r ??= []).push(o);
+      n(s, o);
+    });
+    if (r !== null) {
+      for (let s = 0; s < r.length; s++) {
+        this[um](r[s]);
+      }
+    }
+  }
+  [F1]() {
+    for (const t in this.deletedItems) {
+      delete this.deletedItems[t];
+    }
+  }
+  _dropView(t) {
+    U4(this, t);
+  }
+  _unregister() {}
+  toArray() {
+    return Array.from(this.$items.values());
+  }
+  toJSON() {
+    const t = [];
+    this.forEach((n, i) => {
+      t.push(typeof n.toJSON == "function" ? n.toJSON() : n);
+    });
+    return t;
+  }
+  clone(t) {
+    let n;
+    t ? n = Object.assign(new _M(), this) : (n = new _M(), this.forEach(i => {
+      i[_t] ? n.add(i.clone()) : n.add(i);
+    }));
+    return n;
+  }
+};
+yy("collection", {
+  constructor: tU
+});
+var nU = class xM {
+  [_t];
+  [si];
+  [dr];
+  $items = new Map();
+  deletedItems = {};
+  $refId = 0;
+  _stream;
+  get maxPerTick() {
+    return this._stream?.maxPerTick ?? 32;
+  }
+  set maxPerTick(t) {
+    (this._stream ??= ay()).maxPerTick = t;
+  }
+  get priority() {
+    return this._stream?.priority;
+  }
+  set priority(t) {
+    (this._stream ??= ay()).priority = t;
+  }
+  static [sy] = Z8;
+  static [x0] = Q4;
+  static COLLECTION_KIND = ZA.Set;
+  static [_C](t, n, i) {
+    return !i || typeof t[dr] == "string" || i.isVisible((t["~getByIndex"](n) ?? t.deletedItems[n])[_t]);
+  }
+  static is(t) {
+    return t.set !== void 0;
+  }
+  constructor(t) {
+    Object.defineProperty(this, _t, {
+      value: new zw(this),
+      enumerable: !1,
+      writable: !0
+    });
+    this[dr] = void 0;
+    t && t.forEach(n => this.add(n));
+  }
+  static initializeForDecoder() {
+    const t = Object.create(xM.prototype);
+    t.$items = new Map();
+    t.deletedItems = {};
+    t.$refId = 0;
+    t[dr] = void 0;
+    Gw(t);
+    return t;
+  }
+  add(t) {
+    if (this.has(t)) {
+      return !1;
+    }
+    const n = this.$refId++;
+    const i = this[_t];
+    this.$items.set(n, t);
+    i.isStreamCollection ? i.root !== void 0 && N4(this, i.root, n) : i.change(n, Rt.ADD);
+    t[_t] !== void 0 && t[_t].setParent(this, i.root, n);
+    return n;
+  }
+  entries() {
+    return this.$items.entries();
+  }
+  delete(t) {
+    const n = this.$items.entries();
+    let i;
+    let r;
+    for (; (r = n.next()) && !r.done;) {
+      if (t === r.value[1]) {
+        i = r.value[0];
+        break;
+      }
+    }
+    if (i === void 0) {
+      return !1;
+    }
+    const s = this[_t];
+    if (s.isStreamCollection) {
+      const o = s.root;
+      const a = this.$items.get(i);
+      o !== void 0 && O4(this, o, this[si], i);
+      a?.[_t] !== void 0 && o?.remove(a[_t]);
+      this.deletedItems[i] = a;
+      return this.$items.delete(i);
+    }
+    this.deletedItems[i] = s.delete(i);
+    return this.$items.delete(i);
+  }
+  clear() {
+    const t = this[_t];
+    t.discard();
+    this.$items.clear();
+    t.operation(Rt.CLEAR);
+  }
+  [sm]() {
+    const t = this[_t];
+    if (t.isStreamCollection) {
+      throw new Error("@colyseus/schema: cannot reset a streamed SetSchema (pooling not supported).");
+    }
+    this.$items.forEach(n => n?.[sm]?.());
+    this.$items.clear();
+    this.deletedItems = {};
+    this.$refId = 0;
+    t.recycle();
+    this[si] = void 0;
+  }
+  has(t) {
+    const n = this.$items.values();
+    let i = !1;
+    let r;
+    for (; (r = n.next()) && !r.done;) {
+      if (t === r.value) {
+        i = !0;
+        break;
+      }
+    }
+    return i;
+  }
+  forEach(t) {
+    this.$items.forEach((n, i, r) => t(n, i, this));
+  }
+  values() {
+    return this.$items.values();
+  }
+  get size() {
+    return this.$items.size;
+  }
+  pauseTracking() {
+    this[_t].pause();
+  }
+  resumeTracking() {
+    this[_t].resume();
+  }
+  untracked(t) {
+    return this[_t].untracked(t);
+  }
+  get isTrackingPaused() {
+    return this[_t].paused;
+  }
+  [Symbol.iterator]() {
+    return this.$items.values();
+  }
+  setIndex(t, n) {}
+  getIndex(t) {
+    return t;
+  }
+  [Sd](t) {
+    return this.$items.get(t);
+  }
+  [um](t) {
+    this.$items.delete(t);
+  }
+  [Hw](t, n, i) {
+    let r = null;
+    this.$items.forEach((s, o) => {
+      if (t.has(o)) {
+        i(s);
+        return;
+      }
+      (r ??= []).push(o);
+      n(s, o);
+    });
+    if (r !== null) {
+      for (let s = 0; s < r.length; s++) {
+        this[um](r[s]);
+      }
+    }
+  }
+  [F1]() {
+    for (const t in this.deletedItems) {
+      delete this.deletedItems[t];
+    }
+  }
+  _dropView(t) {
+    U4(this, t);
+  }
+  _unregister() {}
+  toArray() {
+    return Array.from(this.$items.values());
+  }
+  toJSON() {
+    const t = [];
+    this.forEach((n, i) => {
+      t.push(typeof n.toJSON == "function" ? n.toJSON() : n);
+    });
+    return t;
+  }
+  clone(t) {
+    let n;
+    t ? n = Object.assign(new xM(), this) : (n = new xM(), this.forEach(i => {
+      i[_t] ? n.add(i.clone()) : n.add(i);
+    }));
+    return n;
+  }
+};
+yy("set", {
+  constructor: nU
+});
+var jZ = class TM {
+  [_t];
+  [si];
+  [dr];
+  $items = new Map();
+  $nextPosition = 0;
+  _itemIndex = new Map();
+  _stream;
+  get maxPerTick() {
+    return this._stream?.maxPerTick ?? 32;
+  }
+  set maxPerTick(t) {
+    (this._stream ??= ay()).maxPerTick = t;
+  }
+  get priority() {
+    return this._stream?.priority;
+  }
+  set priority(t) {
+    (this._stream ??= ay()).priority = t;
+  }
+  static $isStream = !0;
+  static [sy] = Z8;
+  static [x0] = Q4;
+  static COLLECTION_KIND = ZA.Stream;
+  static [_C](t, n, i) {
+    if (!i) {
+      return !0;
+    }
+    const r = t[Sd](n);
+    return r === void 0 ? !1 : i.isVisible(r[_t]);
+  }
+  static is(t) {
+    return t && t.stream !== void 0;
+  }
+  constructor() {
+    Object.defineProperty(this, _t, {
+      value: new zw(this),
+      enumerable: !1,
+      writable: !0
+    });
+    this[dr] = void 0;
+  }
+  static initializeForDecoder() {
+    const t = Object.create(TM.prototype);
+    t.$items = new Map();
+    t.$nextPosition = 0;
+    t._itemIndex = new Map();
+    t[dr] = void 0;
+    Gw(t);
+    return t;
+  }
+  add(t) {
+    if (this._itemIndex.has(t)) {
+      return -1;
+    }
+    const n = this.$nextPosition++;
+    this.$items.set(n, t);
+    this._itemIndex.set(t, n);
+    const i = this[_t].root;
+    t[_t] !== void 0 && t[_t].setParent(this, i, n);
+    i !== void 0 && N4(this, i, n);
+    return n;
+  }
+  remove(t) {
+    const n = this._itemIndex.get(t);
+    if (n === void 0) {
+      return !1;
+    }
+    this._itemIndex.delete(t);
+    this.$items.delete(n);
+    const i = this[_t].root;
+    i !== void 0 && (O4(this, i, this[si], n), t[_t] !== void 0 && i.remove(t[_t]));
+    return !0;
+  }
+  has(t) {
+    return this._itemIndex.has(t);
+  }
+  clear() {
+    const t = this[_t].root;
+    if (t !== void 0) {
+      Hme(this, t, this[si]);
+      for (const n of this.$items.values()) {
+        n[_t] !== void 0 && t.remove(n[_t]);
+      }
+    }
+    this.$items.clear();
+    this._itemIndex.clear();
+  }
+  forEach(t) {
+    for (const [n, i] of this.$items) {
+      t(i, n, this);
+    }
+  }
+  values() {
+    return this.$items.values();
+  }
+  entries() {
+    return this.$items.entries();
+  }
+  [Symbol.iterator]() {
+    return this.$items.values();
+  }
+  get size() {
+    return this.$items.size;
+  }
+  get length() {
+    return this.$items.size;
+  }
+  setIndex(t, n) {}
+  getIndex(t) {
+    return t;
+  }
+  [Sd](t) {
+    return this.$items.get(t);
+  }
+  [um](t) {
+    const n = this.$items.get(t);
+    n !== void 0 && (this._itemIndex.delete(n), this.$items.delete(t));
+  }
+  [Hw]() {}
+  [F1]() {}
+  toArray() {
+    return Array.from(this.$items.values());
+  }
+  toJSON() {
+    const t = [];
+    this.forEach(n => {
+      t.push(typeof n?.toJSON == "function" ? n.toJSON() : n);
+    });
+    return t;
+  }
+  clone(t) {
+    if (t) {
+      return Object.assign(new TM(), this);
+    }
+    const n = new TM();
+    n.maxPerTick = this.maxPerTick;
+    this.forEach(i => {
+      n.add(typeof i?.clone == "function" ? i.clone() : i);
+    });
+    return n;
+  }
+  _dropView(t) {
+    U4(this, t);
+  }
+  _unregister() {}
+};
+yy("stream", {
+  constructor: jZ
+});
+var uE = class {
+  [gZ] = !0;
+  _type;
+  _default = void 0;
+  _hasDefault = !1;
+  _view = void 0;
+  _unreliable = !1;
+  _patchOnly = !1;
+  _deprecated = !1;
+  _deprecatedThrows = !0;
+  _fullStateOnly = !1;
+  _stream = !1;
+  _optional = !1;
+  _noSync = !1;
+  _streamPriority = void 0;
+  constructor(e) {
+    this._type = e;
+  }
+  default(e) {
+    this._default = e;
+    this._hasDefault = !0;
+    return this;
+  }
+  view(e) {
+    this._view = e ?? -1;
+    return this;
+  }
+  unreliable() {
+    this._unreliable = !0;
+    return this;
+  }
+  patchOnly() {
+    this._patchOnly = !0;
+    return this;
+  }
+  fullStateOnly() {
+    this._fullStateOnly = !0;
+    return this;
+  }
+  noSync() {
+    this._noSync = !0;
+    return this;
+  }
+  stream() {
+    const e = this._type;
+    if (e && typeof e == "object" && e.array !== void 0) {
+      throw new Error(DZ);
+    }
+    this._stream = !0;
+    return this;
+  }
+  priority(e) {
+    this._streamPriority = e;
+    return this;
+  }
+  deprecated(e = !0) {
+    this._deprecated = !0;
+    this._deprecatedThrows = e;
+    return this;
+  }
+  optional() {
+    this._optional = !0;
+    return this;
+  }
+  toDefinition() {
+    return {
+      type: this._type,
+      default: this._default,
+      hasDefault: this._hasDefault,
+      view: this._view,
+      unreliable: this._unreliable,
+      patchOnly: this._patchOnly,
+      deprecated: this._deprecated,
+      deprecatedThrows: this._deprecatedThrows,
+      fullStateOnly: this._fullStateOnly,
+      stream: this._stream,
+      optional: this._optional,
+      noSync: this._noSync,
+      streamPriority: this._streamPriority
+    };
+  }
+};
+function KZ(e) {
+  return e != null && e[gZ] === !0;
+}
+function Mh(e) {
+  return () => new uE(e);
+}
+function yT(e) {
+  if (KZ(e)) {
+    const t = e._type;
+    const n = typeof t == "string" ? `use the type name instead: t.array("${t}")` : 'collections accept a Schema class or a primitive type name ("string", "number", ÔÇª)';
+    throw new Error(`t.array/map/set/collection(): a t.* builder is not a valid element type ÔÇö ${n}.`);
+  }
+  return e;
+}
+var D0e = e => new uE({
+  array: yT(e)
+});
+var P0e = e => new uE({
+  map: yT(e)
+});
+var L0e = e => new uE({
+  set: yT(e)
+});
+var N0e = e => new uE({
+  collection: yT(e)
+});
+var O0e = e => {
+  const t = new uE({
+    stream: yT(e)
+  });
+  t._stream = !0;
+  return t;
+};
+var U0e = e => new uE(e);
+function HH(e) {
+  return new uE({
+    quantized: Y8(e)
+  });
+}
+var Cf = Object.freeze({
+  string: Mh("string"),
+  number: Mh("number"),
+  boolean: Mh("boolean"),
+  int8: Mh("int8"),
+  uint8: Mh("uint8"),
+  int16: Mh("int16"),
+  uint16: Mh("uint16"),
+  int32: Mh("int32"),
+  uint32: Mh("uint32"),
+  int64: Mh("int64"),
+  uint64: Mh("uint64"),
+  float32: Mh("float32"),
+  float64: Mh("float64"),
+  bigint64: Mh("bigint64"),
+  biguint64: Mh("biguint64"),
+  ref: U0e,
+  array: D0e,
+  map: P0e,
+  set: L0e,
+  collection: N0e,
+  stream: O0e,
+  quantized: HH,
+  angle: e => HH({
+    min: 0,
+    max: Math.PI * 2,
+    mode: "wrap",
+    bits: e?.bits ?? 16
+  })
+});
+var z4 = -1;
+function Np(e = z4) {
+  return function (t, n) {
+    const i = Ns.initialize(t.constructor);
+    Ns.setTag(i, n, e);
+  };
+}
+function F0e(e, t) {
+  const n = Ns.initialize(e.constructor);
+  Ns.setUnreliable(n, t);
+}
+function Q0e(e, t) {
+  const n = Ns.initialize(e.constructor);
+  Ns.setPatchOnly(n, t);
+}
+function be(e, t) {
+  return function (n, i) {
+    const r = n.constructor;
+    if (!e) {
+      throw new Error(`${r.name}: @type() reference provided for "${i}" is undefined. Make sure you don't have any circular dependencies.`);
+    }
+    e = sC(e);
+    rw.register(r);
+    const s = Object.getPrototypeOf(r)[Symbol.metadata];
+    const o = Ns.initialize(r);
+    let a = o[i];
+    if (o[a] !== void 0) {
+      if (o[a].deprecated) {
+        return;
+      }
+      if (o[a].type !== void 0) {
+        try {
+          throw new Error(`@colyseus/schema: Duplicate '${i}' definition on '${r.name}'.
+Check @type() annotation`);
+        } catch (l) {
+          const u = l.stack.split(`
+`)[4].trim();
+          throw new Error(`${l.message} ${u}`);
+        }
+      }
+    } else {
+      a = o["~__numFields"] ?? (s && s["~__numFields"]) ?? -1;
+      a++;
+    }
+    if (t && t.manual) {
+      Ns.addField(o, a, i, e, {
+        enumerable: !0,
+        configurable: !0,
+        writable: !0
+      });
+    } else {
+      const {
+        complexTypeKlass: l,
+        childType: u
+      } = OZ(e);
+      Ns.addField(o, a, i, e, YZ(i, a, u, l));
+    }
+    o[mp][i] && Object.defineProperty(n, i, o[mp][i]);
+    (typeof e == "string" || $1(e)) && (o[Vg] || Object.defineProperty(o, Vg, {
+      value: [],
+      enumerable: !1,
+      configurable: !0,
+      writable: !0
+    }), o[Vg][a] = typeof e == "string" ? Hr[e] : NZ(e.quantized));
+  };
+}
+var H0e = {
+  number: "number",
+  int8: "number",
+  uint8: "number",
+  int16: "number",
+  uint16: "number",
+  int32: "number",
+  uint32: "number",
+  int64: "number",
+  uint64: "number",
+  float32: "number",
+  float64: "number",
+  bigint64: "bigint",
+  biguint64: "bigint",
+  string: "string",
+  boolean: "boolean"
+};
+function z0e(e, t, n) {
+  const i = H0e[n];
+  const r = n === "string";
+  const s = n === "boolean";
+  return function (o) {
+    const a = this[_p];
+    const l = a[t];
+    if (o !== l) {
+      if (o != null) {
+        if (!s && i !== void 0 && typeof o !== i && !(r && o === null)) {
+          const u = o && o.constructor ? ` (${o.constructor.name})` : "";
+          throw new eU(`a '${i}' was expected, but '${JSON.stringify(o)}'${u} was provided in ${this.constructor.name}#${e}`);
+        }
+        this.constructor[ry](this[_t], t, Rt.ADD);
+      } else {
+        l != null && this[_t].delete(t);
+      }
+      a[t] = o;
+    }
+  };
+}
+function G0e(e, t, n) {
+  return function (i) {
+    const r = this[_p];
+    const s = r[t];
+    if (i !== s) {
+      if (i != null) {
+        H4(i, n, this, e);
+        const o = this[_t];
+        const a = this.constructor;
+        s != null && s[_t] ? (o.root?.remove(s[_t]), a[ry](o, t, Rt.DELETE_AND_ADD)) : a[ry](o, t, Rt.ADD);
+        i[_t]?.setParent(this, o.root, t);
+      } else {
+        s != null && this[_t].delete(t);
+      }
+      r[t] = i;
+    }
+  };
+}
+function W0e(e, t, n, i) {
+  const r = i.constructor === yr;
+  const s = i.constructor === to;
+  return function (o) {
+    const a = this[_p];
+    const l = a[t];
+    if (o !== l) {
+      if (o != null) {
+        if (r && !(o instanceof yr)) {
+          const h = new yr();
+          h[dr] = n;
+          h.push(...o);
+          o = h;
+        } else {
+          if (s && !(o instanceof to)) {
+            const h = new to();
+            h[dr] = n;
+            if (o instanceof Map) {
+              o.forEach((p, A) => h.set(A, p));
+            } else {
+              for (const p in o) {
+                h.set(p, o[p]);
+              }
+            }
+            o = h;
+          } else {
+            o[dr] = n;
+          }
+        }
+        const u = this[_t];
+        const d = this.constructor;
+        l != null && l[_t] ? (u.root?.remove(l[_t]), d[ry](u, t, Rt.DELETE_AND_ADD)) : d[ry](u, t, Rt.ADD);
+        o[_t]?.setParent(this, u.root, t);
+      } else {
+        l != null && this[_t].delete(t);
+      }
+      a[t] = o;
+    }
+  };
+}
+function V0e(e, t, n) {
+  return function (i) {
+    const r = this[_p];
+    const s = r[t];
+    if (i != null) {
+      if (typeof i != "number") {
+        throw new eU(`a 'number' was expected, but '${JSON.stringify(i)}' was provided in ${this.constructor.name}#${e}`);
+      }
+      i = LZ(n, PZ(n, i));
+      if (i === s) {
+        return;
+      }
+      this.constructor[ry](this[_t], t, Rt.ADD);
+    } else {
+      if (i === s) {
+        return;
+      }
+      s != null && this[_t].delete(t);
+    }
+    r[t] = i;
+  };
+}
+function YZ(e, t, n, i) {
+  let r;
+  i ? r = W0e(e, t, n, i) : typeof n == "string" ? r = z0e(e, t, n) : $1(n) ? r = V0e(e, t, n.quantized) : r = G0e(e, t, n);
+  return {
+    get: function () {
+      return this[_p][t];
+    },
+    set: r,
+    enumerable: !0,
+    configurable: !0
+  };
+}
+function j0e(e = !0) {
+  return function (t, n) {
+    const i = Ns.initialize(t.constructor);
+    Ns.setDeprecated(i, n);
+    e && (i[mp] ??= {}, i[mp][n] = {
+      get: function () {
+        throw new Error(`${n} is deprecated.`);
+      },
+      set: function (r) {},
+      enumerable: !1,
+      configurable: !0
+    }, Object.defineProperty(t, n, i[mp][n]));
+  };
+}
+function K0e(e) {
+  if (e && typeof e == "object") {
+    if (e.array !== void 0) {
+      return () => new yr();
+    }
+    if (e.map !== void 0) {
+      return () => new to();
+    }
+    if (e.set !== void 0) {
+      return () => new nU();
+    }
+    if (e.collection !== void 0) {
+      return () => new tU();
+    }
+    if (e.stream !== void 0) {
+      return () => new jZ();
+    }
+  } else {
+    if (typeof e == "function" && Ln.is(e) && (!e.prototype.initialize || e.prototype.initialize.length === 0)) {
+      return () => new e();
+    }
+  }
+}
+function ET(e, t, n = Ln) {
+  if (e == null || typeof e != "object") {
+    throw new Error(`schema(): first argument must be a fields object (got ${typeof e}).`);
+  }
+  const i = {};
+  const r = {};
+  const s = {};
+  const o = {};
+  const a = (z, Q) => {
+    typeof Q == "function" ? o[z] = Q : Q && typeof Q.clone == "function" ? o[z] = () => Q.clone() : s[z] = Q;
+  };
+  const l = (z, Q) => {
+    if (Q.hasDefault) {
+      a(z, Q.default);
+    } else {
+      if (!Q.optional) {
+        const G = K0e(Q.type);
+        G && (o[z] = G);
+      }
+    }
+  };
+  const u = {};
+  const d = [];
+  const h = [];
+  const p = {};
+  const A = [];
+  const y = [];
+  const E = {};
+  const b = [];
+  for (const z in e) {
+    const Q = e[z];
+    if (KZ(Q)) {
+      const G = Q.toDefinition();
+      if (G.noSync) {
+        if (G.view !== void 0 || G.unreliable || G.patchOnly || G.fullStateOnly || G.stream) {
+          throw new Error(`schema(${t ? `'${t}'` : ""}): field '${z}' uses .noSync() together with a sync-only modifier (.view/.unreliable/.patchOnly/.fullStateOnly/.stream). A local-only field cannot be synchronized.`);
+        }
+        l(z, G);
+        continue;
+      }
+      if (G.patchOnly && G.fullStateOnly) {
+        throw new Error(`schema(${t ? `'${t}'` : ""}): field '${z}' uses .patchOnly() together with .fullStateOnly(). Those are the only two delivery channels, so the field would never reach a client ÔÇö use .noSync() if that is intended.`);
+      }
+      const N = sC(G.type);
+      if (typeof N == "function" && !Ln.is(N)) {
+        throw new Error(`schema(${t ? `'${t}'` : ""}): field '${z}' is a synced ref to non-Schema class '${N.name || "(anonymous)"}' ÔÇö use .noSync(), or Metadata.setFields().`);
+      }
+      i[z] = N;
+      G.view !== void 0 && (u[z] = G.view);
+      G.unreliable && d.push(z);
+      G.patchOnly && h.push(z);
+      G.deprecated && (p[z] = G.deprecatedThrows);
+      G.fullStateOnly && A.push(z);
+      G.stream && y.push(z);
+      G.streamPriority !== void 0 && (E[z] = G.streamPriority);
+      G.optional && b.push(z);
+      l(z, G);
+    } else {
+      if (typeof Q == "function") {
+        Ln.is(Q) ? (i[z] = sC(Q), (!Q.prototype.initialize || Q.prototype.initialize.length === 0) && (o[z] = () => new Q())) : r[z] = Q;
+      } else {
+        throw new Error(`schema(${t ? `'${t}'` : ""}): field '${z}' must be a t.* builder, Schema subclass, or method (got ${typeof Q}).`);
+      }
+    }
+  }
+  const w = z => {
+    for (const Q in s) {
+      z[Q] = s[Q];
+    }
+    for (const Q in o) {
+      z[Q] = o[Q]();
+    }
+  };
+  const T = () => {
+    const z = {};
+    w(z);
+    return z;
+  };
+  const x = z => {
+    const Q = Object.keys(i);
+    const G = {};
+    for (const N in z) {
+      Q.includes(N) || (G[N] = z[N]);
+    }
+    return G;
+  };
+  const R = typeof r.initialize == "function";
+  const D = r.initialize ?? n._initialize;
+  const O = class extends n {
+    constructor(...z) {
+      const Q = z[0];
+      Q === void 0 ? (super(), w(this)) : super(Object.assign(T(), R ? x(Q) : Q));
+      D && new.target === O && D.apply(this, z);
+    }
+  };
+  t && Object.defineProperty(O, "name", {
+    value: t
+  });
+  Ns.setFields(O, i);
+  O._getDefaultValues = T;
+  O._initialize = D;
+  Object.assign(O.prototype, r);
+  for (const z in u) {
+    Np(u[z])(O.prototype, z);
+  }
+  for (const z of d) {
+    F0e(O.prototype, z);
+  }
+  for (const z of h) {
+    Q0e(O.prototype, z);
+  }
+  for (const z in p) {
+    j0e(p[z])(O.prototype, z);
+  }
+  if (A.length > 0 || y.length > 0) {
+    const z = O[Symbol.metadata];
+    for (const Q of A) {
+      Ns.setFullStateOnly(z, Q);
+    }
+    for (const Q of y) {
+      Ns.setStream(z, Q);
+    }
+    for (const Q in E) {
+      Ns.setStreamPriority(z, Q, E[Q]);
+    }
+  }
+  if (b.length > 0) {
+    const z = O[Symbol.metadata];
+    for (const Q of b) {
+      z[z[Q]].optional = !0;
+    }
+  }
+  O.extend = (z, Q) => ET(z, Q, O);
+  return O;
+}
+function Y0e(e) {
+  return new Array(e).fill(0).map((t, n) => n === e - 1 ? "ÔööÔöÇ " : "   ").join("");
+}
+var Ln = class C1 {
+  static [sy] = w0e;
+  static [x0] = M0e;
+  [si];
+  [_p];
+  static initialize(t) {
+    Object.defineProperty(t, _t, {
+      value: new zw(t),
+      enumerable: !1,
+      writable: !0
+    });
+    t[_p] = [];
+  }
+  static initializeForDecoder() {
+    const t = Object.create(this.prototype);
+    Gw(t);
+    t[_p] = [];
+    return t;
+  }
+  static reset(t) {
+    const n = t?.[_t];
+    if (n === void 0 || typeof n.recycle != "function") {
+      throw new Error("@colyseus/schema: Schema.reset() requires a tracked (encoder-side) instance.");
+    }
+    if (n.extraParents !== void 0) {
+      throw new Error(`@colyseus/schema: cannot reset a shared instance (${t.constructor.name}) with multiple parents.`);
+    }
+    t[sm]();
+  }
+  [sm]() {
+    const t = this.constructor[Symbol.metadata]?.[Q1] ?? [];
+    const n = this[_p];
+    for (let i = 0; i < t.length; i++) {
+      n[t[i]]?.[sm]?.();
+    }
+    this[_t].recycle();
+    this[si] = void 0;
+  }
+  static is(t) {
+    const n = t[Symbol.metadata];
+    return typeof n == "object" && n !== null;
+  }
+  static isSchema(t) {
+    return typeof t?.assign == "function";
+  }
+  static [ry](t, n, i = Rt.ADD) {
+    t.change(n, i);
+  }
+  static [_C](t, n, i) {
+    const r = t.constructor[Symbol.metadata][n]?.tag;
+    return i === void 0 ? r === void 0 : r === void 0 ? !0 : r === z4 ? i.isChangeTreeVisible(t[_t]) : i.hasTagOnTree(t[_t], r);
+  }
+  constructor(t) {
+    C1.initialize(this);
+    t && C1.assignProps(this, t);
+  }
+  assign(t) {
+    C1.assignProps(this, t);
+    return this;
+  }
+  static assignProps(t, n) {
+    const i = t.constructor[Symbol.metadata];
+    if (i && i["~__numFields"] !== void 0) {
+      for (let s = 0; s <= i[R1]; s++) {
+        const o = i[s];
+        if (!o) {
+          continue;
+        }
+        const a = n[o.name];
+        a !== void 0 && (t[o.name] = a);
+      }
+    }
+    const r = Object.keys(n);
+    for (let s = 0; s < r.length; s++) {
+      const o = r[s];
+      i && i[o] !== void 0 || (t[o] = n[o]);
+    }
+  }
+  restore(t) {
+    const n = this.constructor[Symbol.metadata];
+    for (const i in n) {
+      const r = n[i];
+      const s = r.name;
+      const o = r.type;
+      const a = t[s];
+      if (a != null) {
+        if (typeof o == "string") {
+          this[s] = a;
+        } else {
+          if (C1.is(o)) {
+            const l = new o();
+            l.restore(a);
+            this[s] = l;
+          } else {
+            if (typeof o == "object") {
+              const l = Object.keys(o)[0];
+              const u = o[l];
+              if (l === "map") {
+                const d = this[s];
+                for (const h in a) {
+                  if (C1.is(u)) {
+                    const p = new u();
+                    p.restore(a[h]);
+                    d.set(h, p);
+                  } else {
+                    d.set(h, a[h]);
+                  }
+                }
+              } else {
+                if (l === "array") {
+                  const d = this[s];
+                  for (let h = 0; h < a.length; h++) {
+                    if (C1.is(u)) {
+                      const p = new u();
+                      p.restore(a[h]);
+                      d.push(p);
+                    } else {
+                      d.push(a[h]);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return this;
+  }
+  setDirty(t, n) {
+    const i = this.constructor[Symbol.metadata];
+    this[_t].change(i[i[t]].index, n);
+  }
+  pauseTracking() {
+    this[_t].pause();
+  }
+  resumeTracking() {
+    this[_t].resume();
+  }
+  untracked(t) {
+    return this[_t].untracked(t);
+  }
+  get isTrackingPaused() {
+    return this[_t].paused;
+  }
+  clone() {
+    const t = Object.create(this.constructor.prototype);
+    C1.initialize(t);
+    const n = this.constructor[Symbol.metadata];
+    for (const i in n) {
+      const r = n[i].name;
+      typeof this[r] == "object" && typeof this[r]?.clone == "function" ? t[r] = this[r].clone() : t[r] = this[r];
+    }
+    return t;
+  }
+  toJSON() {
+    const t = {};
+    const n = this.constructor[Symbol.metadata];
+    for (const i in n) {
+      const r = n[i];
+      const s = r.name;
+      !r.deprecated && this[s] !== null && typeof this[s] < "u" && (t[s] = typeof this[s].toJSON == "function" ? this[s].toJSON() : this[s]);
+    }
+    return t;
+  }
+  discardAllChanges() {
+    this[_t].discardAll();
+  }
+  [Sd](t) {
+    const n = this.constructor[Symbol.metadata];
+    return this[n[t].name];
+  }
+  [um](t) {
+    const n = this.constructor[Symbol.metadata];
+    this[n[t].name] = void 0;
+  }
+  static debugRefIds(t, n = !1, i = 0, r, s = "") {
+    const o = n ? ` - ${JSON.stringify(t.toJSON())}` : "";
+    const a = t[_t];
+    const l = t[si];
+    const u = r ? r.root : a.root;
+    const d = u?.refCount?.[l] > 1 ? ` [├ù${u.refCount[l]}]` : "";
+    let h = `${Y0e(i)}${s}${t.constructor.name} (refId: ${l})${d}${o}
+`;
+    a.forEachChild((p, A) => {
+      let y = A;
+      typeof A == "number" && t.$indexes && (y = t.$indexes.get(A) ?? A);
+      const E = t.forEach !== void 0 && y !== void 0 ? `["${y}"]: ` : "";
+      h += this.debugRefIds(p.ref, n, i + 1, r, E);
+    });
+    return h;
+  }
+  static debugRefIdEncodingOrder(t, n = "allChanges") {
+    const i = [];
+    const r = t[_t];
+    if (n === "changes") {
+      let l = r.root.changes?.next;
+      for (; l;) {
+        l.changeTree && i.push(l.changeTree.ref[si]);
+        l = l.next;
+      }
+      return i;
+    }
+    const s = n === "allFilteredChanges";
+    const o = new Set();
+    const a = l => {
+      o.has(l) || (o.add(l), l.isFiltered === s && i.push(l.ref[si]), l.forEachChild((u, d) => a(u)));
+    };
+    a(r);
+    return i;
+  }
+  static debugRefIdsFromDecoder(t) {
+    return this.debugRefIds(t.state, !1, 0, t);
+  }
+  static debugChanges(t, n = !1) {
+    const i = t[_t];
+    const r = n ? "allChanges" : "changes";
+    let s = `${t.constructor.name} (${t[si]}) -> .${r}:
+`;
+    n ? i.forEachLive(o => {
+      s += `- [${o}]: ADD (${JSON.stringify(i.getValue(Number(o), !0))})
+`;
+    }) : i.forEach((o, a) => {
+      o < 0 || !a || (s += `- [${o}]: ${Rt[a]} (${JSON.stringify(i.getValue(Number(o), !1))})
+`);
+    });
+    return s;
+  }
+};
+pZ(Ln);
+var zH = {
+  value: 0,
+  enumerable: !1,
+  writable: !0
+};
+var J0e = class {
+  types;
+  nextUniqueId = 0;
+  refCount = {};
+  changeTrees = {};
+  changes = DH();
+  unreliableChanges = DH();
+  pendingFilterRefresh = [];
+  enqueueFilterRefresh(e) {
+    this.types.hasFilters && (e.flags & kx || (e.flags |= kx, this.pendingFilterRefresh.push(e)));
+  }
+  _nodePool = [];
+  _nextViewId = 0;
+  _freeViewIds = [];
+  acquireViewId() {
+    return this._freeViewIds.length > 0 ? this._freeViewIds.pop() : this._nextViewId++;
+  }
+  releaseViewId(e) {
+    this._freeViewIds.push(e);
+  }
+  activeViews = new Map();
+  streamTrees = new Set();
+  registerView(e) {
+    this.activeViews.set(e.id, new WeakRef(e));

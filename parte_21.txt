@@ -1,0 +1,3893 @@
+function zJ(e) {
+  return [...e].sort((t, n) => (t.metadata?.slot ?? 0) - (n.metadata?.slot ?? 0) || C8(t).localeCompare(C8(n)));
+}
+async function lue() {
+  await RT();
+  const e = await dw.join("lobby", {
+    filter: {
+      name: "betroom"
+    }
+  });
+  try {
+    return await new Promise((t, n) => {
+      const i = setTimeout(() => n(new Error("lobby did not respond")), DXe);
+      e.onMessage("rooms", r => {
+        clearTimeout(i);
+        t(r);
+      });
+    });
+  } finally {
+    e.leave();
+  }
+}
+async function NXe(e) {
+  await RT();
+  const t = await dw.join("lobby", {
+    filter: {
+      name: "betroom"
+    }
+  });
+  let n = [];
+  const i = () => e([...n].sort(kXe));
+  const r = s => {
+    const o = n.findIndex(a => a.roomId === s.roomId);
+    o === -1 ? n.push(s) : n[o] = s;
+  };
+  t.onMessage("rooms", s => {
+    n = s;
+    i();
+  });
+  t.onMessage("+", ([, s]) => {
+    r(s);
+    i();
+  });
+  t.onMessage("-", s => {
+    n = n.filter(o => o.roomId !== s);
+    i();
+  });
+  return {
+    leave: () => {
+      t.leave();
+    }
+  };
+}
+function OXe({
+  room: e,
+  canBypass: t,
+  requirements: n,
+  disabled: i,
+  current: r,
+  onPick: s
+}) {
+  const {
+    hovered: o,
+    hoverProps: a
+  } = Ml();
+  const l = aue(e);
+  const u = n.length === 0 || n.some(A => A.met);
+  const d = (l || !u) && !t;
+  const h = i || d || r;
+  const p = o && !h;
+  return <button {...a} onClick={s} disabled={h} style={{
+    position: "relative",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 14,
+    padding: "22px 18px 20px",
+    background: p ? xe.cardHover : xe.card,
+    border: `2px solid ${r ? xe.goldSoft : p ? xe.gold : xe.line}`,
+    borderRadius: 14,
+    boxShadow: `0 3px 0 ${xe.ink}`,
+    cursor: h ? "default" : "pointer",
+    opacity: d || i ? .5 : 1,
+    fontFamily: oi.body,
+    transition: "background 120ms ease, border-color 120ms ease"
+  }}><span style={{
+      fontFamily: oi.heading,
+      fontSize: 17,
+      fontWeight: 700,
+      letterSpacing: "0.06em",
+      textTransform: "uppercase",
+      color: xe.txt
+    }}>{C8(e)}</span><span style={{
+      display: "inline-flex",
+      alignItems: "baseline",
+      gap: 6,
+      fontFamily: oi.heading,
+      fontSize: 30,
+      fontWeight: 700,
+      lineHeight: 1,
+      color: l ? xe.txtDim : xe.gold,
+      fontVariantNumeric: "tabular-nums"
+    }}><_Component132 size={14} style={{
+        color: xe.txtFaint,
+        alignSelf: "center"
+      }} />{e.clients}<span style={{
+        fontSize: 15,
+        fontWeight: 600,
+        color: xe.txtFaint
+      }}>/ {oue(e)}</span></span>{n.length > 0 ? <div style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: 6,
+      width: "100%",
+      marginTop: "auto",
+      paddingTop: 14,
+      borderTop: `1px solid ${xe.line}`
+    }}>{n.map((A, y) => <de.Fragment key={A.label}>{y > 0 ? <span style={{
+          paddingLeft: 22,
+          fontFamily: oi.heading,
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: "0.14em",
+          color: xe.txtFaint,
+          textAlign: "left"
+        }}>OR</span> : null}<div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8
+        }}>{A.met ? <WT size={14} color={xe.success} /> : <O9 size={14} color={xe.danger} />}<span style={{
+            fontSize: 12,
+            textAlign: "left",
+            color: A.met ? xe.txt : xe.txtDim
+          }}>{A.label}</span></div></de.Fragment>)}</div> : null}</button>;
+}
+function UXe(e, t, n, i) {
+  const r = RXe(e);
+  if (!r) {
+    return [];
+  }
+  const s = [];
+  r.minBalance > 0 && s.push({
+    met: t >= r.minBalance,
+    label: `$${r.minBalance.toFixed(2)} in balance`
+  });
+  if (r.minWagerRankIndex > 0) {
+    const o = i[r.minWagerRankIndex];
+    s.push({
+      met: n >= r.minWagerRankIndex,
+      label: `Minimum rank ${o ?? r.minWagerRankIndex + 1}`
+    });
+  }
+  return s;
+}
+function SD({
+  size: e = 30
+}) {
+  return <div style={{
+    width: e,
+    height: e,
+    borderRadius: "50%",
+    border: `3px solid ${xe.track}`,
+    borderTopColor: xe.gold,
+    animation: "betroom-spin 0.8s linear infinite",
+    flexShrink: 0
+  }} />;
+}
+function FXe({
+  role: e,
+  busy: t,
+  balance: n,
+  wagerRankIndex: i,
+  rankNumerals: r,
+  currentRoomId: s,
+  onPick: o,
+  playerRooms: a,
+  footer: l
+}) {
+  const [u, d] = (0, de.useState)(null);
+  const [h, p] = (0, de.useState)(!1);
+  (0, de.useEffect)(() => {
+    let T = null;
+    let x = !1;
+    NXe(d).then(R => {
+      x ? R.leave() : T = R;
+    }).catch(R => {
+      x || (R instanceof Ek ? hZ() : p(!0));
+    });
+    return () => {
+      x = !0;
+      T?.leave();
+    };
+  }, []);
+  const A = (0, de.useMemo)(() => zJ((u ?? []).filter(T => b8(T) === Kb.PUBLIC)), [u]);
+  const y = (0, de.useMemo)(() => zJ((u ?? []).filter(T => b8(T) === Kb.PRIVATE)), [u]);
+  const E = hm(e).bypassesLimits;
+  function b(T) {
+    return <OXe room={T} canBypass={E} requirements={UXe(T, n, i, r)} disabled={t} current={T.roomId === s} onPick={() => o(T.roomId)} key={T.roomId} />;
+  }
+  function w() {
+    return u === null && !h ? <QXe /> : h ? <WJ title="Couldn't load rooms" body="The lobby is unreachable. Reload to try again." /> : A.length === 0 && y.length === 0 ? <WJ title="No rooms online" body="The server has no rooms available right now." /> : <S.Fragment><GJ title="Public">{A.map(b)}</GJ>{y.length > 0 ? <GJ title="Private">{y.map(b)}</GJ> : null}</S.Fragment>;
+  }
+  return <div style={{
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 26,
+    width: "100%",
+    maxWidth: 780
+  }}><_Component110 height={84} />{w()}{a}{l}</div>;
+}
+function QXe() {
+  return <div style={{
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 14,
+    width: "100%",
+    minHeight: 168
+  }}><SD /><span style={{
+      fontSize: 13,
+      color: xe.txtDim
+    }}>Finding rooms...</span></div>;
+}
+function GJ({
+  title: e,
+  children: t
+}) {
+  return <div style={{
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
+    width: "100%"
+  }}><span style={{
+      fontFamily: oi.heading,
+      fontSize: 12,
+      fontWeight: 700,
+      letterSpacing: "0.14em",
+      textTransform: "uppercase",
+      color: xe.txtFaint
+    }}>{e}</span><div style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+      gap: 14,
+      width: "100%"
+    }}>{t}</div></div>;
+}
+function WJ({
+  title: e,
+  body: t
+}) {
+  return <div style={{
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 8,
+    width: "100%",
+    padding: "32px 24px",
+    background: xe.card,
+    border: `1px solid ${xe.line}`,
+    borderRadius: 14,
+    textAlign: "center"
+  }}><span style={{
+      fontFamily: oi.heading,
+      fontSize: 16,
+      fontWeight: 700
+    }}>{e}</span><span style={{
+      fontSize: 13,
+      color: xe.txtDim
+    }}>{t}</span></div>;
+}
+var YQ = "/join/";
+function HXe(e) {
+  return `${window.location.origin}${YQ}${e}`;
+}
+function zXe() {
+  const e = window.location.pathname;
+  if (!e.startsWith(YQ)) {
+    return null;
+  }
+  const t = e.slice(6).replace(/\/+$/, "");
+  return gEe(t) ? t : null;
+}
+function VJ() {
+  window.location.pathname.startsWith(YQ) && window.history.replaceState(null, "", "/");
+}
+var pR = class extends Error {
+  constructor() {
+    super("no room matches that code");
+    this.name = "JoinCodeError";
+  }
+};
+async function GXe(e) {
+  await RT();
+  try {
+    const t = (await dw.http.get(mEe(e))).data?.roomId;
+    if (!t) {
+      throw new pR();
+    }
+    return t;
+  } catch (t) {
+    throw t instanceof pR ? t : new pR();
+  }
+}
+function WXe({
+  busy: e,
+  blocked: t,
+  currentRoomId: n,
+  onPick: i
+}) {
+  const {
+    room: r
+  } = on();
+  const [s, o] = (0, de.useState)(null);
+  const [a, l] = (0, de.useState)(!0);
+  const [u, d] = (0, de.useState)(null);
+  const {
+    copied: h,
+    copy: p
+  } = jQ(s ? HXe(s.joinCode) : "");
+  (0, de.useEffect)(() => {
+    let E = !1;
+    r.request("rooms.mine", {}).then(b => {
+      E || o(b);
+    }).catch(b => console.error("rooms.mine failed", b)).finally(() => {
+      E || l(!1);
+    });
+    return () => {
+      E = !0;
+    };
+  }, [r]);
+  const A = () => {
+    l(!0);
+    r.request("rooms.create", {}).then(E => {
+      o(E);
+      d(null);
+      i(E.roomId);
+    }).catch(E => {
+      tse(E, "rooms.create") ? d(E.reason) : console.error("rooms.create failed", E);
+    }).finally(() => l(!1));
+  };
+  function y() {
+    return a ? <SD /> : s ? <S.Fragment><div style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 6,
+        minWidth: 0
+      }}><span style={{
+          fontFamily: oi.heading,
+          fontSize: 15,
+          fontWeight: 700,
+          color: xe.txt
+        }}>{s.displayName}</span><span style={{
+          fontSize: 12,
+          color: xe.txtDim
+        }}>Share code <strong style={{
+            color: xe.gold,
+            letterSpacing: "0.16em",
+            fontVariantNumeric: "tabular-nums"
+          }}>{s.joinCode}</strong></span></div><div style={{
+        display: "flex",
+        gap: 10
+      }}><TL onClick={() => {
+          p();
+        }} icon={h ? <_Component141 size={12} /> : <FDe size={12} />}>{h ? "Copied" : "Copy link"}</TL><TL onClick={() => i(s.roomId)} disabled={e || s.roomId === n} primary={!0}>{s.roomId === n ? "You are here" : "Join"}</TL></div></S.Fragment> : t ? <span style={{
+      fontSize: 13,
+      color: xe.txtDim,
+      maxWidth: 460
+    }}>{t}</span> : <S.Fragment><span style={{
+        fontSize: 13,
+        color: xe.txtDim,
+        maxWidth: 420
+      }}>{VXe(u)}</span><TL onClick={A} disabled={e} primary={!0}>Create room</TL></S.Fragment>;
+  }
+  return <div style={{
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
+    width: "100%"
+  }}><span style={{
+      fontFamily: oi.heading,
+      fontSize: 12,
+      fontWeight: 700,
+      letterSpacing: "0.14em",
+      textTransform: "uppercase",
+      color: xe.txtFaint
+    }}>Your room</span><div style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      flexWrap: "wrap",
+      gap: 14,
+      padding: "18px 20px",
+      background: xe.card,
+      border: `1px solid ${xe.line}`,
+      borderRadius: 14
+    }}>{y()}</div></div>;
+}
+function VXe(e) {
+  if (!e) {
+    return "Make a room of your own and invite people with a link.";
+  }
+  switch (e.reason) {
+    case "DISABLED":
+      return "Player rooms were just turned off.";
+    case "RANK_TOO_LOW":
+      return "You no longer meet the rank needed to open a room.";
+    case "UNAVAILABLE":
+      return "We couldn't open your room. Try again in a moment.";
+  }
+}
+function TL({
+  children: e,
+  onClick: t,
+  disabled: n,
+  primary: i,
+  icon: r
+}) {
+  return <button onClick={t} disabled={n} style={{
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "10px 18px",
+    borderRadius: 10,
+    border: `2px solid ${i ? xe.gold : xe.line}`,
+    background: i ? xe.goldTint : "transparent",
+    color: i ? xe.gold : xe.txtDim,
+    fontFamily: oi.heading,
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: "0.06em",
+    textTransform: "uppercase",
+    cursor: n ? "default" : "pointer",
+    opacity: n ? .5 : 1
+  }}>{r}{e}</button>;
+}
+function _Component165() {
+  const {
+    room: e
+  } = on();
+  const t = Ho();
+  Qo();
+  const [n, i] = (0, de.useState)(!1);
+  const r = (0, de.useMemo)(() => Array.from(e.state.wagerRanks), [e.state.wagerRanks]);
+  const s = (0, de.useMemo)(() => r.map(y => y.numeral), [r]);
+  const o = Ak(r, t.wagered);
+  const {
+    playerRoomsEnabled: a,
+    playerRoomMinRankIndex: l
+  } = e.state.config.rooms;
+  const u = hm(t.role).bypassesRoomRank;
+  const d = s[l] ?? `rank ${l + 1}`;
+  function h() {
+    return a ? !u && o < l ? <S.Fragment>You must be a <strong style={{
+        color: xe.gold
+      }}>{d}</strong> to create a player room.</S.Fragment> : null : <S.Fragment>Player rooms are turned off right now.</S.Fragment>;
+  }
+  const p = nD(() => {
+    n || cr.back();
+  });
+  const A = y => {
+    i(!0);
+    MXe(y);
+  };
+  return <div {...p} style={{
+    position: "fixed",
+    inset: 0,
+    zIndex: 210,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "40px 24px",
+    background: xe.overlay,
+    backdropFilter: "blur(8px)",
+    overflowY: "auto",
+    fontFamily: oi.body,
+    color: xe.txt
+  }}><div onClick={y => y.stopPropagation()} style={{
+      display: "flex",
+      justifyContent: "center",
+      width: "100%"
+    }}><FXe role={t.role} busy={n} balance={t.balance} wagerRankIndex={o} rankNumerals={s} currentRoomId={e.roomId} onPick={A} playerRooms={<WXe busy={n} blocked={h()} currentRoomId={e.roomId} onPick={A} />} footer={<p style={{
+        margin: 0,
+        fontSize: 11,
+        fontWeight: 600,
+        letterSpacing: "0.08em",
+        color: xe.txtFaint
+      }}>{n ? "SWITCHING ROOMS..." : "CLICK OUTSIDE TO CLOSE"}</p>} /></div></div>;
+}
+var KXe = [{
+  id: "controls",
+  label: "Controls",
+  icon: <RPe size={17} />
+}, {
+  id: "audio",
+  label: "Audio",
+  icon: <NPe size={17} />
+}, {
+  id: "video",
+  label: "Video",
+  icon: <_Component142 size={17} />
+}];
+var YXe = [{
+  value: "push-to-talk",
+  label: "Push to Talk"
+}, {
+  value: "open-mic",
+  label: "Open Mic"
+}];
+var JXe = [{
+  group: "movement",
+  field: "forward",
+  label: "Move Forward"
+}, {
+  group: "movement",
+  field: "back",
+  label: "Move Back"
+}, {
+  group: "movement",
+  field: "left",
+  label: "Move Left"
+}, {
+  group: "movement",
+  field: "right",
+  label: "Move Right"
+}, {
+  group: "movement",
+  field: "jump",
+  label: "Jump"
+}, {
+  group: "movement",
+  field: "sprint",
+  label: "Sprint"
+}, {
+  group: "movement",
+  field: "walk",
+  label: "Walk"
+}];
+var XXe = [{
+  group: "actions",
+  field: "interact",
+  label: "Interact"
+}, {
+  group: "actions",
+  field: "quickAction",
+  label: "Quick Action"
+}, {
+  group: "actions",
+  field: "emoteWheel",
+  label: "Emote Wheel"
+}, {
+  group: "actions",
+  field: "thirdPerson",
+  label: "Third Person"
+}, {
+  group: "actions",
+  field: "hideHud",
+  label: "Hide HUD"
+}, {
+  group: "actions",
+  field: "openWheel",
+  label: "Player Wheel"
+}, {
+  group: "actions",
+  field: "playerList",
+  label: "Player List"
+}, {
+  group: "actions",
+  field: "openChat",
+  label: "Open Chat"
+}];
+function ZXe(e, t) {
+  return e[t.group][t.field];
+}
+function qXe(e, t, n) {
+  return {
+    ...e,
+    [t.group]: {
+      ...e[t.group],
+      [t.field]: n
+    }
+  };
+}
+function $Xe() {
+  const e = Gk();
+  const [t, n] = (0, de.useState)("controls");
+  const [i, r] = (0, de.useState)(null);
+  (0, de.useEffect)(() => {
+    open || (n("controls"), r(null));
+  }, [open]);
+  (0, de.useEffect)(() => {
+    r(null);
+  }, [t]);
+  (0, de.useEffect)(() => {
+    if (!i) {
+      return;
+    }
+    const a = d => {
+      if (i.kind === "control") {
+        Uo.setControls(qXe(Uo.getControls(), i.row, d));
+      } else {
+        const h = Uo.getAudio();
+        Uo.setAudio({
+          ...h,
+          voice: {
+            ...h.voice,
+            pushToTalk: d
+          }
+        });
+      }
+      r(null);
+    };
+    const l = d => {
+      d.preventDefault();
+      d.stopImmediatePropagation();
+      if (d.code === "Escape") {
+        r(null);
+        return;
+      }
+      a(d.code);
+    };
+    const u = d => {
+      const h = MO(d.button);
+      h && (d.preventDefault(), d.stopImmediatePropagation(), a(h));
+    };
+    window.addEventListener("keydown", l, !0);
+    window.addEventListener("mousedown", u, !0);
+    return () => {
+      window.removeEventListener("keydown", l, !0);
+      window.removeEventListener("mousedown", u, !0);
+    };
+  }, [i]);
+  const s = a => {
+    const l = i?.kind === "control" && i.row.group === a.group && i.row.field === a.field;
+    return <_Component137 label={a.label} key={a.field}><_Component143 label={cD(ZXe(e, a))} listening={l} onClick={() => r({
+        kind: "control",
+        row: a
+      })} /></_Component137>;
+  };
+  function o() {
+    switch (t) {
+      case "controls":
+        return <div><_Component21 style={{
+            marginTop: 2
+          }}>Mouse</_Component21><_Component144 /><_Component21>Movement</_Component21>{JXe.map(s)}<_Component21>Actions</_Component21>{XXe.map(s)}</div>;
+      case "audio":
+        return <_Component145 listening={i?.kind === "ptt"} onListen={() => r({
+          kind: "ptt"
+        })} />;
+      case "video":
+        return <_Component146 />;
+    }
+  }
+  return <_Component28 title="Settings" icon={<_Component147 size={18} />} onClose={() => cr.back()} footer={<S.Fragment><Ss>Changes save automatically{t === "video" ? "" : " - Click a key to rebind"}</Ss><Lp><_Component133 variant="ghost" onClick={() => {
+        r(null);
+        t === "controls" ? Uo.setControls(yU) : t === "video" ? Uo.setVideo(SU) : Uo.setAudio(EU);
+      }}>Reset to Default</_Component133><_Component133 variant="primary" onClick={() => cr.back()}>Done</_Component133></Lp></S.Fragment>} fixedHeight={!0}><Bm>{KXe.map(a => <Mc icon={a.icon} label={a.label} active={a.id === t} onClick={() => n(a.id)} key={a.id} />)}</Bm><_Component27>{o()}</_Component27></_Component28>;
+}
+function _Component145({
+  listening: e,
+  onListen: t
+}) {
+  const n = Wne();
+  const i = Nce();
+  (0, de.useEffect)(() => Lce(), []);
+  const r = a => Uo.setAudio({
+    ...n,
+    voice: {
+      ...n.voice,
+      ...a
+    }
+  });
+  const s = (a, l) => a.length > 0 ? a.map(u => ({
+    value: u.deviceId,
+    label: u.label
+  })) : [{
+    value: kce,
+    label: l
+  }];
+  const o = EJe();
+  return <div><_Component21 style={{
+      marginTop: 2
+    }}>Levels</_Component21><_Component137 label="Master Volume" sub="Game sound effects"><_Component148 value={n.masterVolume} min={0} max={100} onChange={a => Uo.setAudio({
+        ...n,
+        masterVolume: a
+      })} /></_Component137><_Component137 label="Incoming Voice Volume"><_Component148 value={n.voice.incomingProximityVolume} min={0} max={100} onChange={a => r({
+        incomingProximityVolume: a
+      })} /></_Component137><_Component21>Voice</_Component21><_Component137 label="Voice Mode" sub={n.voice.mode === "open-mic" ? "Transmits continuously while connected" : "Transmits only while the key is held"}><_Component135 value={n.voice.mode} options={YXe} onChange={a => r({
+        mode: a
+      })} /></_Component137><_Component137 label="Push to Talk"><_Component143 label={cD(n.voice.pushToTalk)} listening={e && n.voice.mode === "push-to-talk"} onClick={t} disabled={n.voice.mode !== "push-to-talk"} /></_Component137>{i.permission !== "granted" ? <_Component137 label="Microphone Access" sub={i.permission === "denied" ? "Blocked - allow it in your browser's site settings" : "Required to list and select your devices"}><_Component133 variant="primary" onClick={() => {
+        bJe();
+      }}>{i.permission === "denied" ? "Retry" : "Allow"}</_Component133></_Component137> : null}<_Component137 label="Input Device"><_Component135 value={n.voice.inputDevice ?? "default"} options={s(i.inputs, "System default")} onChange={a => r({
+        inputDevice: a === "default" ? null : a
+      })} /></_Component137><_Component137 label="Output Device" sub={o ? void 0 : "Not supported by this browser"}><_Component135 value={n.voice.outputDevice ?? "default"} options={s(i.outputs, "System default")} onChange={o ? a => r({
+        outputDevice: a === "default" ? null : a
+      }) : void 0} /></_Component137></div>;
+}
+function _Component144() {
+  const e = Gk();
+  return <_Component137 label="Look Sensitivity"><_Component148 value={bEe(e.sensitivity)} min={0} max={100} suffix="" onChange={t => Uo.setControls({
+      ...e,
+      sensitivity: CEe(t)
+    })} /></_Component137>;
+}
+function nZe(e, t, n) {
+  return e ? "Spotlights and shading. Turn off for more performance." : t === "BENCHMARK" ? `Disabled - ${n ? `your graphics chip (${n})` : "your graphics chip"} is not fast enough. Enabling this would cause severe lag.` : n ? `Disabled - we couldn't verify how fast your graphics chip (${n}) is, so we keep lighting off to guarantee a smooth game.` : "Disabled - your browser won't tell us what graphics chip you have, so we keep lighting off to guarantee a smooth game.";
+}
+function _Component146() {
+  const e = s9();
+  const {
+    lightingAllowed: t,
+    type: n,
+    gpu: i
+  } = Ore();
+  return <div><_Component21 style={{
+      marginTop: 2
+    }}>Display</_Component21><_Component137 label="Room Lighting" sub={nZe(t, n, i)}><_Component149 on={e.lighting && t} disabled={!t} onClick={() => Uo.setVideo({
+        ...e,
+        lighting: !e.lighting
+      })} /></_Component137><_Component137 label="Field of View"><_Component148 value={Math.round(e.fov)} min={50} max={100} suffix="┬░" onChange={r => Uo.setVideo({
+        ...e,
+        fov: r
+      })} /></_Component137><_Component137 label="Brightness"><_Component148 value={Math.round(e.brightness * 100)} min={Math.round(bU * 100)} max={Math.round(CU * 100)} suffix="%" onChange={r => Uo.setVideo({
+        ...e,
+        brightness: r / 100
+      })} /></_Component137></div>;
+}
+var rZe = {
+  INSUFFICIENT_FUNDS: "You don't have enough to send that.",
+  SELF_TRANSFER: "You can't tip yourself.",
+  NO_RECIPIENTS: "That player could not be found.",
+  TIP_RESTRICTED: Y4.TIP_SEND
+};
+var cue = "Something went wrong. Try again.";
+var uue = "Tips must be in whole cents.";
+var x4 = "Tips are non-refundable.";
+function JQ(e) {
+  return `Tips must be at least ${jn(e)}.`;
+}
+function XQ(e) {
+  return `Deposit at least ${jn(e)} before tipping.`;
+}
+function sZe(e, t) {
+  return `Tip limit reached. You can send ${jn(Number(e))} more in this ${t}h window.`;
+}
+function oZe(e, t) {
+  return `Limit reached for that player. You can send them ${jn(Number(e))} more in this ${t}h window.`;
+}
+async function due(e) {
+  const t = await e.json().catch(() => null);
+  return t?.error === "BELOW_MINIMUM" && t.details?.minAmount !== void 0 ? JQ(t.details.minAmount) : t?.error === "MIN_DEPOSIT_NOT_MET" && t.details?.minTotalDeposited !== void 0 ? XQ(t.details.minTotalDeposited) : t?.error === "TIP_WINDOW_LIMIT" && t.details?.remaining !== void 0 && t.details?.windowHours !== void 0 ? sZe(t.details.remaining, t.details.windowHours) : t?.error === "TIP_RECIPIENT_LIMIT" && t.details?.remaining !== void 0 && t.details?.windowHours !== void 0 ? oZe(t.details.remaining, t.details.windowHours) : t?.error && rZe[t.error] || "Something went wrong. Try again.";
+}
+async function hue(e, t) {
+  const n = vm(t);
+  if (!n) {
+    return uue;
+  }
+  try {
+    const i = await Bl.api.tip.$post({
+      json: {
+        recipientId: e,
+        amount: n
+      }
+    });
+    return i.ok ? null : await due(i);
+  } catch {
+    return cue;
+  }
+}
+async function aZe(e, t, n) {
+  const i = vm(t);
+  if (!i) {
+    return uue;
+  }
+  try {
+    const r = await Bl.api.tip.all.$post({
+      json: {
+        recipientIds: e,
+        amount: i,
+        mode: n
+      }
+    });
+    return r.ok ? null : await due(r);
+  } catch {
+    return cue;
+  }
+}
+function lZe(e, t) {
+  return t <= 0 ? null : vm((e / t).toFixed(3));
+}
+function _Component168({
+  userId: e,
+  username: t
+}) {
+  const {
+    userId: n
+  } = on();
+  const i = Ai(G => G.players.get(n)?.balance) ?? 0;
+  const r = Ai(G => G.players.get(e)?.balance) ?? 0;
+  const s = Ai(G => G.config.tip.minAmount) ?? 0;
+  const o = Ai(G => G.config.tip.minTotalDeposited) ?? 0;
+  const a = Ai(G => G.config.deposit.leeway) ?? 0;
+  const l = Ai(G => hm(G.players.get(n)?.role ?? "").bypassesDepositRequirements);
+  const {
+    deposited: u
+  } = HC();
+  const [d, h] = (0, de.useState)("");
+  const [p, A] = (0, de.useState)(!1);
+  const [y, E] = (0, de.useState)(null);
+  const b = l || u >= K4(o, a);
+  const w = vm(d);
+  const T = w ? Number(w) : 0;
+  const x = w !== null && T < s;
+  const R = w !== null && !x && T <= i && b;
+  function D() {
+    h("");
+    E(null);
+    A(!1);
+    cr.back();
+  }
+  async function O() {
+    if (!R || p) {
+      return;
+    }
+    A(!0);
+    E(null);
+    const G = await hue(e, d.trim());
+    if (G) {
+      E(G);
+      A(!1);
+      return;
+    }
+    Hi(`Tipped ${jn(T)} to ${t}`, "success", "default");
+    D();
+  }
+  function z() {
+    return y || (b ? x ? JQ(s) : null : XQ(o));
+  }
+  const Q = z();
+  return <_Component28 title="Tip" icon={<F9 size={18} />} onClose={D} maxWidth={480} footer={<S.Fragment><Ss>{`Available: ${jn(i)}`}</Ss><Lp><_Component133 variant="primary" onClick={() => {
+        O();
+      }} disabled={!R || p}>{p ? "Sending..." : "Send Tip"}</_Component133></Lp></S.Fragment>}><_Component27 style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: 14
+    }}><Ss style={{
+        fontSize: 13,
+        lineHeight: 1.5
+      }}>Sent straight to <strong style={{
+          color: xe.txt
+        }}>{t}</strong>'s balance. {x4}</Ss><div style={{
+        display: "flex",
+        gap: 10
+      }}><_Component150 label="Your Balance" value={jn(i)} /><_Component150 label={`${t}'s Balance`} value={jn(r)} /></div><_Component21 style={{
+        margin: 0
+      }}>{`Amount - Min ${jn(s)}`}</_Component21><KT value={d} onChange={h} onEnter={() => {
+        O();
+      }} disabled={p} autoFocus={!0} invalid={w !== null && T > i} />{Q ? <span style={{
+        fontSize: 13,
+        fontWeight: 600,
+        color: xe.danger
+      }}>{Q}</span> : null}</_Component27></_Component28>;
+}
+function _Component150({
+  label: e,
+  value: t
+}) {
+  return <div style={{
+    flex: 1,
+    minWidth: 0,
+    padding: "12px 14px",
+    borderRadius: 12,
+    background: xe.card,
+    border: `1px solid ${xe.line}`
+  }}><div style={{
+      fontSize: 10,
+      fontWeight: 700,
+      letterSpacing: "0.08em",
+      textTransform: "uppercase",
+      color: xe.txtDim,
+      marginBottom: 6,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis"
+    }}>{e}</div><div style={{
+      fontFamily: oi.body,
+      fontSize: 16,
+      fontWeight: 700,
+      color: xe.txt
+    }}>{t}</div></div>;
+}
+var uZe = $l.VITE_AVATAR_URL;
+var KJ = 5;
+var dZe = 3;
+var hZe = "Nobody else is in the room right now.";
+var BL = 10;
+var fZe = 500;
+function _Component166() {
+  const {
+    room: e,
+    userId: t
+  } = on();
+  const n = Ai(De => De.players.get(t)?.balance) ?? 0;
+  const i = Ai(De => De.config.tip.minAmount) ?? 0;
+  const r = Ai(De => De.config.tip.minTotalDeposited) ?? 0;
+  const s = Ai(De => De.config.deposit.leeway) ?? 0;
+  const o = Ai(De => hm(De.players.get(t)?.role ?? "").bypassesDepositRequirements);
+  const {
+    deposited: a
+  } = HC();
+  const [l] = (0, de.useState)(() => {
+    const De = [];
+    e.state.players.forEach((et, rt) => {
+      rt !== t && De.push({
+        userId: rt,
+        username: et.username,
+        image: et.image
+      });
+    });
+    return De.sort((et, rt) => et.username.localeCompare(rt.username));
+  });
+  const [u, d] = (0, de.useState)("player");
+  const [h, p] = (0, de.useState)(null);
+  const [A, y] = (0, de.useState)(() => new Set(l.map(De => De.userId)));
+  const [E, b] = (0, de.useState)([]);
+  const [w, T] = (0, de.useState)(() => new Set());
+  const [x, R] = (0, de.useState)("");
+  const [D, O] = (0, de.useState)("each");
+  const [z, Q] = (0, de.useState)(!1);
+  const [G, N] = (0, de.useState)(null);
+  const [F, H] = (0, de.useState)(!1);
+  const [ee, $] = (0, de.useState)(KJ);
+  (0, de.useEffect)(() => {
+    if (u !== "nearby" || F) {
+      return;
+    }
+    const De = () => {
+      const rt = gZe(e.state.players, t, BL);
+      b(ze => AZe(ze, rt) ? ze : rt);
+    };
+    De();
+    const et = window.setInterval(De, fZe);
+    return () => window.clearInterval(et);
+  }, [u, F, e, t]);
+  (0, de.useEffect)(() => {
+    if (!F) {
+      return;
+    }
+    $(KJ);
+    const De = window.setInterval(() => {
+      $(et => et <= 1 ? (window.clearInterval(De), 0) : et - 1);
+    }, 1e3);
+    return () => window.clearInterval(De);
+  }, [F]);
+  const te = vm(x);
+  const re = te ? Number(te) : 0;
+  const ne = te !== null;
+  const le = E.filter(De => !w.has(De.userId));
+  const me = u === "player" ? h ? [h] : [] : u === "all" ? l.filter(De => A.has(De.userId)) : le;
+  const Me = me.map(De => De.userId);
+  const Je = D === "split" && u !== "player" ? lZe(re, Me.length) : te;
+  const ke = Number(Je ?? 0) * Me.length;
+  const Z = ke <= n;
+  const se = o || a >= K4(r, s);
+  const X = Je !== null && Number(Je) < i;
+  const pe = ne && !X && se && Z && Me.length > 0 && !!Je && !z;
+  function ge() {
+    cr.back();
+  }
+  function Se(De) {
+    const et = rt => {
+      const ze = new Set(rt);
+      ze.has(De) ? ze.delete(De) : ze.add(De);
+      return ze;
+    };
+    u === "nearby" ? T(et) : y(et);
+  }
+  function Oe() {
+    if (pe) {
+      if (u !== "player") {
+        H(!0);
+        return;
+      }
+      Ke();
+    }
+  }
+  async function Ke() {
+    if (!pe) {
+      return;
+    }
+    Q(!0);
+    N(null);
+    const De = u === "player" && h ? await hue(h.userId, x.trim()) : await aZe(Me, x.trim(), D);
+    if (De) {
+      N(De);
+      Q(!1);
+      H(!1);
+      return;
+    }
+    Hi(u === "player" ? `Tipped ${jn(re)} to ${h?.username ?? "player"}` : `Tipped ${jn(ke)} across ${Me.length} players`, "success", "default");
+    ge();
+  }
+  function at() {
+    return se ? X ? JQ(i) : Me.length > 0 && ne ? `${jn(ke)} total - ${S8(Me.length, "recipient")}` : `Available: ${jn(n)}` : XQ(r);
+  }
+  function Fe() {
+    return z ? "Sending..." : ee > 0 ? `Confirm Tip All (${ee})` : "Confirm Tip All";
+  }
+  function Be() {
+    return u !== "player" && D === "split" && Me.length > 0 && ne && Je ? `Each of the ${S8(Me.length, "player")} gets ${jn(Number(Je))}. ${x4}` : `Sent straight to their balance. ${x4}`;
+  }
+  return <_Component28 title="Tip Player" icon={<F9 size={18} />} onClose={ge} fixedHeight={!0} footer={F ? <S.Fragment><Ss>This cannot be undone.</Ss><Lp><_Component133 variant="ghost" onClick={() => H(!1)} disabled={z}>Cancel</_Component133><_Component133 variant="primary" onClick={Ke} disabled={!pe || ee > 0}>{Fe()}</_Component133></Lp></S.Fragment> : <S.Fragment><Ss>{at()}</Ss><Lp><_Component133 variant="primary" onClick={Oe} disabled={!pe}>{u === "player" ? "Send Tip" : "Review Tip"}</_Component133></Lp></S.Fragment>}>{F ? <_Component151 recipients={me} perPerson={Number(Je ?? 0)} total={ke} mode={D} error={G} /> : <S.Fragment><Bm><Mc icon={<_Pe size={16} />} label="Player" active={u === "player"} onClick={() => d("player")} /><Mc icon={<_Component138 size={16} />} label="All" active={u === "all"} onClick={() => d("all")} /><Mc icon={<MPe size={16} />} label="Nearby" active={u === "nearby"} onClick={() => d("nearby")} /></Bm><_Component27 style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 14
+      }}><div style={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+          gap: 10
+        }}><_Component21 style={{
+            marginTop: 2
+          }}>{u === "player" ? `Select Player (${l.length})` : u === "all" ? `Recipients (${A.size}/${l.length})` : `Nearby within ${BL}m (${le.length}/${E.length})`}</_Component21>{u === "nearby" && E.length === 0 ? <Ss>{`Nobody is within ${BL}m of you.`}</Ss> : u !== "nearby" && l.length === 0 ? <Ss>{hZe}</Ss> : <_Component152 roster={u === "nearby" ? E : l} isActive={De => u === "player" ? De.userId === h?.userId : u === "all" ? A.has(De.userId) : !w.has(De.userId)} onSelect={De => {
+            u === "player" ? p(De.userId === h?.userId ? null : De) : Se(De.userId);
+          }} />}</div><_Component21 style={{
+          marginTop: 0
+        }}>Amount</_Component21><div style={{
+          display: "flex",
+          gap: 10,
+          alignItems: "stretch"
+        }}><div style={{
+            flex: 1,
+            minWidth: 0
+          }}><KT value={x} onChange={R} onEnter={Ke} disabled={z} invalid={ne && !Z} /></div>{u !== "player" ? <div style={{
+            display: "flex",
+            flex: "none",
+            border: `1px solid ${xe.line}`,
+            borderRadius: 10,
+            overflow: "hidden"
+          }}><JJ label="Per Person" active={D === "each"} onClick={() => O("each")} /><JJ label="Split" active={D === "split"} onClick={() => O("split")} /></div> : null}</div><Ss>{Be()}</Ss>{!Z && ne ? <_Component153>{`That is ${jn(ke)}, more than your ${jn(n)} balance.`}</_Component153> : null}{G ? <_Component153>{G}</_Component153> : null}</_Component27></S.Fragment>}</_Component28>;
+}
+function S8(e, t) {
+  return `${e} ${t}${e === 1 ? "" : "s"}`;
+}
+function gZe(e, t, n) {
+  const i = e.get(t);
+  if (!i) {
+    return [];
+  }
+  const r = [];
+  e.forEach((s, o) => {
+    if (o === t) {
+      return;
+    }
+    const a = Math.hypot(s.position.x - i.position.x, s.position.y - i.position.y, s.position.z - i.position.z);
+    a > n || r.push({
+      recipient: {
+        userId: o,
+        username: s.username,
+        image: s.image
+      },
+      distance: a
+    });
+  });
+  return r.sort((s, o) => s.distance - o.distance).map(s => s.recipient);
+}
+function AZe(e, t) {
+  return e.length === t.length && e.every((n, i) => n.userId === t[i]?.userId);
+}
+function _Component153({
+  children: e
+}) {
+  return <span style={{
+    fontSize: 13,
+    fontWeight: 600,
+    color: xe.danger
+  }}>{e}</span>;
+}
+function _Component151({
+  recipients: e,
+  perPerson: t,
+  total: n,
+  mode: i,
+  error: r
+}) {
+  const s = e.length;
+  return <_Component27 style={{
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
+    minHeight: 0
+  }}><div style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      padding: "12px 14px",
+      borderRadius: 10,
+      background: `${xe.danger}1a`,
+      border: `1px solid ${xe.danger}`
+    }}><_Component154 size={26} color={xe.danger} style={{
+        flex: "none"
+      }} /><span style={{
+        fontFamily: oi.heading,
+        fontSize: 16,
+        fontWeight: 700,
+        color: xe.danger,
+        letterSpacing: "0.04em"
+      }}>{`TIPPING ${S8(s, "PLAYER").toUpperCase()} - ${jn(n)}`}</span></div><span style={{
+      fontFamily: oi.body,
+      fontSize: 14,
+      fontWeight: 600,
+      color: xe.txt,
+      lineHeight: 1.5
+    }}>{i === "split" ? `${jn(n)} is split evenly - each player below receives ${jn(t)}.` : `Each player below receives ${jn(t)}, totalling ${jn(n)}.`}</span><_Component21 style={{
+      marginTop: 0
+    }}>{`Recipients (${s})`}</_Component21><_Component152 roster={e} /><span style={{
+      fontSize: 13,
+      fontWeight: 600,
+      color: xe.danger,
+      lineHeight: 1.5
+    }}>{`${x4} This cannot be reversed.`}</span>{r ? <_Component153>{r}</_Component153> : null}</_Component27>;
+}
+function _Component152({
+  roster: e,
+  isActive: t,
+  onSelect: n
+}) {
+  return <div style={{
+    display: "grid",
+    gridTemplateColumns: `repeat(${dZe}, minmax(0, 1fr))`,
+    gap: 8,
+    overflowY: "auto",
+    minHeight: 0,
+    flex: n ? void 0 : 1
+  }}>{e.map(i => {
+      const r = t ? t(i) : !0;
+      const s = <S.Fragment><_Component155 image={i.image} username={i.username} /><span style={{
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap"
+        }}>{i.username}</span></S.Fragment>;
+      return n ? <button type="button" onClick={() => n(i)} style={{
+        ...YJ,
+        background: r ? xe.card : "transparent",
+        borderColor: r ? xe.goldSoft : xe.line,
+        opacity: r ? 1 : .45
+      }} key={i.userId}>{s}</button> : <div style={{
+        ...YJ,
+        background: "transparent",
+        borderColor: xe.line,
+        cursor: "default"
+      }} key={i.userId}>{s}</div>;
+    })}</div>;
+}
+var YJ = {
+  display: "flex",
+  alignItems: "center",
+  gap: 9,
+  minWidth: 0,
+  padding: "8px 10px",
+  borderRadius: 10,
+  background: xe.card,
+  borderWidth: 1,
+  borderStyle: "solid",
+  borderColor: xe.goldSoft,
+  color: xe.txt,
+  fontFamily: oi.body,
+  fontWeight: 600,
+  fontSize: 13,
+  cursor: "pointer",
+  textAlign: "left"
+};
+function _Component155({
+  image: e,
+  username: t
+}) {
+  return <img src={dE(uZe, e)} alt={`${t} avatar`} style={{
+    width: 24,
+    height: 24,
+    borderRadius: "50%",
+    objectFit: "cover",
+    flex: "none"
+  }} />;
+}
+function JJ({
+  label: e,
+  active: t,
+  onClick: n
+}) {
+  return <button type="button" onClick={n} style={{
+    padding: "0 14px",
+    height: "100%",
+    background: t ? xe.goldTint : "transparent",
+    border: "none",
+    color: t ? xe.gold : xe.txtDim,
+    fontFamily: oi.body,
+    fontWeight: 700,
+    fontSize: 12,
+    letterSpacing: "0.04em",
+    cursor: "pointer",
+    whiteSpace: "nowrap"
+  }}>{e}</button>;
+}
+var wD = "Something went wrong. Try again.";
+var pue = "Amounts must be in whole cents.";
+var gue = "Enable two-factor authentication on the site before using the vault.";
+var yZe = {
+  TWO_FACTOR_REQUIRED: gue,
+  INSUFFICIENT_FUNDS: "You don't have that much available.",
+  INSUFFICIENT_VAULT: "You don't have that much in your vault.",
+  ...qce
+};
+function Aue(e) {
+  return `Vault deposits must be at least ${jn(e)}.`;
+}
+function mue(e) {
+  return `Clear your playthrough first. ${jn(e)} remaining.`;
+}
+function vue(e) {
+  return `Deposit at least ${jn(e)} before using the vault.`;
+}
+function EZe(e) {
+  return e.twoFactorEnabled ? e.playthroughRemaining > 0 ? mue(e.playthroughRemaining) : e.depositMet ? null : vue(e.minTotalDeposited) : gue;
+}
+async function bZe(e) {
+  const t = await e.json().catch(() => null);
+  switch (t?.error) {
+    case "BELOW_MINIMUM":
+      return Aue(t.details?.minAmount ?? 0);
+    case "PLAYTHROUGH_REMAINING":
+      return mue(Number(t.details?.remaining ?? 0));
+    case "MIN_DEPOSIT_NOT_MET":
+      return vue(t.details?.minTotalDeposited ?? 0);
+    default:
+      return t?.error && yZe[t.error] || wD;
+  }
+}
+async function CZe() {
+  try {
+    const e = await (await Bl.api.vault.$get()).json();
+    return e.success ? {
+      kind: "ready",
+      status: {
+        vault: Number(e.data.vault),
+        available: Number(e.data.available),
+        twoFactorEnabled: e.data.twoFactorEnabled,
+        minDeposit: e.data.minDeposit,
+        minTotalDeposited: e.data.minTotalDeposited,
+        depositMet: e.data.depositMet,
+        playthroughRemaining: Number(e.data.playthroughRemaining)
+      }
+    } : {
+      kind: "error"
+    };
+  } catch {
+    return {
+      kind: "error"
+    };
+  }
+}
+async function yue(e) {
+  if (!e.ok) {
+    return {
+      ok: !1,
+      error: await bZe(e)
+    };
+  }
+  const t = await e.json();
+  return !t.success || !t.data ? {
+    ok: !1,
+    error: wD
+  } : {
+    ok: !0,
+    vault: Number(t.data.vault),
+    available: Number(t.data.available)
+  };
+}
+async function SZe(e) {
+  const t = vm(e);
+  if (!t) {
+    return {
+      ok: !1,
+      error: pue
+    };
+  }
+  try {
+    return await yue(await Bl.api.vault.deposit.$post({
+      json: {
+        amount: t
+      }
+    }));
+  } catch {
+    return {
+      ok: !1,
+      error: wD
+    };
+  }
+}
+async function wZe(e, t) {
+  const n = vm(e);
+  if (!n) {
+    return {
+      ok: !1,
+      error: pue
+    };
+  }
+  try {
+    return await yue(await Bl.api.vault.withdraw.$post({
+      json: {
+        amount: n,
+        code: t
+      }
+    }));
+  } catch {
+    return {
+      ok: !1,
+      error: wD
+    };
+  }
+}
+var IZe = `${$l.VITE_WEB_APP_URL}/account/security`;
+var _Ze = "Couldn't load your vault. Try again shortly.";
+function _Component164() {
+  const {
+    userId: e
+  } = on();
+  const t = Ai($ => $.players.get(e)?.balance) ?? 0;
+  const [n, i] = (0, de.useState)({
+    kind: "loading"
+  });
+  const [r, s] = (0, de.useState)("deposit");
+  const [o, a] = (0, de.useState)("");
+  const [l, u] = (0, de.useState)("");
+  const [d, h] = (0, de.useState)(!1);
+  const [p, A] = (0, de.useState)(null);
+  (0, de.useEffect)(() => {
+    let $ = !1;
+    CZe().then(te => {
+      $ || i(te);
+    });
+    return () => {
+      $ = !0;
+    };
+  }, []);
+  const y = n.kind === "ready";
+  const E = y ? n.status.vault : 0;
+  const b = y ? n.status.minDeposit : 0;
+  const w = y ? EZe(n.status) : null;
+  const T = !y || r === "deposit" && w !== null;
+  const x = r === "deposit" ? t : E;
+  const R = vm(o);
+  const D = R ? Number(R) : 0;
+  const O = r === "deposit" && R !== null && D < b;
+  const z = R !== null && D > x;
+  const Q = r === "deposit" || l.length === 6;
+  const G = !T && R !== null && !O && !z && Q;
+  function N() {
+    a("");
+    u("");
+    A(null);
+    h(!1);
+    cr.back();
+  }
+  function F($) {
+    s($);
+    a("");
+    u("");
+    A(null);
+  }
+  async function H() {
+    if (!G || d) {
+      return;
+    }
+    h(!0);
+    A(null);
+    const $ = r === "deposit" ? await SZe(o.trim()) : await wZe(o.trim(), l);
+    if (!$.ok) {
+      A($.error);
+      u("");
+      h(!1);
+      return;
+    }
+    Hi(r === "deposit" ? `Deposited ${jn(D)} to your vault` : `Withdrew ${jn(D)} from your vault`, "success", "default");
+    N();
+  }
+  if (n.kind === "loading") {
+    return <_Component28 title="Vault" icon={<KM size={18} />} onClose={N} maxWidth={480}><_Component27 style={{
+        display: "flex",
+        justifyContent: "center",
+        padding: "32px 0"
+      }}><SD /></_Component27></_Component28>;
+  }
+  if (y && !n.status.twoFactorEnabled) {
+    return <_Component28 title="Vault" icon={<KM size={18} />} onClose={N} maxWidth={480} footer={<S.Fragment><span /><Lp><_Component133 variant="primary" onClick={() => window.open(IZe, "_blank", "noopener,noreferrer")}>Enable 2FA</_Component133></Lp></S.Fragment>}><_Component27 style={{
+        display: "flex",
+        justifyContent: "center"
+      }}><span style={{
+          fontSize: 18,
+          fontWeight: 700,
+          color: xe.danger,
+          textAlign: "center"
+        }}>2FA must be enabled to use the Vault</span></_Component27></_Component28>;
+  }
+  const ee = p ?? (n.kind === "error" ? _Ze : null) ?? (O ? Aue(b) : null);
+  return <_Component28 title="Vault" icon={<KM size={18} />} onClose={N} maxWidth={640} banner={y && r === "deposit" ? <TZe status={n.status} /> : void 0} footer={<S.Fragment><Ss>{r === "deposit" ? `Vaulted: ${y ? jn(E) : "..."}` : `Available: ${jn(t)}`}</Ss><Lp><_Component133 variant="primary" onClick={() => {
+        H();
+      }} disabled={!G || d}>{r === "deposit" ? d ? "Depositing..." : "Deposit" : d ? "Withdrawing..." : "Withdraw"}</_Component133></Lp></S.Fragment>}><Bm><Mc icon={<U9 size={17} color={xe.gold} />} label="Deposit" active={r === "deposit"} onClick={() => F("deposit")} /><Mc icon={<_Component156 size={17} color={xe.gold} />} label="Withdraw" active={r === "withdraw"} onClick={() => F("withdraw")} /></Bm><_Component27 style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: 14
+    }}><div><_Component21 style={{
+          margin: 0
+        }}>{r === "deposit" ? "Current Balance" : "Vault Balance"}</_Component21><div style={{
+          fontFamily: oi.body,
+          fontSize: 32,
+          fontWeight: 700,
+          color: xe.txt,
+          margin: "4px 2px 0"
+        }}>{r === "deposit" ? jn(t) : y ? jn(E) : "..."}</div><Ss style={{
+          display: "block",
+          marginTop: 6
+        }}>{r === "deposit" ? "Money in the vault can't be wagered, tipped or withdrawn until you take it back out." : "Money you take out is back in your balance instantly, ready to use."}</Ss></div><_Component21 style={{
+        margin: 0
+      }}>Amount</_Component21><KT value={o} onChange={a} onEnter={() => {
+        H();
+      }} disabled={d || T} autoFocus={!0} invalid={z} />{r === "withdraw" ? <S.Fragment><_Component21 style={{
+          margin: 0
+        }}>2FA Code</_Component21><$ce value={l} onChange={u} onEnter={() => {
+          H();
+        }} disabled={d || T} /></S.Fragment> : null}{ee ? <span style={{
+        fontSize: 13,
+        fontWeight: 600,
+        color: xe.danger
+      }}>{ee}</span> : null}</_Component27></_Component28>;
+}
+function TZe({
+  status: e
+}) {
+  const t = [{
+    met: e.depositMet,
+    label: `Deposit at least ${jn(e.minTotalDeposited)}`
+  }, {
+    met: e.playthroughRemaining <= 0,
+    label: e.playthroughRemaining > 0 ? `Clear your wagering requirement - ${jn(e.playthroughRemaining)} remaining` : "Clear your wagering requirement"
+  }];
+  return <WQ title="Vault Requirements" tint={t.every(n => n.met) ? "met" : "unmet"}>{t.map(n => <VQ icon={n.met ? <WT size={16} color={xe.success} /> : <O9 size={16} color={xe.danger} />} label={n.label} dim={!n.met} key={n.label} />)}</WQ>;
+}
+var mM = null;
+var {
+  emit: XJ,
+  subscribe: BZe
+} = Tm();
+var RS = {
+  get: () => mM,
+  set(e, t) {
+    mM = {
+      type: e,
+      code: t
+    };
+    XJ();
+  },
+  clear() {
+    mM !== null && (mM = null, XJ());
+  },
+  subscribe: BZe
+};
+function Eue() {
+  return L0(RS, RS.get);
+}
+var vM = {
+  type: Ft.OUTFIT,
+  slot: 0
+};
+var {
+  emit: MZe,
+  subscribe: RZe
+} = Tm();
+var I8 = {
+  get: () => vM,
+  set(e, t) {
+    vM.type === e && vM.slot === t || (vM = {
+      type: e,
+      slot: t
+    }, MZe());
+  },
+  subscribe: RZe
+};
+function bue() {
+  return L0(I8, I8.get);
+}
+var Cue = 400;
+var Sue = 480;
+var wue = 2;
+var Iue = 28;
+var kZe = wue / 2 / Math.tan(Iue * Math.PI / 360) * 1.2;
+var DZe = .6;
+var ZJ = 32;
+var PZe = "Idle";
+var yM = new ur();
+var LZe = new ur();
+function NZe(e) {
+  e.traverse(t => {
+    const n = t;
+    n.isSkinnedMesh && (n.boundingBox = new ur());
+  });
+}
+function _ue(e, t) {
+  NZe(e);
+  yM.makeEmpty();
+  if (t.length === 0) {
+    e.updateMatrixWorld(!0);
+    return yM.setFromObject(e, !0).clone();
+  }
+  const n = new UC(e);
+  const i = t.map(s => n.clipAction(s).play());
+  const r = Math.max(...t.map(s => s.duration));
+  for (let s = 0; s < ZJ; s++) {
+    n.setTime(r * s / ZJ);
+    e.updateMatrixWorld(!0);
+    yM.union(LZe.setFromObject(e, !0));
+  }
+  for (const s of i) {
+    s.stop();
+  }
+  n.uncacheRoot(e);
+  return yM.clone();
+}
+function xue(e) {
+  const t = e.getSize(new ve());
+  const n = e.getCenter(new ve());
+  const i = Math.hypot(t.x, t.z);
+  const r = Math.max(t.y, i * (Sue / Cue), .001);
+  return {
+    scale: wue / r,
+    offset: n.negate()
+  };
+}
+function Tue(e) {
+  const t = (0, de.useRef)(null);
+  Ha((n, i) => {
+    e(i);
+    t.current && (t.current.rotation.y += i * DZe);
+  });
+  return t;
+}
+function Bue({
+  spin: e,
+  object: t,
+  fit: n
+}) {
+  return <group ref={e} rotation-y={Math.PI}><group scale={n.scale}><group position={n.offset}><primitive object={t} /></group></group></group>;
+}
+function OZe() {
+  return <Lne gl={{
+    alpha: !0,
+    antialias: !0
+  }} dpr={[1, 2]} camera={{
+    fov: Iue,
+    near: .1,
+    far: 50,
+    position: [0, 0, kZe]
+  }} onCreated={({
+    gl: e,
+    scene: t
+  }) => {
+    e.toneMapping = 4;
+    t.environment = new Vx(e).fromScene(new Nne()).texture;
+  }} style={{
+    width: Cue,
+    height: Sue,
+    background: "transparent"
+  }}><de.Suspense fallback={null}><UZe /></de.Suspense></Lne>;
+}
+function UZe() {
+  const {
+    type: e,
+    slot: t
+  } = bue();
+  const n = UT();
+  oQ();
+  const i = Eue();
+  const r = i && i.type === e ? i.code : kp.equipped(e, t);
+  const s = r ? n.get(r) : null;
+  const o = s && kq(s) ? s : null;
+  const a = s && aN(s) ? s : null;
+  const l = s?.type === Ft.EMOTE ? s : null;
+  const u = kp.equipped(Ft.OUTFIT, 0);
+  const d = u ? n.get(u) : null;
+  const h = d && aN(d) ? d.node : dU;
+  if (o) {
+    return <QZe node={o.node} key={o.node} />;
+  }
+  if (e === Ft.OUTFIT) {
+    const p = a?.node ?? "Outfit_Default";
+    return <_Component157 node={p} emoteCode={null} key={p} />;
+  }
+  return e === Ft.EMOTE && l && r ? <_Component157 node={h} emoteCode={r} key={`${h}:${r}`} /> : null;
+}
+function FZe(e) {
+  const t = e.length - 1;
+  return e.map((n, i) => ({
+    clip: n.clip,
+    times: i === t ? Number.POSITIVE_INFINITY : Lq(n.repeat)
+  }));
+}
+function _Component157({
+  node: e,
+  emoteCode: t
+}) {
+  const n = UT();
+  const {
+    scene: i,
+    animations: r
+  } = rl(rQ);
+  const s = (0, de.useMemo)(() => {
+    const a = die({
+      scene: i,
+      animations: r
+    });
+    A9(a.group, e);
+    const l = t ? n.get(t) : null;
+    const u = l?.type === Ft.EMOTE ? FZe(l.clips) : null;
+    const d = xue(_ue(a.group, r.filter(h => h.name === PZe)));
+    u && a.playEmote(u);
+    return {
+      model: a,
+      fit: d
+    };
+  }, [i, r, e, t, n]);
+  const o = Tue(a => s.model.updateAnimation(a));
+  (0, de.useEffect)(() => () => s.model.dispose(), [s]);
+  return <Bue spin={o} object={s.model.group} fit={s.fit} />;
+}
+function QZe({
+  node: e
+}) {
+  const t = (0, de.useMemo)(() => {
+    const r = ux.build(e);
+    return r ? {
+      ...r,
+      fit: xue(_ue(r.object, r.clips))
+    } : null;
+  }, [e]);
+  const n = (0, de.useMemo)(() => {
+    if (!t || t.clips.length === 0) {
+      return null;
+    }
+    const r = new UC(t.object);
+    for (const s of t.clips) {
+      r.clipAction(s).setLoop(Xw, 1 / 0).play();
+    }
+    return r;
+  }, [t]);
+  const i = Tue(r => n?.update(r));
+  (0, de.useEffect)(() => () => {
+    !t || !n || (n.stopAllAction(), n.uncacheRoot(t.object));
+  }, [n, t]);
+  return t ? <Bue spin={i} object={t.object} fit={t.fit} /> : null;
+}
+var HZe = T4();
+var S_ = 340;
+var EM = 158;
+var bM = 62;
+function $_(e, t, n) {
+  const i = t * Math.PI / 180;
+  return {
+    x: e + n * Math.cos(i),
+    y: e + n * Math.sin(i)
+  };
+}
+function zZe(e, t, n) {
+  const i = $_(e, t, EM);
+  const r = $_(e, n, EM);
+  const s = $_(e, n, bM);
+  const o = $_(e, t, bM);
+  const a = n - t > 180 ? 1 : 0;
+  return [`M ${i.x} ${i.y}`, `A ${EM} ${EM} 0 ${a} 1 ${r.x} ${r.y}`, `L ${s.x} ${s.y}`, `A ${bM} ${bM} 0 ${a} 0 ${o.x} ${o.y}`, "Z"].join(" ");
+}
+function GZe({
+  emoteName: e,
+  onPick: t,
+  onCancel: n
+}) {
+  const i = UT();
+  const [r, s] = (0, de.useState)(-1);
+  const o = nD(n);
+  const a = S_ / 2;
+  const l = 110;
+  (0, de.useEffect)(() => {
+    const u = d => {
+      d.code === "Escape" && (d.preventDefault(), d.stopImmediatePropagation(), n());
+    };
+    window.addEventListener("keydown", u, !0);
+    return () => window.removeEventListener("keydown", u, !0);
+  }, [n]);
+  return (0, HZe.createPortal)(<div {...o} style={{
+    position: "fixed",
+    inset: 0,
+    zIndex: 210,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 18,
+    background: xe.overlay,
+    fontFamily: oi.body
+  }}><span style={{
+      fontSize: 12.5,
+      fontWeight: 600,
+      letterSpacing: "0.08em",
+      color: xe.txtDim
+    }}>{`Choose a wheel slot for ${e}`}</span><svg width={S_} height={S_} viewBox={`0 0 ${S_} ${S_}`} onClick={u => u.stopPropagation()} style={{
+      filter: `drop-shadow(0 6px 18px ${Ye.shadow})`
+    }}>{Array.from({
+        length: Wk
+      }, (u, d) => {
+        const {
+          start: h,
+          end: p
+        } = tie(d);
+        const A = kp.equipped(Ft.EMOTE, d);
+        const y = A ? i.get(A)?.name ?? "" : "";
+        const E = r === d;
+        const b = $_(a, (h + p) / 2, l);
+        return <g onMouseEnter={() => s(d)} onMouseLeave={() => s(-1)} onClick={() => t(d)} style={{
+          cursor: "pointer"
+        }} key={d}><path d={zZe(a, h, p)} fill={E ? Ye.accent : Ye.bg.panel} stroke={Ye.border.hard} strokeWidth={2} /><text x={b.x} y={b.y} textAnchor="middle" dominantBaseline="central" fill={E ? Ye.bg.panelSolid : y ? Ye.text.secondary : Ye.border.stroke} style={{
+            font: `600 14px ${oi.body}`,
+            pointerEvents: "none"
+          }}>{y || "ÔÇö"}</text></g>;
+      })}<circle cx={a} cy={a} r={54} fill={Ye.bg.panelSolid} stroke={Ye.border.stroke} strokeWidth={2} /><text x={a} y={a} textAnchor="middle" dominantBaseline="central" fill={Ye.text.primary} style={{
+        font: `700 12px ${oi.heading}`
+      }}>{r >= 0 ? `SLOT ${r + 1}` : "PICK A SLOT"}</text></svg><span style={{
+      fontSize: 11,
+      fontWeight: 600,
+      letterSpacing: "0.08em",
+      color: xe.txtFaint
+    }}>CLICK OUTSIDE TO CANCEL</span></div>, document.body);
+}
+var WZe = 3;
+var VZe = 92;
+var jZe = [{
+  type: Ft.OUTFIT,
+  icon: _Component158
+}, {
+  type: Ft.HAT,
+  icon: MDe
+}, {
+  type: Ft.MASK,
+  icon: BDe
+}, {
+  type: Ft.NECK,
+  icon: Sre
+}, {
+  type: Ft.WRIST,
+  icon: Bre
+}, {
+  type: Ft.WAIST,
+  icon: DDe
+}, {
+  type: Ft.BACK,
+  icon: PDe
+}, {
+  type: Ft.AURA,
+  icon: SDe
+}, {
+  type: Ft.HELD,
+  icon: kDe
+}, {
+  type: Ft.EMOTE,
+  icon: LDe
+}];
+var $J = e => Mq.indexOf(e.def.rarity);
+function KZe() {
+  const {
+    type: e,
+    slot: t
+  } = bue();
+  const n = UT();
+  oQ();
+  const {
+    room: i
+  } = on();
+  const r = Eue();
+  (0, de.useEffect)(() => () => RS.clear(), []);
+  const s = [...i.state.wagerRanks];
+  const o = n.ofType(e).sort((G, N) => $J(N) - $J(G));
+  const a = e === Ft.EMOTE;
+  const l = kp.equipped(e, t);
+  const u = new Map();
+  for (const [G, N] of Object.entries(kp.getLoadout())) {
+    const F = xq(G);
+    F && F.type === e && u.set(N, F.slot);
+  }
+  const d = r && r.type === e ? r : null;
+  const [h, p] = (0, de.useState)(!1);
+  const A = G => kp.owns(G.code);
+  const y = G => G.def.unlock.kind === "EARNED" ? vye(G.def.unlock, N => s[N]?.numeral ?? String(N)) : "";
+  const E = d?.code ? o.find(G => G.code === d.code) ?? null : null;
+  const [b, w] = _r("wardrobe.hideOwned", !1);
+  const [T, x] = _r("wardrobe.hideUnowned", !1);
+  const R = o.filter(G => A(G) ? !b : !T);
+  const D = n.collections.map(G => ({
+    ...G,
+    items: R.filter(N => N.def.collection === G.key)
+  })).filter(G => G.items.length > 0);
+  const O = G => {
+    RS.clear();
+    p(!1);
+    I8.set(G, 0);
+  };
+  const z = () => {
+    if (E) {
+      if (a) {
+        p(!0);
+        return;
+      }
+      qK(e, t, E.code);
+    }
+  };
+  const Q = () => {
+    if (E) {
+      const G = u.get(E.code);
+      G !== void 0 && $K(e, G);
+    } else {
+      l && $K(e, t);
+    }
+  };
+  return <_Component28 title="Wardrobe" icon={<_Component158 size={18} />} onClose={() => cr.back()} fixedHeight={!0} aside={<OZe />} footer={<YZe selected={d !== null} selectedItem={E} selectedEquipped={E ? u.has(E.code) : l !== null} owned={E ? A(E) : !1} onEquip={z} onUnequip={Q} filters={<S.Fragment><_Component159 label="Hide owned" on={b} onClick={() => w(!b)} /><_Component159 label="Hide unowned" on={T} onClick={() => x(!T)} /></S.Fragment>} />}><Bm>{jZe.map(G => <Mc icon={<G.icon size={16} />} label={p5[G.type]} active={G.type === e} onClick={() => O(G.type)} key={G.type} />)}</Bm><_Component27 style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: 14
+    }}><div style={{
+        display: "flex",
+        alignItems: "baseline",
+        justifyContent: "space-between"
+      }}><_Component21 style={{
+          margin: 0
+        }}>{p5[e]}</_Component21><Ss>{`${o.filter(A).length} / ${o.length} owned`}</Ss></div>{R.length === 0 ? <div style={{
+        flex: 1,
+        minHeight: 200,
+        display: "grid",
+        placeItems: "center",
+        color: xe.txtDim,
+        fontSize: 14,
+        fontWeight: 600
+      }}>{o.length === 0 ? `No ${p5[e].toLowerCase()} yet` : "Nothing matches the filters"}</div> : <div style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 16
+      }}>{D.map((G, N) => <div style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 10
+        }} key={G.key}>{D.length > 1 ? <Ss style={{
+            fontWeight: 700,
+            letterSpacing: "0.08em"
+          }}>{G.name.toUpperCase()}</Ss> : null}<div style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${WZe}, minmax(0, 1fr))`,
+            gap: 10
+          }}>{N === 0 && !a ? <XZe viewing={d !== null && d.code === null} equipped={l === null} onSelect={() => RS.set(e, null)} /> : null}{G.items.map(F => <ZZe item={F} owned={A(F)} lockLabel={y(F)} viewing={d?.code === F.code} equipped={u.has(F.code)} onSelect={() => RS.set(e, F.code)} key={F.code} />)}</div></div>)}</div>}{h && E ? <GZe emoteName={E.def.name} onPick={G => {
+        p(!1);
+        qK(e, G, E.code);
+      }} onCancel={() => p(!1)} /> : null}</_Component27></_Component28>;
+}
+function YZe({
+  selected: e,
+  selectedItem: t,
+  selectedEquipped: n,
+  owned: i,
+  onEquip: r,
+  onUnequip: s,
+  filters: o
+}) {
+  let a = null;
+  e && n ? a = {
+    label: "Unequip",
+    variant: "ghost",
+    onClick: s
+  } : t && i && (a = {
+    label: "Equip",
+    variant: "primary",
+    onClick: r
+  });
+  return <S.Fragment><div style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 18
+    }}>{o}</div>{a ? <Lp><_Component133 variant={a.variant} onClick={a.onClick}>{a.label}</_Component133></Lp> : null}</S.Fragment>;
+}
+function _Component159({
+  label: e,
+  on: t,
+  onClick: n
+}) {
+  return <label style={{
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    cursor: "pointer"
+  }}><_Component149 on={t} onClick={n} /><Ss>{e}</Ss></label>;
+}
+function Mue(e, t) {
+  return e ? xe.goldTint : t ? xe.cardHover : xe.card;
+}
+function JZe(e, t) {
+  return e ? xe.success : t ? xe.danger : xe.line;
+}
+var Rue = {
+  minHeight: VZe,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 6,
+  padding: "12px 10px",
+  borderRadius: 12,
+  fontFamily: oi.body,
+  cursor: "pointer",
+  minWidth: 0
+};
+function XZe({
+  viewing: e,
+  equipped: t,
+  onSelect: n
+}) {
+  const {
+    hovered: i,
+    hoverProps: r
+  } = Ml();
+  return <button type="button" onClick={n} {...r} style={{
+    ...Rue,
+    background: Mue(e, i),
+    border: `1px solid ${e ? xe.gold : t ? xe.success : xe.line}`,
+    color: t ? xe.txt : xe.txtDim,
+    fontSize: 14,
+    fontWeight: 700
+  }}>None</button>;
+}
+function ZZe({
+  item: e,
+  owned: t,
+  lockLabel: n,
+  viewing: i,
+  equipped: r,
+  onSelect: s
+}) {
+  const {
+    hovered: o,
+    hoverProps: a
+  } = Ml();
+  const l = !t && o ? n ? `${n} required` : "Not unlocked yet" : null;
+  return <button type="button" onClick={s} {...a} style={{
+    ...Rue,
+    position: "relative",
+    background: Mue(i, o),
+    border: `1px solid ${JZe(r, !t)}`,
+    color: xe.txt
+  }}><span style={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 6,
+      minWidth: 0,
+      maxWidth: "100%",
+      opacity: l ? .12 : 1
+    }}><span style={{
+        fontSize: 14,
+        fontWeight: 700,
+        lineHeight: 1.2,
+        textAlign: "center",
+        overflowWrap: "anywhere",
+        maxWidth: "100%"
+      }}>{e.def.name}</span><span style={{
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.08em",
+        color: Eye[e.def.rarity]
+      }}>{yye[e.def.rarity].toUpperCase()}</span></span>{l ? <span style={{
+      position: "absolute",
+      inset: 0,
+      display: "grid",
+      placeItems: "center",
+      padding: 10,
+      color: xe.danger,
+      fontSize: 12.5,
+      fontWeight: 700,
+      textAlign: "center",
+      lineHeight: 1.4,
+      pointerEvents: "none"
+    }}>{l}</span> : null}</button>;
+}
+var kue = "Your session expired. Refresh the page and sign in again.";
+var Due = "Couldn't reach the server. Try again shortly.";
+var Pue = "Network error. Try again shortly.";
+async function qZe(e) {
+  try {
+    const t = await (await Bl.api.withdrawals[":id"].cancel.$post({
+      param: {
+        id: e
+      }
+    })).json();
+    if (t.success) {
+      return {
+        ok: !0
+      };
+    }
+    switch (t.error) {
+      case "INVALID_STATUS":
+        return {
+          ok: !1,
+          message: "That withdrawal is already being processed."
+        };
+      case "NOT_FOUND":
+        return {
+          ok: !1,
+          message: "That withdrawal no longer exists."
+        };
+      case "NOT_OWNER":
+        return {
+          ok: !1,
+          message: "That withdrawal isn't yours."
+        };
+      case "UNAUTHORIZED":
+        return {
+          ok: !1,
+          message: kue
+        };
+      case "INTERNAL_ERROR":
+        return {
+          ok: !1,
+          message: Due
+        };
+    }
+    return {
+      ok: !1,
+      message: JSON.stringify(t.error)
+    };
+  } catch {
+    return {
+      ok: !1,
+      message: Pue
+    };
+  }
+}
+async function $Ze(e) {
+  try {
+    const t = await (await Bl.api.withdrawals.$post({
+      json: e
+    })).json();
+    if (t.success) {
+      return {
+        ok: !0,
+        id: t.data.withdrawalRequestId
+      };
+    }
+    switch (t.error) {
+      case "TWO_FACTOR_REQUIRED":
+        return {
+          ok: !1,
+          message: "Enter your 2FA code to withdraw."
+        };
+      case "INVALID_CODE":
+      case "CODE_REUSED":
+      case "TOO_MANY_ATTEMPTS":
+      case "TOTP_UNAVAILABLE":
+        return {
+          ok: !1,
+          message: qce[t.error]
+        };
+      case "BELOW_MINIMUM":
+        return {
+          ok: !1,
+          message: `Minimum withdrawal is $${t.details.minWithdrawalAmount}.`
+        };
+      case "CURRENCY_DISABLED":
+        return {
+          ok: !1,
+          message: `${t.details.currency} withdrawals are paused right now. Pick another currency.`
+        };
+      case "DEPOSIT_ADDRESS":
+        return {
+          ok: !1,
+          message: "That's a deposit address. Withdraw to a wallet you control."
+        };
+      case "INSUFFICIENT_FUNDS":
+        return {
+          ok: !1,
+          message: "You don't have enough available balance."
+        };
+      case "PLAYTHROUGH_REMAINING":
+        return {
+          ok: !1,
+          message: `Wager $${t.details.remaining} more before you can withdraw.`
+        };
+      case "MIN_DEPOSIT_NOT_MET":
+        return {
+          ok: !1,
+          message: `Deposit at least $${t.details.minTotalDeposited} before withdrawing.`
+        };
+      case "WITHDRAW_RESTRICTED":
+        return {
+          ok: !1,
+          message: `${Y4.WITHDRAW_REQUEST}. Contact support.`
+        };
+      case "UNAUTHORIZED":
+        return {
+          ok: !1,
+          message: kue
+        };
+      case "INTERNAL_ERROR":
+        return {
+          ok: !1,
+          message: Due
+        };
+    }
+    return {
+      ok: !1,
+      message: JSON.stringify(t.error)
+    };
+  } catch {
+    return {
+      ok: !1,
+      message: Pue
+    };
+  }
+}
+async function eqe() {
+  try {
+    const e = await (await Bl.api.me["two-factor"].$get()).json();
+    return e.success ? {
+      kind: "ready",
+      enabled: e.data.enabled
+    } : {
+      kind: "error"
+    };
+  } catch {
+    return {
+      kind: "error"
+    };
+  }
+}
+var tqe = "Withdrawals are temporarily unavailable. Check back shortly.";
+var nqe = "Couldn't check your security settings. Try again shortly.";
+function CM({
+  children: e
+}) {
+  return <div style={{
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
+    color: xe.txtDim,
+    marginBottom: 8
+  }}>{e}</div>;
+}
+function _Component163() {
+  const {
+    balance: e
+  } = Ho();
+  const {
+    playthroughRemaining: t,
+    deposited: n,
+    pendingWithdrawals: i
+  } = HC();
+  const r = zT("WITHDRAW_REQUEST");
+  const s = Ai(De => De.config.withdrawal.minTotalDeposited) ?? 0;
+  const o = Ai(De => De.config.deposit.leeway) ?? 0;
+  const a = Ai(De => De.config.withdrawal.disabledCurrencies);
+  const [l, u] = (0, de.useState)(Cp[0].id);
+  const [d, h] = (0, de.useState)(Cp[0].networks[0]);
+  const [p, A] = (0, de.useState)("");
+  const [y, E] = (0, de.useState)("");
+  const [b, w] = (0, de.useState)(!1);
+  const [T, x] = (0, de.useState)("");
+  const [R, D] = (0, de.useState)({
+    kind: "loading"
+  });
+  const [O, z] = (0, de.useState)(!1);
+  const [Q, G] = (0, de.useState)(null);
+  const [N, F] = (0, de.useState)(!1);
+  const H = (0, de.useRef)(!1);
+  (0, de.useEffect)(() => {
+    let De = !1;
+    eqe().then(et => {
+      De || D(et);
+    });
+    return () => {
+      De = !0;
+    };
+  }, []);
+  const ee = a ? [...a] : [];
+  const $ = Cp.every(De => ee.includes(De.id));
+  const te = Cp.find(De => De.id === l) ?? Cp[0];
+  const re = ee.includes(te.id);
+  const ne = te.networks.includes(d) ? d : te.networks[0];
+  const le = Doe(te.symbol ?? "BTCUSDT");
+  const me = te.usdPeg ? 1 : te.symbol ? le?.price ?? null : null;
+  const Me = !te.usdPeg && te.symbol === null;
+  const Je = vm(p);
+  const ke = Je ? Number(Je) : 0;
+  const Z = Je !== null;
+  const se = J1e(ne, y);
+  const X = y.trim() !== "" && !se;
+  const pe = R.kind === "ready" && R.enabled;
+  const ge = R.kind === "ready" && (!R.enabled || T.length === 6);
+  const Se = n >= K4(s, o) && t <= 0 && r === void 0;
+  const Oe = Z && se && !re && Se && ge;
+  const Ke = Z && me !== null && me > 0 ? ke / me : null;
+  const at = () => cr.back();
+  const Fe = async () => {
+    if (!Oe || !Je || H.current) {
+      return;
+    }
+    H.current = !0;
+    z(!0);
+    G(null);
+    const De = await $Ze({
+      payoutCurrency: te.id,
+      network: ne,
+      amount: Je,
+      toAddress: y.trim(),
+      ...(pe ? {
+        code: T
+      } : {})
+    });
+    De.ok ? F(!0) : (G(De.message), x(""), z(!1), H.current = !1);
+  };
+  if (N) {
+    return <_Component28 title="Withdraw" icon={<_Component156 size={18} />} onClose={at} footer={<Lp><_Component133 variant="primary" onClick={at}>Done</_Component133></Lp>}><div style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center",
+        padding: "48px 32px",
+        gap: 16
+      }}><WT size={52} color={xe.gold} /><div style={{
+          fontFamily: oi.heading,
+          fontSize: 16,
+          fontWeight: 700,
+          letterSpacing: "0.04em"
+        }}>Withdrawal request submitted</div><div style={{
+          fontSize: 13,
+          color: xe.txtDim,
+          maxWidth: 380,
+          lineHeight: 1.5
+        }}>Your request is now awaiting approval. You'll be notified once it has been processed.</div></div></_Component28>;
+  }
+  function Be() {
+    return Q ? <Ss style={{
+      color: xe.danger
+    }}>{Q}</Ss> : r ? <Ss style={{
+      color: xe.danger
+    }}>{`${Y4.WITHDRAW_REQUEST} - ${r.reason}`}</Ss> : $ ? <Ss style={{
+      color: xe.danger
+    }}>{tqe}</Ss> : R.kind === "error" ? <Ss style={{
+      color: xe.danger
+    }}>{nqe}</Ss> : <Ss>Available: {jn(e)}</Ss>;
+  }
+  return <_Component28 title="Withdraw" icon={<_Component156 size={18} />} onClose={at} banner={<S.Fragment><Zce title="Pending Withdrawals" noun="withdrawal" entries={[...i]} trailing={De => <_Component160 withdrawalId={De.id} />} /><_Component161 deposited={n} minTotalDeposited={s} depositLeeway={o} playthroughRemaining={t} restricted={r !== void 0} /></S.Fragment>} footer={<S.Fragment>{Be()}<Lp><_Component133 variant="primary" onClick={() => {
+        Fe();
+      }} disabled={!Oe || O}>{O ? "Submitting..." : "Withdraw"}</_Component133></Lp></S.Fragment>}><Jce assets={Cp} selected={te.id} onSelect={De => {
+      u(De.id);
+      h(De.networks[0]);
+      E("");
+    }} /><_Component27 style={re ? {
+      display: "flex",
+      overflowY: "hidden"
+    } : void 0}>{re ? <_Component122 currency={te.name} action="withdraw" /> : <div style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 18
+      }}><_Component21 style={{
+          margin: 0
+        }}>{te.name}</_Component21>{te.networks.length > 1 ? <div><CM>Network</CM><Xce networks={te.networks} selected={ne} onSelect={De => {
+            h(De);
+            E("");
+          }} /></div> : null}<div><CM>Amount</CM><KT value={p} onChange={A} /><div style={{
+            minHeight: 18,
+            marginTop: 6,
+            fontSize: 12.5,
+            color: xe.txtDim,
+            textAlign: "right"
+          }}>{Me ? "No Live Price" : me === null ? "Fetching rate..." : Z ? `Ôëê ${dEe(Ke ?? 0)} ${te.id}` : `1 ${te.id} Ôëê ${jq(me)}`}</div></div><div><CM>Destination Address</CM><label style={{
+            display: "flex",
+            alignItems: "center",
+            height: 56,
+            boxSizing: "border-box",
+            padding: "0 16px",
+            borderRadius: 12,
+            background: xe.card,
+            border: `1px solid ${X ? xe.danger : b ? xe.goldSoft : xe.line}`
+          }}><input type="text" spellCheck={!1} autoComplete="off" placeholder={`Your ${_4(d)} address`} value={y} onChange={De => E(De.target.value.trim())} onFocus={() => w(!0)} onBlur={() => w(!1)} style={{
+              flex: 1,
+              minWidth: 0,
+              background: "none",
+              border: "none",
+              outline: "none",
+              color: xe.txt,
+              fontFamily: oi.body,
+              fontSize: 14,
+              fontWeight: 500
+            }} /></label><div style={{
+            minHeight: 18,
+            marginTop: 6,
+            fontSize: 12,
+            color: xe.danger,
+            textAlign: "right"
+          }}>{X ? `Enter a valid ${_4(d)} address` : ""}</div></div>{pe ? <div><CM>2FA Code</CM><$ce value={T} onChange={x} onEnter={() => {
+            Fe();
+          }} disabled={O} /></div> : null}</div>}</_Component27></_Component28>;
+}
+function _Component160({
+  withdrawalId: e
+}) {
+  const [t, n] = (0, de.useState)(!1);
+  const {
+    hovered: i,
+    hoverProps: r
+  } = Ml();
+  const s = async () => {
+    if (t) {
+      return;
+    }
+    n(!0);
+    const o = await qZe(e);
+    if (!o.ok) {
+      Hi(o.message, "error", "default");
+      n(!1);
+      return;
+    }
+    Hi("Withdrawal cancelled - funds returned to your balance", "success", "default");
+  };
+  return <button type="button" onClick={() => {
+    s();
+  }} disabled={t} {...r} style={{
+    flex: "none",
+    padding: "4px 10px",
+    borderRadius: 8,
+    border: `1px solid ${i && !t ? xe.danger : xe.lineStrong}`,
+    background: "transparent",
+    color: t ? xe.txtDim : i ? xe.danger : xe.txtDim,
+    fontFamily: oi.body,
+    fontSize: 11.5,
+    fontWeight: 600,
+    cursor: t ? "default" : "pointer"
+  }}>{t ? "..." : "Cancel"}</button>;
+}
+function _Component161({
+  deposited: e,
+  minTotalDeposited: t,
+  depositLeeway: n,
+  playthroughRemaining: i,
+  restricted: r
+}) {
+  const s = [{
+    met: e >= K4(t, n),
+    label: `Deposit at least ${jn(t)}`
+  }, {
+    met: i <= 0,
+    label: i > 0 ? `Clear your wagering requirement - ${jn(i)} remaining` : "Clear your wagering requirement"
+  }, {
+    met: !r,
+    label: "No active withdrawal restrictions"
+  }];
+  return <WQ title="Withdrawal Requirements" tint={s.every(o => o.met) ? "met" : "unmet"}>{s.map(o => <VQ icon={o.met ? <WT size={16} color={xe.success} /> : <O9 size={16} color={xe.danger} />} label={o.label} dim={!o.met} key={o.label} />)}</WQ>;
+}
+function oqe(e) {
+  switch (e.kind) {
+    case "escape":
+      return <_Component162 />;
+    case "settings":
+      return <$Xe />;
+    case "deposit":
+      return <JJe />;
+    case "withdraw":
+      return <_Component163 />;
+    case "vault":
+      return <_Component164 />;
+    case "rewards":
+      return <TXe />;
+    case "rooms":
+      return <_Component165 />;
+    case "tipPlayer":
+      return <_Component166 />;
+    case "giveaway":
+      return <_Component167 />;
+    case "wardrobe":
+      return <KZe />;
+    case "game":
+      return e.content;
+    case "tip":
+      return <_Component168 userId={e.userId} username={e.username} />;
+    case "roomRemove":
+      return <BXe userId={e.userId} username={e.username} />;
+    case "restrict":
+      return <_Component169 userId={e.userId} username={e.username} />;
+  }
+}
+function _Component178() {
+  const e = gBe();
+  (0, de.useEffect)(() => {
+    const t = i => {
+      i.code !== "Escape" || i.defaultPrevented || cr.top() !== null && (i.preventDefault(), cr.back());
+    };
+    const n = () => {
+      document.pointerLockElement === null && cr.onPointerLockLost();
+    };
+    window.addEventListener("keydown", t);
+    document.addEventListener("pointerlockchange", n);
+    n();
+    return () => {
+      window.removeEventListener("keydown", t);
+      document.removeEventListener("pointerlockchange", n);
+    };
+  }, []);
+  return e === null ? null : oqe(e);
+}
+var lqe = 15e3;
+var {
+  subscribe: cqe,
+  emit: uqe
+} = Sm();
+var Lue = 0;
+var tX = 0;
+var ML = null;
+function dqe() {
+  ML || Date.now() - tX < lqe || (ML = lue().then(e => {
+    Lue = e.reduce((t, n) => t + n.clients, 0);
+    tX = Date.now();
+    uqe();
+  }).catch(e => console.error("room info lookup failed", e)).finally(() => {
+    ML = null;
+  }));
+}
+function nX() {
+  return Lue;
+}
+function hqe() {
+  return (0, de.useSyncExternalStore)(cqe, nX, nX);
+}
+var iX = 3;
+var rX = 17;
+var fqe = 330;
+var Nue = 38;
+var pqe = 44;
+var gqe = 24;
+function Aqe() {
+  const [e, t] = (0, de.useState)(rX);
+  (0, de.useEffect)(() => {
+    const n = () => {
+      const i = Math.max(window.innerHeight * .13, 140);
+      const r = window.innerHeight - i - pqe - gqe;
+      t(Math.max(1, Math.min(rX, Math.floor(r / Nue))));
+    };
+    n();
+    window.addEventListener("resize", n);
+    return () => window.removeEventListener("resize", n);
+  }, []);
+  return e;
+}
+function _Component180() {
+  return vGe() ? <_Component170 /> : null;
+}
+function _Component170() {
+  const {
+    room: e
+  } = on();
+  Qo();
+  const t = hqe();
+  const n = Aqe();
+  (0, de.useEffect)(() => {
+    dqe();
+  }, [e.roomId]);
+  const i = e.state;
+  const r = Array.from(i.wagerRanks);
+  const s = [];
+  i.players.forEach((l, u) => {
+    const d = hm(l.role);
+    const h = i.whaleId === u;
+    const p = i.highRollerId === u;
+    const A = VU(r, l.wagered);
+    let y = d.badge;
+    let E = 3;
+    d.badge ? E = -d.weight : p ? (y = zre, E = 1) : h && (y = Hre, E = 2);
+    s.push({
+      userId: u,
+      username: l.username,
+      balance: l.balance,
+      statsExcluded: d.statsExcluded,
+      balanceHidden: d.balanceHidden,
+      nameColor: d.nameColor,
+      group: E,
+      rankValue: A ? A.value : -1,
+      badge: y,
+      numeral: !d.badge && A ? A.numeral : null,
+      numeralColor: A?.color ?? Ye.text.primary
+    });
+  });
+  s.sort((l, u) => l.group - u.group || u.rankValue - l.rankValue || u.balance - l.balance || l.username.localeCompare(u.username));
+  const o = s.reduce((l, u) => u.statsExcluded ? l : l + u.balance, 0);
+  const a = Array.from({
+    length: iX * n
+  }, (l, u) => s[u] ?? null);
+  return <div style={{
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "center",
+    paddingTop: "max(13vh, 140px)",
+    zIndex: 90,
+    pointerEvents: "none"
+  }}><div style={{
+      overflow: "hidden",
+      background: Ye.bg.panel,
+      border: `2px solid ${Ye.border.hard}`,
+      display: "flex",
+      flexDirection: "column"
+    }}><div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 24,
+        padding: "10px 14px",
+        borderBottom: `2px solid ${Ye.border.hard}`,
+        fontFamily: oi.heading,
+        fontSize: 12,
+        fontWeight: 700,
+        letterSpacing: "0.14em",
+        textTransform: "uppercase"
+      }}><span style={{
+          flex: 1,
+          color: Ye.accent,
+          whiteSpace: "nowrap"
+        }}>{i.displayName || "Betroom"}</span><span style={{
+          color: Ye.text.primary,
+          whiteSpace: "nowrap"
+        }}>{`Room Value: ${jn(o)}`}</span><span style={{
+          flex: 1,
+          color: Ye.text.muted,
+          whiteSpace: "nowrap",
+          textAlign: "right"
+        }}>{t > 0 ? `${t} Online` : ""}</span></div><div style={{
+        minHeight: 0,
+        overflow: "hidden",
+        display: "grid",
+        gridAutoFlow: "column",
+        gridTemplateColumns: `repeat(${iX}, ${fqe}px)`,
+        gridTemplateRows: `repeat(${n}, ${Nue}px)`
+      }}>{a.map((l, u) => <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "0 14px",
+          borderBottom: u % n === n - 1 ? "none" : `1px solid ${Ye.bg.whitewash}`,
+          borderLeft: u >= n ? `1px solid ${Ye.bg.whitewash}` : "none"
+        }} key={l?.userId ?? `slot-${u}`}>{l ? <_Component171 row={l} /> : null}</div>)}</div></div></div>;
+}
+function _Component171({
+  row: e
+}) {
+  return <S.Fragment><div style={{
+      width: 92,
+      flexShrink: 0
+    }}>{e.badge ? <span style={{
+        background: e.badge.bg,
+        color: e.badge.fg,
+        fontSize: 13,
+        fontWeight: 700,
+        borderRadius: 6,
+        padding: "2px 8px"
+      }}>{e.badge.label}</span> : <span style={{
+        fontSize: 20,
+        fontWeight: 800,
+        color: e.numeralColor,
+        paddingLeft: 4
+      }}>{e.numeral ?? "ÔÇô"}</span>}</div><span style={{
+      flex: 1,
+      fontSize: 16,
+      fontWeight: 600,
+      color: e.nameColor,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis"
+    }}>{e.username}</span>{e.balanceHidden ? null : <span style={{
+      fontSize: 14,
+      color: Ye.text.muted,
+      flexShrink: 0
+    }}>{jn(e.balance)}</span>}</S.Fragment>;
+}
+var Eqe = 320;
+var bqe = 150;
+var Cqe = 58;
+var Sqe = 13;
+function _Component175() {
+  const {
+    open: e,
+    userId: t,
+    segments: n,
+    selected: i,
+    offsetX: r,
+    offsetY: s
+  } = OBe();
+  const o = Ai(l => t ? l.players.get(t)?.username ?? "" : "") ?? "";
+  Yne();
+  if (!e) {
+    return null;
+  }
+  const a = n.map((l, u) => ({
+    key: l.id,
+    label: l.label({
+      userId: t ?? "",
+      username: o
+    }),
+    lit: i === u,
+    range: LBe(u, n.length)
+  }));
+  return <Goe size={Eqe} outerRadius={bqe} innerRadius={Cqe} segments={a} hubLabel={o} hubFontSize={Sqe} offsetX={r} offsetY={s} maxOffset={90} />;
+}
+var Iqe = 5e3;
+var _qe = 7;
+var xqe = 260;
+var Tqe = {
+  info: FPe,
+  success: WT,
+  warning: _Component154,
+  error: LPe
+};
+var Bqe = {
+  mines: _Component33,
+  roulette: $R,
+  raffle: _Component86,
+  coinflip: _9,
+  plinko: $R,
+  blackjack: Tw,
+  baccarat: Tw,
+  giveaway: Cre,
+  cookiejar: Ire,
+  bigwheel: _re,
+  keno: Are,
+  dice: _Component61,
+  limbo: _Component62,
+  rps: _Component79,
+  dragontower: I9,
+  hilo: _Component49,
+  jackpot: QT
+};
+var Mqe = {
+  info: Ye.status.info,
+  success: Ye.status.success,
+  warning: Ye.status.warning,
+  error: Ye.status.error
+};
+function Rqe() {
+  const {
+    room: e
+  } = on();
+  const [t, n] = (0, de.useState)([]);
+  const i = joe();
+  (0, de.useEffect)(() => {
+    let r = 0;
+    const s = l => {
+      if (aQ.get()) {
+        return;
+      }
+      const u = ++r;
+      n(d => [{
+        ...l,
+        id: u
+      }, ...d].slice(0, _qe));
+      window.setTimeout(() => {
+        n(d => d.filter(h => h.id !== u));
+      }, Iqe);
+    };
+    const o = e.onMessage("notifications.toast", s);
+    const a = ABe(s);
+    return () => {
+      o();
+      a();
+    };
+  }, [e]);
+  return i ? null : <div style={{
+    position: "fixed",
+    right: 12,
+    bottom: 12,
+    display: "flex",
+    flexDirection: "column-reverse",
+    alignItems: "flex-end",
+    gap: 10,
+    zIndex: 100,
+    pointerEvents: "none"
+  }}>{t.map(r => {
+      const s = Mqe[r.variant];
+      const _Component172 = r.type === "default" ? Tqe[r.variant] : Bqe[r.type];
+      return <div style={{
+        ...M9(s),
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        maxWidth: "min(380px, calc(100vw - 24px))",
+        padding: "12px 18px",
+        animation: `betroom-toast-in ${xqe}ms cubic-bezier(0.22, 0.8, 0.28, 1)`
+      }} key={r.id}><_Component172 size={22} color={s} style={{
+          flexShrink: 0
+        }} /><div style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+          minWidth: 0
+        }}><span style={{
+            fontFamily: oi.body,
+            fontSize: 14,
+            fontWeight: 600,
+            lineHeight: 1.3,
+            color: Ye.text.primary,
+            wordBreak: "break-word"
+          }}>{r.text}</span>{r.subtext ? <span style={{
+            fontFamily: oi.body,
+            fontSize: 12,
+            fontWeight: 600,
+            lineHeight: 1.3,
+            color: s,
+            wordBreak: "break-word"
+          }}>{r.subtext}</span> : null}</div></div>;
+    })}</div>;
+}
+function _Component181() {
+  const e = joe();
+  return <S.Fragment><_Component173 /><Rqe />{e ? null : <S.Fragment><Jze /><_Component174 /><_Component175 /><_Component176 /><Yze /><Tze /><Qze /><_Component177 /><_Component178 /><_Component179 /><_Component180 /></S.Fragment>}</S.Fragment>;
+}
+function Dqe({
+  room: e,
+  userId: t
+}) {
+  const n = Noe();
+  (0, de.useEffect)(() => {
+    Uo.load();
+  }, []);
+  (0, de.useEffect)(() => Jbe(e), [e]);
+  (0, de.useEffect)(() => {
+    const i = e.onMessage("chat.message", r => d4.push(r));
+    return () => {
+      i();
+      d4.clear();
+    };
+  }, [e]);
+  return <_Component182 value={{
+    room: e,
+    userId: t
+  }}><Ize />{n ? <_Component181 /> : null}</_Component182>;
+}
+var Pqe = /\.(glb|gltf|bin|ktx2|png|jpe?g|webp|hdr|exr|json|wasm|mp3|ogg|wav)(\?|$)/i;
+var Lqe = /-[A-Za-z0-9_-]{8,}(\.[A-Za-z0-9]+)$/;
+function _8(e) {
+  if (!e) {
+    return "";
+  }
+  if (e.startsWith("blob:") || e.startsWith("data:")) {
+    return "embedded texture";
+  }
+  const t = e.split("?")[0] ?? e;
+  return t.slice(t.lastIndexOf("/") + 1).replace(Lqe, "$1");
+}
+function gR(e) {
+  return e <= 0 ? "ÔÇö" : e < 1024 ? `${e} B` : e < 1048576 ? `${Math.round(e / 1024)} KB` : `${(e / 1048576).toFixed(1)} MB`;
+}
+var AR = [];
+var x8 = new Set();
+function Nqe(e) {
+  if (!Pqe.test(e.name) || AR.some(i => i.url === e.name)) {
+    return;
+  }
+  const t = e.encodedBodySize || 0;
+  const n = e.decodedBodySize || t || e.transferSize || 0;
+  AR = [...AR, {
+    url: e.name,
+    label: _8(e.name),
+    bytes: n,
+    wireBytes: t,
+    durationMs: Math.round(e.duration),
+    cached: e.transferSize === 0 && n > 0,
+    compressed: t > 0 && n > t * 1.05
+  }];
+  for (const i of x8) {
+    i();
+  }
+}
+if (typeof PerformanceObserver < "u") {
+  try {
+    new PerformanceObserver(e => {
+      for (const t of e.getEntries()) {
+        Nqe(t);
+      }
+    }).observe({
+      type: "resource",
+      buffered: !0
+    });
+  } catch {}
+}
+function Oqe(e) {
+  x8.add(e);
+  return () => x8.delete(e);
+}
+var sX = () => AR;
+function Uqe() {
+  return (0, de.useSyncExternalStore)(Oqe, sX, sX);
+}
+var Fqe = 15e3;
+var RL = 12;
+var oX = "ui-monospace, SFMono-Regular, Menlo, monospace";
+function Qqe(e) {
+  const [t] = (0, de.useState)(() => performance.now());
+  const [n, i] = (0, de.useState)(t);
+  (0, de.useEffect)(() => {
+    if (!e) {
+      return;
+    }
+    const r = window.setInterval(() => i(performance.now()), 200);
+    return () => window.clearInterval(r);
+  }, [e]);
+  return Math.max(0, n - t);
+}
+function Hqe(e) {
+  return `${(e / 1e3).toFixed(1)}s`;
+}
+function zqe(e, t, n, i) {
+  return e ? "searching" : t ? "compiling" : i > 0 && n < i ? "downloading" : "starting";
+}
+var Gqe = {
+  searching: "Finding you a room",
+  downloading: "Downloading assets",
+  compiling: "Compiling shaders",
+  starting: "Starting the room"
+};
+function Wqe(e, t, n, i, r) {
+  return e === "compiling" ? `${t} / ${n} shaders` : r > 0 ? `${Math.min(i, r)} / ${r} assets` : "";
+}
+function Vqe(e, t) {
+  return e <= 0 ? "0 B" : t > e * 1.05 ? `${gR(e)} wire, ${gR(t)} decoded` : `${gR(e)} uncompressed`;
+}
+function _Component185({
+  searching: e = !1
+} = {}) {
+  const t = Noe();
+  const {
+    progress: n,
+    loaded: i,
+    total: r,
+    item: s,
+    errors: o
+  } = hTe();
+  const a = rze();
+  const l = Uqe();
+  const u = e || !t;
+  const d = Qqe(u);
+  const [h, p] = (0, de.useState)(!1);
+  const {
+    wire: A,
+    decoded: y
+  } = (0, de.useMemo)(() => {
+    let z = 0;
+    let Q = 0;
+    for (const G of l) {
+      z += G.wireBytes || G.bytes;
+      Q += G.bytes;
+    }
+    return {
+      wire: z,
+      decoded: Q
+    };
+  }, [l]);
+  const E = (0, de.useMemo)(() => [...l].sort((z, Q) => Q.durationMs - z.durationMs), [l]);
+  if (!u) {
+    return null;
+  }
+  const b = zqe(e, a.active, i, r);
+  const w = d > Fqe;
+  const T = h || w || o.length > 0;
+  const x = r > 0 ? Math.min(100, Math.round(n)) : 0;
+  const R = a.total > 0 ? Math.round((a.total - a.pending) / a.total * 100) : 0;
+  const D = b === "compiling" ? R : x;
+  const O = Math.max(0, a.total - a.pending);
+  return <div style={{
+    position: "fixed",
+    inset: 0,
+    zIndex: 200,
+    background: "#0c0c10",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 26
+  }}><_Component110 height={110} /><div style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 12
+    }}><SD size={18} /><span style={{
+        fontFamily: oi.heading,
+        fontSize: 14,
+        fontWeight: 700,
+        letterSpacing: "0.16em",
+        textTransform: "uppercase",
+        color: Ye.text.secondary
+      }}>{Gqe[b]}</span></div><div style={{
+      width: "min(460px, calc(100vw - 56px))",
+      visibility: e ? "hidden" : "visible"
+    }}><div style={{
+        height: 10,
+        borderRadius: 6,
+        background: Ye.bg.field,
+        border: `2px solid ${Ye.border.hard}`,
+        overflow: "hidden"
+      }}><div style={{
+          width: `${D}%`,
+          height: "100%",
+          background: b === "compiling" ? Ye.status.info : Ye.accent,
+          boxShadow: "inset 0 -3px 0 rgba(0, 0, 0, 0.25)",
+          transition: "width 200ms ease"
+        }} /></div><div style={{
+        marginTop: 10,
+        display: "flex",
+        justifyContent: "space-between",
+        gap: 12,
+        fontSize: 12,
+        fontWeight: 600,
+        color: Ye.text.muted
+      }}><span>{D}%</span><span style={{
+          fontFamily: oX
+        }}>{Wqe(b, O, a.total, i, r)}</span></div><div style={{
+        marginTop: 12,
+        padding: "10px 12px",
+        borderRadius: 10,
+        background: Ye.bg.field,
+        border: `2px solid ${Ye.border.hard}`,
+        fontFamily: oX,
+        fontSize: 11,
+        lineHeight: 1.7,
+        color: Ye.text.dim
+      }}>{b === "compiling" ? <_Component183 label="compiling" value={`${a.pending} material${a.pending === 1 ? "" : "s"} left`} /> : <_Component183 label="loading" value={_8(s) || "waiting"} />}<_Component183 label="downloaded" value={Vqe(A, y)} /><_Component183 label="elapsed" value={Hqe(d)} />{a.path ? <_Component183 label="compile path" value={a.path} /> : null}{o.length > 0 ? <_Component183 label="errors" value={`${o.length} failed`} danger={!0} /> : null}{w ? <div style={{
+          marginTop: 6,
+          color: Ye.status.warning
+        }}>Taking longer than usual. Details below help support diagnose it.</div> : null}{T && (E.length > 0 || o.length > 0) ? <div style={{
+          marginTop: 8,
+          borderTop: `1px solid ${Ye.border.input}`,
+          paddingTop: 8
+        }}>{E.slice(0, RL).map(z => <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 10
+          }} key={z.url}><span style={{
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap"
+            }}>{z.label}{z.cached ? <span style={{
+                color: Ye.status.success
+              }}> cached</span> : null}{z.compressed ? <span style={{
+                color: Ye.status.info
+              }}> gz</span> : null}</span><span style={{
+              flexShrink: 0,
+              color: Ye.text.muted
+            }}>{gR(z.wireBytes || z.bytes)}, {z.durationMs}ms</span></div>)}{E.length > RL ? <div style={{
+            color: Ye.text.muted
+          }}>+{E.length - RL} more</div> : null}{o.map(z => <div style={{
+            color: Ye.status.error,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap"
+          }} key={z}>failed: {_8(z)}</div>)}</div> : null}</div><Kqe open={h} onToggle={() => p(z => !z)} count={l.length} /></div><Yqe /></div>;
+}
+function _Component183({
+  label: e,
+  value: t,
+  danger: n = !1
+}) {
+  return <div style={{
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 10
+  }}><span style={{
+      color: Ye.text.muted
+    }}>{e}</span><span style={{
+      color: n ? Ye.status.error : Ye.text.secondary,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap"
+    }}>{t}</span></div>;
+}
+function Kqe({
+  open: e,
+  onToggle: t,
+  count: n
+}) {
+  const {
+    hovered: i,
+    hoverProps: r
+  } = Ml();
+  return <button {...r} type="button" onClick={t} style={{
+    marginTop: 8,
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "4px 2px",
+    background: "transparent",
+    border: "none",
+    color: i ? Ye.accent : Ye.text.muted,
+    fontFamily: oi.heading,
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: "0.1em",
+    textTransform: "uppercase",
+    cursor: "pointer"
+  }}>{e ? <HDe size={10} /> : <QDe size={10} />}{e ? "Hide" : "Show"} asset details ({n})</button>;
+}
+function Yqe() {
+  const {
+    hovered: e,
+    hoverProps: t
+  } = Ml();
+  return <a {...t} href={Xq} target="_blank" rel="noopener noreferrer" style={{
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "9px 16px",
+    borderRadius: 10,
+    background: e ? Ye.bg.hover : "transparent",
+    border: `2px solid ${e ? Ye.accent : Ye.border.hard}`,
+    color: e ? Ye.accent : Ye.text.muted,
+    fontFamily: oi.heading,
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: "0.1em",
+    textTransform: "uppercase",
+    textDecoration: "none",
+    cursor: "pointer",
+    transition: "background 120ms ease, border-color 120ms ease, color 120ms ease"
+  }}><_Component184 size={16} />Need help? Contact support</a>;
+}
+function ID({
+  title: e,
+  body: t,
+  onRetry: n,
+  retryLabel: i = "Try again",
+  details: r
+}) {
+  return <div style={{
+    position: "fixed",
+    inset: 0,
+    zIndex: 400,
+    overflowY: "auto",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 18,
+    padding: "40px 24px",
+    background: xe.ink,
+    color: xe.txt,
+    fontFamily: oi.body,
+    textAlign: "center"
+  }}><_Component110 height={84} /><h1 style={{
+      margin: 0,
+      fontFamily: oi.heading,
+      fontSize: 20,
+      fontWeight: 700,
+      letterSpacing: "0.08em",
+      textTransform: "uppercase"
+    }}>{e}</h1><p style={{
+      margin: 0,
+      fontSize: 14,
+      color: xe.txtDim,
+      maxWidth: 380
+    }}>{t}</p><div style={{
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 10,
+      justifyContent: "center",
+      marginTop: 6
+    }}>{n ? <button onClick={n} style={{
+        padding: "11px 24px",
+        borderRadius: 10,
+        border: `2px solid ${xe.gold}`,
+        background: xe.goldTint,
+        color: xe.gold,
+        fontFamily: oi.heading,
+        fontSize: 14,
+        fontWeight: 700,
+        letterSpacing: "0.06em",
+        textTransform: "uppercase",
+        cursor: "pointer"
+      }}>{i}</button> : null}<a href={Xq} target="_blank" rel="noopener noreferrer" style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "11px 20px",
+        borderRadius: 10,
+        border: `2px solid ${xe.line}`,
+        color: xe.txtDim,
+        fontFamily: oi.heading,
+        fontSize: 13,
+        fontWeight: 700,
+        letterSpacing: "0.06em",
+        textTransform: "uppercase",
+        textDecoration: "none"
+      }}><_Component184 size={16} />Contact support</a></div>{r ? <Jqe details={r} /> : null}</div>;
+}
+function Jqe({
+  details: e
+}) {
+  const {
+    copied: t,
+    copy: n
+  } = jQ(e);
+  return <div style={{
+    width: "min(640px, 100%)",
+    marginTop: 10,
+    textAlign: "left"
+  }}><div style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+      marginBottom: 6
+    }}><span style={{
+        fontFamily: oi.heading,
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.12em",
+        textTransform: "uppercase",
+        color: xe.txtDim
+      }}>Send this to support</span><button onClick={() => {
+        n();
+      }} style={{
+        padding: "5px 12px",
+        borderRadius: 8,
+        border: `1px solid ${t ? xe.gold : xe.line}`,
+        background: "transparent",
+        color: t ? xe.gold : xe.txtDim,
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.06em",
+        textTransform: "uppercase",
+        cursor: "pointer"
+      }}>{t ? "Copied" : "Copy"}</button></div><pre style={{
+      margin: 0,
+      maxHeight: 220,
+      overflow: "auto",
+      padding: 12,
+      borderRadius: 10,
+      border: `1px solid ${xe.line}`,
+      background: xe.card,
+      color: xe.txt,
+      fontSize: 11.5,
+      lineHeight: 1.5,
+      whiteSpace: "pre-wrap",
+      wordBreak: "break-word",
+      userSelect: "text"
+    }}>{e}</pre></div>;
+}
+var ZQ = "Join a public room";
+var Xqe = {
+  title: "Every room is full",
+  body: "There is no space right now. Try again in a moment."
+};
+var Zqe = {
+  title: "Couldn't reach the rooms",
+  body: "The server didn't return a room list. Check your connection and try again."
+};
+var qqe = {
+  title: Dp.KICKED_BY_ADMIN,
+  body: "You were removed from the room. You can rejoin, but keep it clean."
+};
+var Oue = {
+  title: "Removed from that room",
+  body: "You were removed and can't rejoin that room right now.",
+  retryLabel: ZQ
+};
+var $qe = {
+  title: "That room closed",
+  body: "The player who owns this room left, so it shut down.",
+  retryLabel: ZQ
+};
+var e$e = {
+  title: "That invite has expired",
+  body: "No room matches that code - it may have closed since the link was shared.",
+  retryLabel: ZQ
+};
+var t$e = {
+  title: "No rooms available",
+  body: "The rooms we found are no longer accepting players. Try again in a moment."
+};
+var aX = {
+  ROOM_FULL: {
+    title: "That room is full",
+    body: "Someone took the last seat. Pick another room."
+  },
+  ROOM_UNAVAILABLE: {
+    title: "Room no longer available",
+    body: "That room closed or restarted. Pick another one."
+  },
+  REQUIREMENTS_NOT_MET: {
+    title: "You can't join that room",
+    body: "This room is only open to players who meet its balance and wager rank requirements."
+  },
+  BANNED: {
+    title: "Account banned",
+    body: "This account can't join. Contact support if you think that's a mistake."
+  },
+  GAME_BANNED: {
+    title: "Banned from the game",
+    body: "This account can't join right now. Contact support if you think that's a mistake."
+  },
+  ROOM_BANNED: Oue,
+  TICKET_INVALID: {
+    title: "Join pass expired",
+    body: "Your pass expired before you connected. Retry to get a fresh one."
+  },
+  CAPTCHA_BLOCKED: {
+    title: "Verification blocked",
+    body: "An ad blocker or privacy extension is stopping our security check from loading. Disable it for this site, then reload."
+  },
+  CAPTCHA_FAILED: {
+    title: "Verification failed",
+    body: "The security check didn't pass. Retry to get a new challenge, and disable any VPN or ad blocker that might be interfering."
+  },
+  NOT_AUTHENTICATED: {
+    title: "Session expired",
+    body: "You need to sign in again before joining. Refresh the page to continue."
+  },
+  SERVER_ERROR: {
+    title: "Can't reach the server",
+    body: "We couldn't get a join pass. The server may be restarting - try again in a moment."
+  },
+  NETWORK: {
+    title: "Connection lost",
+    body: "We couldn't reach betroom. Check your connection and try again."
+  },
+  JOIN_TIMEOUT: {
+    title: "Joining timed out",
+    body: "We connected but the room never finished seating you. Try again."
+  },
+  UNKNOWN: {
+    title: "Couldn't join",
+    body: "Something went wrong while joining. Try again in a moment."
+  }
+};
+var n$e = new Set(["REQUIREMENTS_NOT_MET", "GAME_BANNED"]);
+function SM(e, t) {
+  const n = n$e.has(t) ? Gbe(e) : null;
+  return n ? {
+    ...aX[t],
+    body: n
+  } : aX[t];
+}
+var i$e = {
+  [Bbe]: qqe,
+  [Mbe]: $qe,
+  [Rbe]: Oue
+};
+function _Component189({
+  session: e
+}) {
+  const [t, n] = (0, de.useState)(null);
+  const [i, r] = (0, de.useState)(null);
+  const [s, o] = (0, de.useState)(0);
+  const a = (0, de.useRef)(null);
+  const l = (0, de.useCallback)((h, p) => {
+    h.onLeave(A => {
+      const y = i$e[A];
+      if (y) {
+        a.current = null;
+        m5();
+        n(null);
+        r(y);
+        return;
+      }
+      kbe.has(A) || location.reload();
+    });
+    h.onDrop(() => Hi("Connection lost, reconnecting...", "warning", "default"));
+    h.onReconnect(() => Hi("Reconnected", "success", "default"));
+    Fbe(p);
+    a.current = h;
+    n(h);
+  }, []);
+  const u = (0, de.useCallback)(async () => {
+    const h = a.current;
+    if (h) {
+      a.current = null;
+      n(null);
+      try {
+        await h.leave(!0);
+      } catch {
+        r(null);
+      }
+    }
+  }, []);
+  const d = (0, de.useCallback)(async h => {
+    if (a.current?.roomId === h) {
+      cr.closeKind("rooms");
+      return;
+    }
+    await u();
+    try {
+      l(await IB(h, e.userId), h);
+    } catch (p) {
+      m5();
+      r(SM(p, _B(p)));
+    } finally {
+      cr.closeKind("rooms");
+    }
+  }, [l, u, e.userId]);
+  (0, de.useEffect)(() => {
+    HJ(d);
+    return () => HJ(null);
+  }, [d]);
+  (0, de.useEffect)(() => {
+    let h = !1;
+    async function p() {
+      const A = zXe();
+      if (A) {
+        try {
+          const T = await GXe(A);
+          const x = await IB(T, e.userId);
+          VJ();
+          h || l(x, T);
+          return;
+        } catch (T) {
+          if (h) {
+            return;
+          }
+          const x = _B(T);
+          T instanceof pR || v5(x) ? r(e$e) : r(SM(T, x));
+          return;
+        }
+      }
+      const y = Ube();
+      if (y) {
+        try {
+          const T = await IB(y, e.userId);
+          h || l(T, y);
+          return;
+        } catch (T) {
+          const x = _B(T);
+          m5();
+          if (!v5(x) && x !== "NETWORK") {
+            h || r(SM(T, x));
+            return;
+          }
+        }
+      }
+      let E;
+      try {
+        E = LXe(await lue(), hm(e.role).bypassesLimits);
+      } catch {
+        h || r(Zqe);
+        return;
+      }
+      let b = 0;
+      let w = 0;
+      for (const T of E) {
+        if (h) {
+          return;
+        }
+        try {
+          const x = await IB(T.roomId, e.userId);
+          h || l(x, T.roomId);
+          return;
+        } catch (x) {
+          const R = _B(x);
+          if (!v5(R)) {
+            h || r(SM(x, R));
+            return;
+          }
+          b++;
+          R === "ROOM_FULL" && w++;
+        }
+      }
+      h || r(b > w ? t$e : Xqe);
+    }
+    p();
+    return () => {
+      h = !0;
+    };
+  }, [l, e.userId, e.role, s]);
+  return i ? <ID title={i.title} body={i.body} retryLabel={i.retryLabel} onRetry={() => {
+    VJ();
+    r(null);
+    o(h => h + 1);
+  }} /> : <S.Fragment>{t ? <Dqe room={t} userId={e.userId} /> : null}<_Component185 searching={!t} /></S.Fragment>;
+}
+var lX = {
+  own: {
+    title: "The game couldn't load",
+    body: "Something broke while starting the room. Reload to try again - if it keeps happening, send the details below to support."
+  },
+  domMutation: {
+    title: "A browser extension broke the page",
+    body: "An extension - usually a page translator, ad blocker or VPN - edited the game's page while it was running, which stopped it rendering. Reload to try again, and if it keeps happening turn that extension off for betroom.gg."
+  }
+};
+var _Component190 = class extends de.Component {
+  constructor(...e) {
+    super(...e);
+    this.state = {
+      details: null,
+      domMutation: !1
+    };
+  }
+  static getDerivedStateFromError(e) {
+    return {
+      details: Zx(e, "render"),
+      domMutation: N5e(e)
+    };
+  }
+  componentDidCatch(e, t) {
+    console.error("fatal render error", e, t.componentStack);
+    Rw(e, "render", t.componentStack ?? void 0);
+  }
+  render() {
+    if (this.state.details === null) {
+      return this.props.children;
+    }
+    const {
+      title: e,
+      body: t
+    } = this.state.domMutation ? lX.domMutation : lX.own;
+    return <ID title={e} body={t} onRetry={() => window.location.reload()} details={this.state.details} />;
+  }
+};
+var _Component187 = (0, de.forwardRef)(({
+  as: _Component186 = "div",
+  ...t
+}, n) => <_Component186 {...t} ref={n} />);
+var a$e = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+var l$e = "cf-turnstile-script";
+var Uue = "onloadTurnstileCallback";
+var Fue = e => !!document.getElementById(e);
+var c$e = ({
+  render: e = "explicit",
+  onLoadCallbackName: t = Uue,
+  scriptOptions: {
+    nonce: n = "",
+    defer: i = !0,
+    async: r = !0,
+    id: s = "",
+    appendTo: o,
+    onError: a,
+    crossOrigin: l = ""
+  } = {}
+}) => {
+  let u = s || "cf-turnstile-script";
+  if (Fue(u)) {
+    return;
+  }
+  let d = document.createElement("script");
+  d.id = u;
+  d.src = `${a$e}?onload=${t}&render=${e}`;
+  !document.querySelector(`script[src="${d.src}"]`) && (d.defer = !!i, d.async = !!r, n && d.setAttribute("nonce", n), l && (d.crossOrigin = l), a && (d.onerror = a, delete window[t]), (o === "body" ? document.body : document.getElementsByTagName("head")[0]).appendChild(d));
+};
+var kL = {
+  normal: {
+    width: 300,
+    height: 65
+  },
+  compact: {
+    width: 150,
+    height: 140
+  },
+  invisible: {
+    width: 0,
+    height: 0,
+    overflow: "hidden"
+  },
+  flexible: {
+    minWidth: 300,
+    width: "100%",
+    height: 65
+  }
+};
+function u$e(e) {
+  if (e !== "invisible") {
+    return e;
+  }
+}
+function d$e(e = l$e) {
+  let [t, n] = (0, de.useState)(!1);
+  (0, de.useEffect)(() => {
+    let i = () => {
+      Fue(e) && n(!0);
+    };
+    let r = new MutationObserver(i);
+    r.observe(document, {
+      childList: !0,
+      subtree: !0
+    });
+    i();
+    return () => {
+      r.disconnect();
+    };
+  }, [e]);
+  return t;
+}
+var Tx = "unloaded";
+var Que;
+var h$e = new Promise((e, t) => {
+  Que = {
+    resolve: e,
+    reject: t
+  };
+  Tx === "ready" && e(void 0);
+});
+var cX = (e = Uue) => {
+  Tx === "unloaded" && (Tx = "loading", window[e] = () => {
+    Que.resolve();
+    Tx = "ready";
+    delete window[e];
+  });
+  return h$e;
+};
+var Hue = (0, de.forwardRef)((e, t) => {
+  let {
+    scriptOptions: n,
+    options: i = {},
+    siteKey: r,
+    onWidgetLoad: s,
+    onSuccess: o,
+    onExpire: a,
+    onError: l,
+    onBeforeInteractive: u,
+    onAfterInteractive: d,
+    onUnsupported: h,
+    onTimeout: p,
+    onLoadScript: A,
+    id: y,
+    style: E,
+    as: b = "div",
+    injectScript: w = !0,
+    rerenderOnCallbackChange: T = !1,
+    ...x
+  } = e;
+  let R = i.size;
+  let D = (0, de.useMemo)(() => {
+    if (R === void 0) {
+      return {};
+    }
+    let ke = kL[R];
+    return i.appearance === "interaction-only" ? {
+      ...ke,
+      height: "auto"
+    } : ke;
+  }, [R, i.appearance]);
+  let O = i.execution === "execute" ? kL.invisible : D;
+  let [z, Q] = (0, de.useState)(O);
+  let G = (0, de.useRef)(null);
+  let [N, F] = (0, de.useState)(!1);
+  let H = (0, de.useRef)(void 0);
+  let ee = (0, de.useRef)(!1);
+  let $ = y || "cf-turnstile";
+  let te = (0, de.useRef)({
+    onSuccess: o,
+    onError: l,
+    onExpire: a,
+    onBeforeInteractive: u,
+    onAfterInteractive: d,
+    onUnsupported: h,
+    onTimeout: p
+  });
+  (0, de.useEffect)(() => {
+    T || (te.current = {
+      onSuccess: o,
+      onError: l,
+      onExpire: a,
+      onBeforeInteractive: u,
+      onAfterInteractive: d,
+      onUnsupported: h,
+      onTimeout: p
+    });
+  });
+  let re = n?.id || "cf-turnstile-script";
+  let ne = d$e(re);
+  let le = n?.onLoadCallbackName || "onloadTurnstileCallback";
+  let me = (0, de.useMemo)(() => ({
+    sitekey: r,
+    action: i.action,
+    cData: i.cData,
+    theme: i.theme || "auto",
+    language: i.language || "auto",
+    tabindex: i.tabIndex,
+    "response-field": i.responseField,
+    "response-field-name": i.responseFieldName,
+    size: u$e(R),
+    retry: i.retry || "auto",
+    "retry-interval": i.retryInterval || 8e3,
+    "refresh-expired": i.refreshExpired || "auto",
+    "refresh-timeout": i.refreshTimeout || "auto",
+    execution: i.execution || "render",
+    appearance: i.appearance || "always",
+    "feedback-enabled": i.feedbackEnabled ?? !0,
+    "offlabel-show-privacy": i.offlabelShowPrivacy ?? !0,
+    "offlabel-show-help": i.offlabelShowHelp ?? !0,
+    callback: ke => {
+      ee.current = !0;
+      T ? o?.(ke) : te.current.onSuccess?.(ke);
+    },
+    "error-callback": T ? l : (...ke) => te.current.onError?.(...ke),
+    "expired-callback": T ? a : (...ke) => te.current.onExpire?.(...ke),
+    "before-interactive-callback": T ? u : (...ke) => te.current.onBeforeInteractive?.(...ke),
+    "after-interactive-callback": T ? d : (...ke) => te.current.onAfterInteractive?.(...ke),
+    "unsupported-callback": T ? h : (...ke) => te.current.onUnsupported?.(...ke),
+    "timeout-callback": T ? p : (...ke) => te.current.onTimeout?.(...ke)
+  }), [i.action, i.appearance, i.cData, i.execution, i.language, i.refreshExpired, i.responseField, i.responseFieldName, i.retry, i.retryInterval, i.tabIndex, i.theme, i.feedbackEnabled, i.offlabelShowPrivacy, i.offlabelShowHelp, i.refreshTimeout, r, R, T, T ? o : null, T ? l : null, T ? a : null, T ? u : null, T ? d : null, T ? h : null, T ? p : null]);
+  let Me = (0, de.useCallback)(() => typeof window < "u" && !!window.turnstile, []);
+  let Je = (0, de.useCallback)((ke, Z) => {
+    try {
+      return window.turnstile.render(ke, Z);
+    } catch (se) {
+      let X = T ? l : te.current.onError;
+      X ? X(se instanceof Error ? se.message : String(se)) : console.error(se);
+      return;
+    }
+  }, [T, T ? l : null]);
+  (0, de.useEffect)(function () {
+    w && !N && (cX(le), c$e({
+      onLoadCallbackName: le,
+      scriptOptions: {
+        ...n,
+        id: re
+      }
+    }));
+  }, [w, N, n, re, le]);
+  (0, de.useEffect)(function () {
+    Tx !== "ready" && cX(le).then(() => F(!0)).catch(console.error);
+  }, [le]);
+  (0, de.useEffect)(function () {
+    if (!G.current || !N) {
+      return;
+    }
+    let ke = !1;
+    (async () => {
+      if (ke || !G.current) {
+        return;
+      }
+      let Z = Je(G.current, me);
+      H.current = Z;
+      Q(O);
+      H.current && s?.(H.current);
+    })();
+    return () => {
+      ke = !0;
+      H.current && (window.turnstile.remove(H.current), ee.current = !1);
+    };
+  }, [$, N, me, O, Je]);
+  (0, de.useImperativeHandle)(t, () => {
+    let {
+      turnstile: ke
+    } = window;
+    return {
+      getResponse() {
+        if (!ke?.getResponse || !H.current || !Me()) {
+          console.warn("Turnstile has not been loaded");
+          return;
+        }
+        return ke.getResponse(H.current);
+      },
+      async getResponsePromise(Z = 3e4, se = 100) {
+        return new Promise((X, pe) => {
+          let ge;
+          let Se = async () => {
+            if (ee.current && window.turnstile && H.current) {
+              try {
+                let Oe = window.turnstile.getResponse(H.current);
+                ge && clearTimeout(ge);
+                return Oe ? X(Oe) : pe(Error("No response received"));
+              } catch (Oe) {
+                ge && clearTimeout(ge);
+                console.warn("Failed to get response", Oe);
+                return pe(Error("Failed to get response"));
+              }
+            }
+            ge ||= setTimeout(() => {
+              ge && clearTimeout(ge);
+              pe(Error("Timeout"));
+            }, Z);
+            await new Promise(Oe => setTimeout(Oe, se));
+            await Se();
+          };
+          Se();
+        });
+      },
+      reset() {
+        if (!ke?.reset || !H.current || !Me()) {
+          console.warn("Turnstile has not been loaded");
+          return;
+        }
+        Q(O);
+        try {
+          ee.current = !1;
+          ke.reset(H.current);
+        } catch (Z) {
+          console.warn(`Failed to reset Turnstile widget ${H.current}`, Z);
+        }
+      },
+      remove() {
+        if (!ke?.remove || !H.current || !Me()) {
+          console.warn("Turnstile has not been loaded");
+          return;
+        }
+        Q(kL.invisible);
+        ee.current = !1;
+        ke.remove(H.current);
+        H.current = null;
+      },
+      render() {
+        if (!ke?.render || !G.current || !Me() || H.current) {
+          console.warn("Turnstile has not been loaded or container not found");
+          return;
+        }
+        let Z = Je(G.current, me);
+        H.current = Z;
+        H.current && s?.(H.current);
+        Q(O);
+        return Z;
+      },
+      execute() {
+        if (i.execution !== "execute") {
+          console.warn('Execution mode is not set to "execute"');
+          return;
+        }
+        if (!ke?.execute || !G.current || !H.current || !Me()) {
+          console.warn("Turnstile has not been loaded or container not found");
+          return;
+        }
+        ke.execute(G.current);
+        Q(D);
+      },
+      isExpired() {
+        return !ke?.isExpired || !H.current || !Me() ? (console.warn("Turnstile has not been loaded"), !1) : ke.isExpired(H.current);
+      }
+    };
+  }, [H, i.execution, me, G, Me, Je, N, s, O, D]);
+  (0, de.useEffect)(() => {
+    if (N || !ne) {
+      return;
+    }
+    if (window.turnstile) {
+      F(!0);
+      return;
+    }
+    let ke = setInterval(() => {
+      window.turnstile && (F(!0), clearInterval(ke));
+    }, 50);
+    return () => {
+      clearInterval(ke);
+    };
+  }, [N, ne]);
+  (0, de.useEffect)(() => {
+    Q(O);
+  }, [O]);
+  (0, de.useEffect)(() => {
+    !ne || typeof A != "function" || A();
+  }, [ne]);
+  return <_Component187 ref={G} as={b} id={$} style={{
+    ...z,
+    ...E
+  }} {...x} />;
+});
+Hue.displayName = "Turnstile";
+function _Component188() {
+  const e = (0, de.useRef)(void 0);
+  const t = pbe();
+  (0, de.useEffect)(() => {
+    xz(e.current);
+    return () => xz(void 0);
+  });
+  return <div style={{
+    position: "fixed",
+    inset: 0,
+    zIndex: 201,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 150,
+    pointerEvents: "none",
+    visibility: t ? "visible" : "hidden"
+  }}><Hue ref={e} siteKey={$l.VITE_TURNSTILE_SITE_KEY} options={{
+      theme: "dark",
+      appearance: "interaction-only",
+      refreshExpired: "never"
+    }} onSuccess={wbe} onExpire={Ibe} onBeforeInteractive={_be} onError={n => {
+      console.warn("[turnstile] challenge failed", n);
+      Tz("CAPTCHA_BLOCKED");
+    }} onUnsupported={() => Tz("CAPTCHA_UNSUPPORTED")} style={{
+      pointerEvents: "auto"
+    }} /></div>;
+}
+var zue = "ui-root";
+var DL = null;
+function T8(e, t, n) {
+  if (DL) {
+    return;
+  }
+  const i = document.createElement("div");
+  i.id = "fatal-root";
+  document.body.appendChild(i);
+  DL = (0, B8.createRoot)(i);
+  DL.render(<ID title={e} body={t} onRetry={() => window.location.reload()} details={n} />);
+}
+function p$e() {
+  const e = (t, n) => {
+    Rw(t, n);
+    if (Qre(t) !== "own" || c4.get()) {
+      console.error(`non-fatal ${n}`, t);
+      return;
+    }
+    T8("The game couldn't load", "Something broke while starting the game. Reload to try again - if it keeps happening, send the details below to support.", Zx(t, n));
+  };
+  window.addEventListener("error", t => {
+    Fre(t.filename) || e(t.error ?? t.message, "window.error");
+  });
+  window.addEventListener("unhandledrejection", t => e(t.reason, "unhandledrejection"));
+  window.addEventListener("webglcontextlost", t => {
+    const n = t.target;
+    !(n instanceof HTMLCanvasElement) || !n.closest(`#${zue}`) || (t.preventDefault(), Rw(new Error("WebGL context lost"), "webglcontextlost"), T8("Graphics stopped responding", "Your browser lost the 3D graphics context. This is usually a driver or memory issue - reload to try again.", Zx("WebGL context lost", "webglcontextlost")));
+  }, !0);
+}
+var Gue = "betroom.forceUnsupported";
+var g$e = {
+  "no-mouse": {
+    title: "Desktop only",
+    body: "Betroom needs a mouse and keyboard. Phones and tablets aren't supported yet - open this on a PC or laptop to play. If you are on a laptop, continue below."
+  },
+  "no-pointer-lock": {
+    title: "Desktop only",
+    body: "Your browser doesn't support mouse look, which Betroom needs to play. Try the latest Chrome, Edge or Firefox on a PC or laptop."
+  },
+  "no-webgl": {
+    title: "3D graphics unavailable",
+    body: "Your browser couldn't start the 3D graphics Betroom needs. This usually means hardware acceleration is turned off in your browser settings, a privacy extension is blocking WebGL, graphics drivers are missing or out of date, or you're on a remote desktop or virtual machine. Reloading won't help until that's fixed."
+  }
+};
+function uX(e) {
+  e === "no-webgl" && Rw(new Error("WebGL context unavailable"), "device-support");
+  const t = document.createElement("div");
+  t.id = "unsupported-root";
+  document.body.appendChild(t);
+  const {
+    title: n,
+    body: i
+  } = g$e[e];
+  (0, B8.createRoot)(t).render(<ID title={n} body={i} onRetry={e === "no-mouse" ? () => {
+    localStorage.setItem(Gue, "1");
+    window.location.reload();
+  } : void 0} retryLabel="I have a mouse - continue" details={e === "no-webgl" ? Zx("WebGL context unavailable", "device-support") : void 0} />);
+}
+async function A$e() {
+  p$e();
+  const e = localStorage.getItem(Gue) === "1";
+  let t;
+  e ? t = Hoe() ? null : "no-webgl" : t = wze();
+  if (t) {
+    uX(t);
+    return;
+  }
+  const n = B5e();
+  try {
+    const i = await Obe();
+    await n;
+    if (!e && Mw().isMobile) {
+      uX("no-mouse");
+      return;
+    }
+    const r = document.createElement("div");
+    r.id = zue;
+    document.body.appendChild(r);
+    (0, B8.createRoot)(r).render(<_Component190><_Component188 /><_Component189 session={i} /></_Component190>);
+  } catch (i) {
+    if (i instanceof Ek) {
+      await hZ();
+      return;
+    }
+    Rw(i, "startSession");
+    T8("Couldn't reach the game server", "We couldn't start your session. Check your connection and try again - if it keeps happening, send the details below to support.", Zx(i, "startSession"));
+  }
+}
+A$e();

@@ -1,0 +1,8000 @@
+function E7e(e) {
+  return voe(e).flatMap(({
+    podId: t,
+    left: n,
+    right: i
+  }) => [{
+    podId: t,
+    node: n
+  }, {
+    podId: t,
+    node: i
+  }]);
+}
+var b7e = 760;
+var C7e = 44;
+var S7e = 15;
+function BO(e) {
+  return {
+    id: e.id,
+    creatorId: e.creatorId,
+    creatorUsername: e.creatorUsername,
+    creatorImage: e.creatorImage,
+    wager: e.wager,
+    choiceLabel: A$(e.creatorMove)
+  };
+}
+function _Component83({
+  podId: e
+}) {
+  const [t, n] = _r("rps.tab", "player");
+  return <_Component28 title="Rock Paper Scissors" icon={<_Component79 size={18} />} onClose={() => ai.close()} maxWidth={b7e} fixedHeight={!0}><Bm><Mc icon={<_Component66 size={16} />} label="Player" active={t === "player"} onClick={() => n("player")} /><Mc icon={<_Component67 size={16} />} label="House" active={t === "house"} onClick={() => n("house")} /><Mc icon={<_Component68 size={16} />} label="Create" active={t === "create"} onClick={() => n("create")} /></Bm><_Component27 style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: 18
+    }}>{t === "player" ? <I7e podId={e} /> : null}{t === "house" ? <_7e podId={e} /> : null}{t === "create" ? <_Component80 /> : null}</_Component27></_Component28>;
+}
+function yoe(e) {
+  const {
+    room: t
+  } = on();
+  return (n, i) => {
+    if (i) {
+      or(t, "rps.player.cancel", {
+        roundId: n.id
+      });
+    } else {
+      if (!e) {
+        return;
+      }
+      or(t, "rps.player.join", {
+        roundId: n.id,
+        podId: e
+      });
+    }
+    ai.close();
+  };
+}
+function Eoe() {
+  const {
+    room: e
+  } = on();
+  return zT("PVP_HOUSE_LIMITS") !== void 0 ? e.state.config.rps.houseLimits : e.state.config.rps.playerLimits;
+}
+function I7e({
+  podId: e
+}) {
+  const {
+    room: t,
+    userId: n
+  } = on();
+  const {
+    balance: i
+  } = Ho();
+  Qo();
+  const r = yoe(e);
+  const s = Eoe();
+  const o = [...t.state.rpsPlayerRounds.values()].sort((u, d) => d.createdAt - u.createdAt);
+  if (o.length === 0) {
+    return <_Component72 text="No open throws" />;
+  }
+  const a = o.filter(u => t.state.players.has(u.creatorId));
+  const l = o.filter(u => !t.state.players.has(u.creatorId));
+  return <S.Fragment><_Component73 label="This Room" rounds={a.map(BO)} userId={n} balance={Rf(i)} maxWager={s.maxWager} joinable={!0} onPick={r} /><_Component73 label="Other" rounds={l.map(BO)} userId={n} balance={Rf(i)} maxWager={s.maxWager} joinable={!0} onPick={r} /></S.Fragment>;
+}
+function _7e({
+  podId: e
+}) {
+  const {
+    room: t
+  } = on();
+  const {
+    balance: n
+  } = Ho();
+  Qo();
+  const i = Qh(t.state.config.rps.houseLimits, n);
+  const [r, s] = _r("rps.wager", i.minWager);
+  const [o, a] = _r("rps.move", "ROCK");
+  const l = t.state.rpsPods.get(e)?.status !== "idle";
+  function u() {
+    if (l) {
+      Hi(Dp.POD_IN_ROUND, "warning", "rps");
+      return;
+    }
+    const d = kf(r, i, n, "rps");
+    d !== null && (or(t, "rps.house.throw", {
+      podId: e,
+      move: o,
+      wager: d
+    }), ai.close());
+  }
+  return <S.Fragment><_Component81 move={o} setMove={a} /><Ju wager={r} setWager={s} min={i.minWager} max={i.maxWager} onEnter={u} /><So label={l ? "Pod In Use" : "Throw"} disabled={l} onClick={u} /></S.Fragment>;
+}
+function _Component80() {
+  const {
+    room: e,
+    userId: t
+  } = on();
+  const {
+    balance: n
+  } = Ho();
+  Qo();
+  const i = yoe();
+  const r = [...e.state.rpsPlayerRounds.values()].filter(p => p.creatorId === t).sort((p, A) => A.createdAt - p.createdAt);
+  const s = Eoe();
+  const o = Qh(s, n);
+  const [a, l] = _r("rps.playerWager", o.minWager);
+  const [u, d] = _r("rps.playerMove", "ROCK");
+  function h() {
+    const p = kf(a, o, n, "rps");
+    p !== null && (or(e, "rps.player.create", {
+      move: u,
+      wager: p
+    }), ai.close());
+  }
+  return <S.Fragment><_Component81 move={u} setMove={d} /><Ju wager={a} setWager={l} min={o.minWager} max={o.maxWager} onEnter={h} /><So label="Create Throw" onClick={h} /><_Component73 label="Your Open Throws" rounds={r.map(BO)} userId={t} balance={Rf(n)} maxWager={s.maxWager} joinable={!1} onPick={i} /></S.Fragment>;
+}
+function _Component81({
+  move: e,
+  setMove: t
+}) {
+  return <Xu label="Throw"><_Component22>{XEe.map(n => <Xg label={A$(n)} height={C7e} fontSize={S7e} selected={e === n} onClick={() => t(n)} key={n} />)}</_Component22></Xu>;
+}
+var T7e = .8;
+function B7e(e, t, n, i) {
+  return e.result === "PUSH" ? {
+    text: "DRAW",
+    color: no.draw,
+    fontSize: t ? 64 : 56
+  } : t ? {
+    text: n ? "WIN" : "LOST",
+    color: n ? no.win : no.lose,
+    fontSize: 64
+  } : {
+    text: `${i} WINS`,
+    color: no.win,
+    fontSize: 56
+  };
+}
+function M7e({
+  node: e,
+  podId: t
+}) {
+  const {
+    room: n
+  } = on();
+  Qo();
+  const i = n.state.rpsPods.get(t);
+  return i ? <Cd node={e} yOffset={T7e}>{i.status === "idle" ? <_Component12 fontSize={40} fontWeight="bold" color={no.text}>Click a hand to play</_Component12> : <R7e pod={i} />}</Cd> : null;
+}
+function R7e({
+  pod: e
+}) {
+  const t = ir();
+  const n = e.mode !== "player";
+  const i = B7e(e, n || e.creatorId === t || e.throwerId === t, n ? e.result === "WON" : e.winnerId === t, e.winnerId === e.creatorId ? e.leftUsername : e.rightUsername);
+  return <S.Fragment><_Component82 left={n ? e.leftUsername || "Someone" : e.leftUsername} right={e.rightUsername} /><_Component12 fontSize={34} fontWeight="bold" color={n ? Ye.accent : no.text}>{`$${e.wager.toFixed(2)}`}</_Component12>{e.status === "revealed" ? <_Component12 fontSize={i.fontSize} fontWeight="bold" color={i.color}>{i.text}</_Component12> : null}</S.Fragment>;
+}
+function _Component82({
+  left: e,
+  right: t
+}) {
+  return <Sn flexDirection="row" alignItems="center" gap={14}><_Component12 fontSize={48} fontWeight="bold" color={Ye.accent}>{e}</_Component12><_Component12 fontSize={30} fontWeight="bold" color={no.text}>vs</_Component12><_Component12 fontSize={48} fontWeight="bold" color={Ye.accent}>{t}</_Component12></Sn>;
+}
+var Coe = "/assets/rps_hands-CR5zMfiU.glb";
+var D7e = /^(rps_pod_[A-Za-z0-9_]+)_hologram$/;
+rl.preload(Coe);
+function P7e({
+  gltf: e
+}) {
+  const {
+    room: t,
+    userId: n
+  } = on();
+  Qo();
+  const i = rl(Coe);
+  const r = (0, de.useRef)(null);
+  const s = (0, de.useRef)(null);
+  (0, de.useEffect)(() => {
+    const u = y7e(e, i);
+    r.current = u;
+    for (const [h, p] of t.state.rpsPods) {
+      p.status === "revealed" && p.leftMove && p.rightMove && u.reveal(h, p.leftMove, p.rightMove);
+    }
+    const d = ec.get(t);
+    d.onAdd(t.state, "rpsPods", (h, p) => {
+      d.listen(h, "status", (A, y) => {
+        A === "idle" && y !== "idle" && u.idle(p);
+        if (A === "throwing" && y !== "throwing" && h.mode === "house" && h.throwerId === n) {
+          la.clear();
+          s.current = {
+            podId: p,
+            move: h.leftMove,
+            wager: h.wager
+          };
+          return;
+        }
+        if (A === "idle" && s.current?.podId === p) {
+          const {
+            move: E,
+            wager: b
+          } = s.current;
+          s.current = null;
+          wE({
+            game: "rps",
+            gameLabel: "Rock Paper Scissors",
+            unavailableText: "That pod is not available to replay",
+            available: () => t.state.rpsPods.get(p)?.status === "idle",
+            fire: () => or(t, "rps.house.throw", {
+              podId: p,
+              move: E,
+              wager: b
+            })
+          });
+        }
+      });
+    });
+    return () => {
+      u.dispose();
+      r.current = null;
+    };
+  }, [e, i, t, n]);
+  am(t, "rps.house.result", u => {
+    r.current?.play({
+      podId: u.podId,
+      left: u.move,
+      right: u.outcome,
+      win: u.userId === n && u.status === "WON",
+      throwStartsAt: u.throwStartsAt,
+      throwEndsAt: u.throwEndsAt
+    });
+  });
+  am(t, "rps.player.result", u => {
+    r.current?.play({
+      podId: u.podId,
+      left: u.creatorMove,
+      right: u.opponentMove,
+      win: u.winnerId === n,
+      throwStartsAt: u.throwStartsAt,
+      throwEndsAt: u.throwEndsAt
+    });
+  });
+  Ha(() => r.current?.update());
+  const o = (0, de.useMemo)(() => E7e(e), [e]);
+  const a = (0, de.useMemo)(() => aa(e.scene, D7e), [e]);
+  const l = o.map(({
+    podId: u,
+    node: d
+  }) => ({
+    node: d,
+    onClick: () => ai.open(<_Component83 podId={u} />),
+    onHover: h => Rp(d, h)
+  }));
+  Zu(l);
+  return <S.Fragment>{a.map(({
+      node: u,
+      podId: d
+    }) => <M7e node={u} podId={d} key={u.name} />)}</S.Fragment>;
+}
+var tM = {
+  phase: "loading"
+};
+var {
+  emit: HP,
+  subscribe: L7e
+} = Tm();
+var tT = {
+  get: () => tM,
+  reset() {
+    tM = {
+      phase: "loading"
+    };
+    HP();
+  },
+  setState(e) {
+    tM = {
+      phase: "state",
+      state: e
+    };
+    HP();
+  },
+  setResult(e) {
+    tM = {
+      phase: "result",
+      result: e
+    };
+    HP();
+  },
+  subscribe: L7e
+};
+function N7e() {
+  return L0(tT, tT.get);
+}
+var O7e = 420;
+var U7e = 6;
+function F7e() {
+  const e = N7e();
+  return <_Component28 title="Cookie Jar" icon={<Ire size={18} />} onClose={() => ai.close()} maxWidth={O7e}><_Component27 style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: 16
+    }}>{e.phase === "loading" ? <Q7e text="Opening the jar..." /> : null}{e.phase === "state" ? <H7e state={e.state} /> : null}{e.phase === "result" ? <W7e result={e.result} /> : null}</_Component27></_Component28>;
+}
+function Q7e({
+  text: e
+}) {
+  return <div style={{
+    display: "grid",
+    placeItems: "center",
+    padding: "18px 0",
+    fontSize: 15,
+    color: xe.txtDim
+  }}>{e}</div>;
+}
+function H7e({
+  state: e
+}) {
+  return e.status === "active" ? <G7e range={e.range} /> : e.status === "cooldown" ? <_Component84 label="Resets in" endsAt={e.nextAvailableAt} /> : <_Component85 requiredRankIndex={e.requiredRankIndex} />;
+}
+function _Component85({
+  requiredRankIndex: e
+}) {
+  const {
+    room: t
+  } = on();
+  const n = [...t.state.wagerRanks][Math.max(0, e)];
+  return <div style={{
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 8,
+    padding: "16px 0",
+    textAlign: "center"
+  }}><span style={{
+      fontSize: 24,
+      fontWeight: 700,
+      color: n?.color || xe.txt
+    }}>{n ? `Rank ${n.numeral} required` : "Locked"}</span><span style={{
+      fontSize: 13,
+      color: xe.txtDim
+    }}>{n ? `Wager $${fEe(n.value)} to open the jar` : "Wager more to open the jar"}</span></div>;
+}
+function G7e({
+  range: e
+}) {
+  const {
+    room: t
+  } = on();
+  const [n, i] = (0, de.useState)("");
+  const [r, s] = (0, de.useState)(!1);
+  const o = Number(n);
+  const a = n !== "" && Number.isInteger(o) && o >= 1 && o <= e;
+  const l = () => {
+    !a || r || (s(!0), N9(t, "cookiejar.guess", {
+      guess: o
+    }).then(u => {
+      u ? tT.setResult(u) : ai.close();
+    }));
+  };
+  return <div style={{
+    display: "flex",
+    flexDirection: "column",
+    gap: 14
+  }}><span style={{
+      fontSize: 14,
+      color: xe.txt
+    }}>{`How many cookies are in the jar? (1 to ${e})`}</span><Xu label="Your guess"><JPe value={n} onChange={u => i(u.replace(/[^\d]/g, "").slice(0, U7e))} onEnter={l} /></Xu><So label={r ? "Opening..." : "Open the jar"} disabled={!a || r} onClick={l} /></div>;
+}
+function W7e({
+  result: e
+}) {
+  return <div style={{
+    display: "flex",
+    flexDirection: "column",
+    gap: 16
+  }}><div style={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 8,
+      padding: "10px 0",
+      textAlign: "center"
+    }}><span style={{
+        fontSize: 24,
+        fontWeight: 700,
+        color: e.won ? xe.success : xe.txt
+      }}>{e.won ? `You won $${Number(e.prize).toFixed(2)}` : "Not this time"}</span><span style={{
+        fontSize: 13,
+        color: xe.txtDim
+      }}>{e.won ? `There was ${e.answer} cookies!` : `There was ${e.answer} cookies but you guessed ${e.guess}`}</span></div><So label="Close" onClick={() => ai.close()} /></div>;
+}
+var V7e = "cookie_jar";
+function _Component100({
+  gltf: e
+}) {
+  const {
+    room: t
+  } = on();
+  const n = (0, de.useMemo)(() => {
+    const i = [];
+    e.scene.traverse(r => {
+      r.name === V7e && i.push({
+        node: r,
+        onClick: () => {
+          tT.reset();
+          ai.open(<F7e />);
+          N9(t, "cookiejar.open", {}).then(s => {
+            s ? tT.setState(s) : ai.close();
+          });
+        },
+        onHover: s => Rp(r, s)
+      });
+    });
+    return i;
+  }, [e, t]);
+  Zu(n);
+  return null;
+}
+var K7e = /^wardrobe_door$/;
+function Y7e({
+  gltf: e
+}) {
+  const t = (0, de.useMemo)(() => L9(e.scene, K7e, () => cr.open({
+    kind: "wardrobe"
+  })), [e]);
+  Zu(t);
+  return null;
+}
+var J7e = 640;
+var X7e = [1, 5, 10, 25];
+var PK = 38;
+var Soe = 160;
+function Z7e() {
+  const [e, t] = _r("raffle.tab", "raffle");
+  return <_Component28 title="Raffle" icon={<_Component86 size={18} />} onClose={() => ai.close()} maxWidth={J7e} fixedHeight={!0}><Bm><Mc icon={<_Component66 size={16} />} label="Raffle" active={e === "raffle"} onClick={() => t("raffle")} /><Mc icon={<_Component68 size={16} />} label="Enter" active={e === "enter"} onClick={() => t("enter")} /></Bm><_Component27 style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: 18
+    }}>{e === "raffle" ? <$7e /> : <_Component87 />}</_Component27></_Component28>;
+}
+function woe() {
+  const {
+    room: e,
+    userId: t
+  } = on();
+  Qo();
+  const n = e.state.raffle;
+  const i = [...n.entries];
+  const r = i.reduce((a, l) => a + l.tickets, 0);
+  const s = Number(n.ticketPrice) || 0;
+  const o = i.find(a => a.userId === t)?.tickets ?? 0;
+  return {
+    raffle: n,
+    totalTickets: r,
+    ticketPrice: s,
+    mine: o,
+    pot: r * s,
+    open: n.status === "BETTING",
+    winChance: r > 0 ? o / r : 0
+  };
+}
+function q7e(e, t, n) {
+  switch (e) {
+    case "BETTING":
+      return `Closes in ${g5e(t - n)}`;
+    case "DRAWING":
+      return "Drawing the winner...";
+    case "FORFEITED":
+      return "No entries - round skipped";
+    default:
+      return "Round complete";
+  }
+}
+function $7e() {
+  const {
+    raffle: e,
+    totalTickets: t,
+    mine: n,
+    pot: i,
+    winChance: r
+  } = woe();
+  const s = bE();
+  return e.id ? <S.Fragment><div style={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 6,
+      padding: "10px 0"
+    }}><span style={{
+        fontSize: 40,
+        fontWeight: 700,
+        color: xe.gold,
+        fontVariantNumeric: "tabular-nums"
+      }}>{`$${i.toFixed(2)}`}</span><span style={{
+        fontSize: 13,
+        fontWeight: 700,
+        color: xe.txtDim
+      }}>{q7e(e.status, e.betsCloseAt, s)}</span></div><Q9><OS label="Your tickets" value={String(n)} accent={n > 0} /><OS label="Total tickets" value={String(t)} /><OS label="Win chance" value={`${(r * 100).toFixed(1)}%`} accent={n > 0} /></Q9></S.Fragment> : <_Component72 text="No raffle running right now" height={Soe} />;
+}
+function _Component87() {
+  const {
+    room: e
+  } = on();
+  const {
+    balance: t
+  } = Ho();
+  const {
+    raffle: n,
+    ticketPrice: i,
+    mine: r,
+    open: s
+  } = woe();
+  const [o, a] = _r("raffle.tickets", 1);
+  const l = Math.max(0, n.maxTicketsPerPlayer - r);
+  const u = i > 0 ? Math.floor(t / i) : 0;
+  const d = Math.min(l, u);
+  const h = Math.min(Math.max(1, Math.floor(o)), Math.max(1, d));
+  const p = h * i;
+  function A() {
+    if (!s) {
+      Hi(Dp.RAFFLE_ENTRIES_CLOSED, "warning", "raffle");
+      return;
+    }
+    if (l <= 0) {
+      Hi(`You already hold the maximum ${n.maxTicketsPerPlayer} tickets`, "warning", "raffle");
+      return;
+    }
+    if (p > t) {
+      Hi("Not enough balance", "warning", "raffle");
+      return;
+    }
+    or(e, "raffle.buy", {
+      tickets: h
+    });
+    ai.close();
+  }
+  return !n.id || !s ? <_Component72 text={n.id ? Dp.RAFFLE_ENTRIES_CLOSED : "No raffle running right now"} height={Soe} /> : <S.Fragment><Xu label="Tickets"><div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10
+      }}><_Component34 icon={Ere} onClick={() => a(Math.max(1, h - 1))} /><_Component35 value={String(h)} /><_Component34 icon={_Component68} onClick={() => a(Math.min(d, h + 1))} /></div><_Component22>{X7e.map(y => <Xg label={String(y)} height={PK} disabled={y > d} onClick={() => a(y)} key={y} />)}<Xg label="Max" height={PK} disabled={d < 1} onClick={() => a(Math.max(1, d))} /></_Component22></Xu><Q9><OS label="Cost" value={`$${p.toFixed(2)}`} accent={!0} /><OS label="You hold" value={String(r)} /><OS label="Max per player" value={String(n.maxTicketsPerPlayer)} /></Q9><So label={`Buy ${h} ticket${h === 1 ? "" : "s"}`} disabled={d < 1} onClick={A} /></S.Fragment>;
+}
+var tHe = 52;
+var nHe = 34;
+function _Component88({
+  title: e,
+  subtitle: t
+}) {
+  return <_Component1 gap={2}><_Component12 fontSize={tHe} fontWeight="bold" color={Ye.accent}>{e}</_Component12>{t ? <_Component12 fontSize={nHe} fontWeight="bold" color="#ffffff">{t}</_Component12> : null}</_Component1>;
+}
+var rHe = 4;
+function Ioe({
+  scene: e,
+  pattern: t,
+  hologramPattern: n,
+  title: i,
+  subtitle: r,
+  onOpen: s
+}) {
+  const o = (0, de.useMemo)(() => py(e, t), [e, t]);
+  const a = (0, de.useMemo)(() => n ? py(e, n) : [], [e, n]);
+  const l = (0, de.useMemo)(() => L9(e, t, s), [e, t, s]);
+  Zu(l);
+  const u = a.length > 0 ? a : o;
+  const d = a.length > 0 ? 0 : rHe;
+  return <S.Fragment>{u.map(h => <Cd node={h} yOffset={d} key={h.name}><_Component88 title={i} subtitle={r} /></Cd>)}</S.Fragment>;
+}
+var sHe = /^raffle_\d+$/;
+var oHe = () => ai.open(<Z7e />);
+function aHe(e, t) {
+  return e === "DRAWING" ? "Drawing now" : e !== "BETTING" ? "Click to view" : t > 0 ? `$${t.toFixed(2)} pot` : "Click to enter";
+}
+function _Component101({
+  gltf: e
+}) {
+  const {
+    room: t,
+    userId: n
+  } = on();
+  const i = Ai(o => o.raffle.status) ?? "";
+  const r = Ai(o => o.raffle.ticketPrice) ?? "";
+  const s = Ai(o => o.raffle.entries.reduce((a, l) => a + l.tickets, 0)) ?? 0;
+  am(t, "raffle.result", o => {
+    o.winnerId === n && Ti.play("giveaway.win");
+  });
+  return <Ioe scene={e.scene} pattern={sHe} title="Raffle" subtitle={aHe(i, s * (Number(r) || 0))} onOpen={oHe} />;
+}
+var cHe = 380;
+function _Component89() {
+  const {
+    room: e,
+    userId: t
+  } = on();
+  const [n, i] = (0, de.useState)(null);
+  const r = Ai(d => d.bigWheel.status) ?? "idle";
+  const s = Ai(d => d.bigWheel.spinnerId) ?? "";
+  (0, de.useEffect)(() => {
+    N9(e, "bigwheel.open", {}).then(d => {
+      d && i(d.nextAvailableAt);
+    });
+  }, [e]);
+  const o = s === t;
+  const a = (0, de.useRef)(!1);
+  (0, de.useEffect)(() => {
+    a.current && r === "spinning" && o && ai.close();
+  }, [r, o]);
+  const l = () => {
+    a.current = !0;
+    e.request("bigwheel.spin", {}).catch(d => {
+      if (!tse(d, "bigwheel.spin")) {
+        return console.error("bigwheel.spin failed", d);
+      }
+      "nextAvailableAt" in d.reason ? i(d.reason.nextAvailableAt) : l9(d.reason);
+    });
+  };
+  const u = n !== null && n > eE();
+  return <_Component28 title="Big Wheel" icon={<_re size={18} />} onClose={() => ai.close()} maxWidth={cHe}><_Component27 style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: 18
+    }}>{u ? <_Component84 label="Next spin in" endsAt={n} /> : <So label="Spin the wheel" disabled={n === null || r !== "idle"} onClick={l} />}</_Component27></_Component28>;
+}
+var d_ = 1024;
+var LK = .78;
+var dHe = "#0d0d12";
+var hHe = "#14141b";
+function _oe(e) {
+  const t = e.reduce((r, s) => r + s.weight, 0) || 1;
+  const n = [];
+  let i = 0;
+  for (const r of e) {
+    const s = r.weight / t * Math.PI * 2;
+    n.push({
+      start: i,
+      end: i + s
+    });
+    i += s;
+  }
+  return n;
+}
+function fHe(e, t) {
+  const n = _oe(e)[t];
+  return n ? (n.start + n.end) / 2 : 0;
+}
+function pHe(e) {
+  const t = document.createElement("canvas");
+  t.width = d_;
+  t.height = d_;
+  const n = t.getContext("2d");
+  const i = d_ / 2;
+  const r = 504;
+  n.clearRect(0, 0, d_, d_);
+  const s = _oe(e);
+  e.forEach((a, l) => {
+    const {
+      start: u,
+      end: d
+    } = s[l];
+    n.beginPath();
+    n.moveTo(i, i);
+    n.arc(i, i, r, u, d);
+    n.closePath();
+    n.fillStyle = a.color;
+    n.fill();
+    n.lineWidth = 4;
+    n.strokeStyle = dHe;
+    n.stroke();
+  });
+  e.forEach((a, l) => {
+    const {
+      start: u,
+      end: d
+    } = s[l];
+    const h = (u + d) / 2;
+    n.save();
+    n.translate(i + Math.cos(h) * r * LK, i + Math.sin(h) * r * LK);
+    n.rotate(h + Math.PI / 2);
+    n.fillStyle = a.value > 0 ? "#ffffff" : "rgba(255,255,255,0.45)";
+    n.font = `bold ${a.value > 0 ? 60 : 44}px sans-serif`;
+    n.textAlign = "center";
+    n.textBaseline = "middle";
+    n.fillText(a.value > 0 ? `$${a.value}` : "ÔÇö", 0, 0);
+    n.restore();
+  });
+  n.beginPath();
+  n.arc(i, i, r * .16, 0, Math.PI * 2);
+  n.fillStyle = hHe;
+  n.fill();
+  const o = new PT(t);
+  o.colorSpace = Ua;
+  o.anisotropy = 8;
+  return o;
+}
+var gHe = "wheel_pod_1";
+var AHe = "wheel_pod_1_face";
+var mHe = "wheel_pod_1_backing";
+var vHe = 6;
+function yHe(e) {
+  return 1 - Math.pow(1 - e, 5);
+}
+function EHe({
+  gltf: e
+}) {
+  const {
+    room: t,
+    userId: n
+  } = on();
+  const i = Ai(w => w.bigWheel.status) ?? "idle";
+  const r = Ai(w => w.bigWheel.spinnerId) ?? "";
+  const s = Ai(w => w.bigWheel.prize) ?? "";
+  const o = Ai(w => w.bigWheel.segmentIndex) ?? -1;
+  const a = Ai(w => w.bigWheel.spinStartsAt) ?? 0;
+  const l = Ai(w => w.bigWheel.spinEndsAt) ?? 0;
+  const u = Ai(w => [...w.bigWheel.segments].map(T => `${T.value}:${T.weight}:${T.color}`).join("|")) ?? "";
+  const d = (0, de.useMemo)(() => [...t.state.bigWheel.segments].map(w => ({
+    value: w.value,
+    weight: w.weight,
+    color: w.color
+  })), [t, u]);
+  const h = (0, de.useMemo)(() => e.scene.getObjectByName(AHe) ?? null, [e]);
+  const p = (0, de.useMemo)(() => e.scene.getObjectByName(gHe) ?? h, [e, h]);
+  const A = (0, de.useMemo)(() => {
+    const w = e.scene.getObjectByName(mHe);
+    if (!w?.geometry) {
+      return null;
+    }
+    w.geometry.computeBoundingBox();
+    const T = w.geometry.boundingBox;
+    return T ? (T.max.x - T.min.x) / 2 * w.scale.x : null;
+  }, [e]);
+  const y = (0, de.useRef)(null);
+  (0, de.useEffect)(() => {
+    if (!h || !A || d.length === 0) {
+      return;
+    }
+    const w = pHe(d);
+    const T = new nr(new bF(A, 96), new ql({
+      map: w,
+      toneMapped: !1
+    }));
+    const x = new Vu();
+    x.quaternion.copy(h.quaternion).invert();
+    x.add(T);
+    h.add(x);
+    h.updateMatrixWorld(!0);
+    y.current = T;
+    return () => {
+      h.remove(x);
+      T.geometry.dispose();
+      T.material.dispose();
+      w.dispose();
+      y.current = null;
+    };
+  }, [h, A, d]);
+  (0, de.useEffect)(() => {
+    if (i !== "spinning" || !p || l <= a || eE() > l) {
+      return;
+    }
+    const w = Ti.playAt("bigwheel.spin", p);
+    return () => w.stop(120);
+  }, [i, a, l, p]);
+  (0, de.useEffect)(() => {
+    i !== "revealed" || r !== n || Number(s) > 0 && Ti.play("giveaway.win");
+  }, [i, r, n, s]);
+  const E = (0, de.useMemo)(() => d.length === 0 || o < 0 ? null : {
+    target: fHe(d, o) + Math.PI / 2,
+    duration: Math.max(1, l - a)
+  }, [d, o, a, l]);
+  Ha(() => {
+    const w = y.current;
+    if (!w || !E) {
+      return;
+    }
+    const T = Math.min(1, Math.max(0, (eE() - a) / E.duration));
+    w.rotation.z = E.target + (1 - yHe(T)) * vHe * Math.PI * 2;
+  });
+  const b = (0, de.useMemo)(() => !p || i !== "idle" ? [] : [{
+    node: p,
+    onClick: () => ai.open(<_Component89 />),
+    onHover: w => Rp(p, w)
+  }], [p, i]);
+  Zu(b);
+  return null;
+}
+var bHe = /^giveaway_root$/;
+var CHe = /^giveaway_hologram$/;
+var SHe = () => cr.open({
+  kind: "giveaway"
+});
+function wHe(e) {
+  return e === 0 ? "No active giveaways" : e === 1 ? "1 active giveaway" : `${e} active giveaways`;
+}
+function IHe({
+  gltf: e
+}) {
+  const {
+    room: t,
+    userId: n
+  } = on();
+  const i = Ai(r => r.giveaways.size + (r.affiliateGiveaways?.size ?? 0)) ?? 0;
+  am(t, "giveaway.result", r => {
+    r.winnerId === n && Ti.play("giveaway.win");
+  });
+  return <Ioe scene={e.scene} pattern={bHe} hologramPattern={CHe} title="Giveaways" subtitle={wHe(i)} onOpen={SHe} />;
+}
+function _Component91({
+  scene: e,
+  screens: t
+}) {
+  const n = (0, de.useMemo)(() => t.map(({
+    node: i,
+    render: r
+  }) => ({
+    render: r,
+    target: e.getObjectByName(i)
+  })), [e, t]);
+  return <S.Fragment>{n.map(({
+      render: i,
+      target: r
+    }) => r ? <Mf node={r} key={r.name}>{i()}</Mf> : null)}</S.Fragment>;
+}
+var vC = {
+  stripe: "#26262e",
+  currentRow: "#3f3618",
+  gold: "#ffd24a",
+  whale: aw.balance,
+  highRoller: aw.wagered
+};
+var _He = 18;
+var xHe = 12;
+var THe = 2;
+function Toe({
+  children: e,
+  gap: t = 14
+}) {
+  return <Sn width="100%" height="100%" backgroundColor={Ye.bg.panelSolid} flexDirection="column" padding={_He} gap={t}>{e}</Sn>;
+}
+function Boe({
+  icon: e,
+  title: t
+}) {
+  return <Sn flexDirection="row" alignItems="center" justifyContent="center" gap={14}><_Component11 icon={e} size={30} color={Ye.accent} /><_Component12 fontSize={34} fontWeight="bold" color={Ye.text.primary}>{t}</_Component12></Sn>;
+}
+function BHe(e, t) {
+  return t ? vC.currentRow : e % 2 === 1 ? vC.stripe : void 0;
+}
+function Moe({
+  index: e,
+  highlighted: t,
+  inset: n = xHe,
+  children: i
+}) {
+  return <Sn flexGrow={1} flexDirection="row" alignItems="center" justifyContent="space-between" paddingX={n} backgroundColor={BHe(e, t)}>{i}</Sn>;
+}
+function Roe({
+  children: e,
+  justify: t = "center",
+  inset: n = 0,
+  gap: i = 4
+}) {
+  return <Sn flexDirection="row" flexWrap="wrap" alignItems="center" justifyContent={t} gap={i} paddingX={n} paddingTop={10} borderTopWidth={THe} borderColor={Ye.border.stroke}>{e}</Sn>;
+}
+var NK = 10;
+var MHe = [vC.gold, "#cfd4dc", "#cd8b5b"];
+function RHe({
+  title: e,
+  icon: t,
+  valueHeader: n,
+  rows: i,
+  you: r
+}) {
+  return <Toe><Boe icon={t} title={e} /><Sn flexGrow={1} flexDirection="column"><Sn flexDirection="row" justifyContent="space-between" paddingX={12} paddingBottom={8} borderBottomWidth={2} borderColor={Ye.border.input}><Sn flexDirection="row" alignItems="center" gap={12}><_Component12 fontSize={14} color={Ye.text.secondary}>#</_Component12><_Component12 fontSize={14} color={Ye.text.secondary}>Player</_Component12></Sn><_Component12 fontSize={14} color={Ye.text.secondary}>{n}</_Component12></Sn>{i.slice(0, NK).map((s, o) => <Moe index={o} highlighted={r?.position === o + 1} key={o}><Sn flexDirection="row" alignItems="center" gap={12}><_Component12 fontSize={16} fontWeight="bold" color={MHe[o] ?? Ye.text.muted}>{o + 1}</_Component12><GT image={s.image} size={34} /><_Component12 fontSize={20} fontWeight="bold" color={Ye.text.primary}>{s.username}</_Component12></Sn><_Component12 fontSize={18} fontWeight="bold" color={Ye.accent}>{jn(s.value)}</_Component12></Moe>)}</Sn>{r && r.position > NK ? <Roe justify="space-between" inset={12} gap={12}><Sn flexDirection="row" alignItems="center" gap={12}><_Component12 fontSize={18} fontWeight="bold" color={Ye.accent}>{r.position}</_Component12><_Component12 fontSize={22} fontWeight="bold" color={Ye.accent}>You</_Component12></Sn><_Component12 fontSize={20} fontWeight="bold" color={Ye.accent}>{jn(r.value)}</_Component12></Roe> : null}</Toe>;
+}
+var kHe = 1e4;
+function _Component90({
+  boards: e,
+  icon: t,
+  rotateMs: n = kHe
+}) {
+  const [i, r] = (0, de.useState)(0);
+  (0, de.useEffect)(() => {
+    const a = setInterval(() => r(l => (l + 1) % e.length), n);
+    return () => clearInterval(a);
+  }, [e.length, n]);
+  const s = e[i];
+  const o = Ai(s.select);
+  return <RHe title={s.title} icon={t} valueHeader={s.valueHeader} rows={o ? [...o] : []} />;
+}
+var DHe = [{
+  title: "Weekly Wagers",
+  valueHeader: "Wagered",
+  select: e => e.leaderboards.wageredWeekly
+}, {
+  title: "Monthly Wagers",
+  valueHeader: "Wagered",
+  select: e => e.leaderboards.wageredMonthly
+}, {
+  title: "All-Time Wagers",
+  valueHeader: "Wagered",
+  select: e => e.leaderboards.wagered
+}];
+function PHe() {
+  return <_Component90 boards={DHe} icon={_De} />;
+}
+var LHe = 14;
+function NHe() {
+  const e = [...(Ai(r => r.wagerRanks) ?? [])];
+  const t = Ho().wagered;
+  let n;
+  for (const r of e) {
+    r.value <= t && (n = r);
+  }
+  const i = e.find(r => r.value > t);
+  return <Toe gap={12}><Boe icon={TDe} title="Wager Ranks" /><_Component12 fontSize={16} fontWeight="bold" color={Ye.text.secondary} textAlign="center">You will rank up as you wager across all games in Betroom</_Component12><Sn flexGrow={1} flexDirection="column">{e.map((r, s) => <Moe index={s} inset={LHe} highlighted={r.numeral === n?.numeral} key={r.numeral}><_Component12 fontSize={22} fontWeight="bold" color={r.color}>{r.numeral}</_Component12><_Component12 fontSize={20} fontWeight="bold" color={Ye.text.primary}>{jn(r.value)}</_Component12></Moe>)}</Sn><Roe>{i ? <S.Fragment><_Component12 fontSize={18} fontWeight="bold" color={vC.gold}>{jn(i.value - t)}</_Component12><_Component12 fontSize={18} fontWeight="bold" color={Ye.text.primary}>away from</_Component12><_Component12 fontSize={18} fontWeight="bold" color={i.color}>{i.numeral}</_Component12></S.Fragment> : <_Component12 fontSize={18} fontWeight="bold" color={Ye.text.primary}>Max rank reached</_Component12>}</Roe></Toe>;
+}
+var OHe = [{
+  title: "Top Balances",
+  valueHeader: "Balance",
+  select: e => e.leaderboards.balance
+}, {
+  title: "Biggest Deposits",
+  valueHeader: "Deposit",
+  select: e => e.leaderboards.largestDeposits
+}, {
+  title: "Biggest Withdrawals",
+  valueHeader: "Withdrawal",
+  select: e => e.leaderboards.largestWithdrawals
+}];
+function UHe() {
+  return <_Component90 boards={OHe} icon={QT} />;
+}
+var FHe = 5e3;
+var QHe = "#202028";
+var HHe = 400;
+var zHe = {
+  WHALE: {
+    title: "Whale",
+    subtitle: "Highest balance in the room",
+    icon: UDe,
+    accent: vC.whale
+  },
+  HIGH_ROLLER: {
+    title: "High Roller",
+    subtitle: "Most wagered in the room",
+    icon: QT,
+    accent: vC.highRoller
+  }
+};
+function GHe() {
+  const [e, t] = (0, de.useState)("WHALE");
+  (0, de.useEffect)(() => {
+    const A = setInterval(() => t(y => y === "WHALE" ? "HIGH_ROLLER" : "WHALE"), FHe);
+    return () => clearInterval(A);
+  }, []);
+  const n = Ai(A => e === "WHALE" ? A.whaleId : A.highRollerId) ?? "";
+  const i = Ai(A => A.players.get(n)?.username) ?? "";
+  const r = Ai(A => A.players.get(n)?.image) ?? "";
+  const s = Ai(A => A.players.get(n)?.balance) ?? 0;
+  const o = Ai(A => A.players.get(n)?.wagered) ?? 0;
+  const a = Ai(A => A.wagerRanks) ?? [];
+  const {
+    title: l,
+    icon: u,
+    accent: d
+  } = zHe[e];
+  const h = n !== "" && i !== "";
+  const p = VU([...a], o);
+  return <Sn width="100%" height="100%" backgroundColor={Ye.bg.panelSolid} flexDirection="row" alignItems="center" paddingX={260} paddingY={28} gap={80}><Sn flexDirection="row" alignItems="center" gap={64} padding={20}><Sn flexDirection="column" alignItems="center" justifyContent="center" gap={14}><_Component11 icon={u} size={240} color={d} /><_Component12 fontSize={84} fontWeight="bold" color={d}>{l}</_Component12></Sn>{h && <GT image={r} size={HHe} />}</Sn><Sn flexGrow={1} flexDirection="column" justifyContent="center" gap={20}>{h ? <S.Fragment><Sn flexDirection="row" alignItems="center" gap={24}>{p?.numeral && <_Component12 fontSize={104} fontWeight="bold" color={p.color}>{p.numeral}</_Component12>}<_Component12 fontSize={104} fontWeight="bold" color={Ye.text.primary}>{i}</_Component12></Sn><Sn flexDirection="row" gap={20}><OK label="Balance" value={jn(s)} /><OK label="Wagered" value={jn(o)} /></Sn></S.Fragment> : <_Component12 fontSize={64} fontWeight="bold" color={Ye.text.muted}>{`No ${l} yet`}</_Component12>}</Sn></Sn>;
+}
+function OK({
+  label: e,
+  value: t,
+  valueColor: n
+}) {
+  return <Sn flexGrow={1} flexBasis={0} flexDirection="column" justifyContent="center" gap={10} padding={28} borderRadius={16} backgroundColor={QHe} borderWidth={2} borderColor={Ye.border.stroke}><_Component12 fontSize={48} fontWeight="bold" color={Ye.text.primary}>{e}</_Component12><_Component12 fontSize={76} fontWeight="bold" color={n ?? vC.gold}>{t}</_Component12></Sn>;
+}
+function WHe() {
+  const e = Ai(n => n.jackpot.pot);
+  const t = e === "" ? null : Number(e);
+  return <Sn width="100%" height="100%" backgroundColor={Ye.bg.panelSolid} flexDirection="column" justifyContent="space-between" paddingX={72} paddingY={56}><Sn flexDirection="row" alignItems="center" justifyContent="center"><_Component12 fontFamily={jM} fontSize={64} fontWeight="bold" color={Ye.text.secondary} textAlign="center">Win the jackpot by wagering on games in Betroom</_Component12></Sn><Sn flexDirection="row" alignItems="center" justifyContent="center" flexGrow={1}><_Component12 fontFamily={V5e} fontSize={400} fontWeight="bold" color={Ye.accent}>{t === null || Number.isNaN(t) ? "-" : jn(t)}</_Component12></Sn></Sn>;
+}
+var VHe = 2;
+var jHe = [...[{
+  prefix: "wager_top_screen",
+  render: () => <PHe />
+}, {
+  prefix: "ranks_screen",
+  render: () => <NHe />
+}, {
+  prefix: "treasury_top_screen",
+  render: () => <UHe />
+}, {
+  prefix: "leaders_screen",
+  render: () => <GHe />
+}].flatMap(({
+  prefix: e,
+  render: t
+}) => Array.from({
+  length: VHe
+}, (n, i) => ({
+  node: `${e}_${i}`,
+  render: t
+}))), {
+  node: "jackpot_screen_0",
+  render: () => <WHe />
+}];
+function KHe({
+  gltf: e
+}) {
+  return <_Component91 scene={e.scene} screens={jHe} />;
+}
+function Doe(e) {
+  return Ai(t => t.tickers.get(e)) ?? null;
+}
+function YHe({
+  currency: e
+}) {
+  const t = Doe(e.symbol);
+  const n = (t?.changePercent ?? 0) >= 0;
+  const i = n ? Ye.status.success : Ye.status.error;
+  return <Sn width="100%" height="100%" backgroundColor={Ye.bg.panelSolid} flexDirection="row" alignItems="center" justifyContent="space-between" paddingX={80}><_Component0 src={e.icon} width={360} height={360} depthWrite={!1} /><Sn flexDirection="column" alignItems="flex-end"><Sn flexDirection="row" alignItems="center" gap={24}>{t !== null ? <Sn flexDirection="row" alignItems="center" gap={8}><_Component11 icon={n ? GDe : WDe} size={72} color={i} /><_Component12 fontFamily={jM} fontSize={72} fontWeight="bold" color={i}>{`${Math.abs(t.changePercent).toFixed(2)}%`}</_Component12></Sn> : null}<_Component12 fontFamily={jM} fontSize={72} fontWeight="bold" color={Ye.text.primary}>{e.name}</_Component12></Sn><_Component12 fontFamily={jM} fontSize={100} fontWeight="bold" color={Ye.accent}>{t === null ? "-" : jq(t.price)}</_Component12></Sn></Sn>;
+}
+var JHe = [{
+  node: "crypto_screen_0",
+  currency: {
+    symbol: "BTCUSDT",
+    name: yf.BTC,
+    icon: "/crypto/btc.svg"
+  }
+}, {
+  node: "crypto_screen_1",
+  currency: {
+    symbol: "SOLUSDT",
+    name: yf.SOL,
+    icon: "/crypto/sol.svg"
+  }
+}, {
+  node: "crypto_screen_2",
+  currency: {
+    symbol: "ETHUSDT",
+    name: yf.ETH,
+    icon: "/crypto/eth.svg"
+  }
+}, {
+  node: "crypto_screen_3",
+  currency: {
+    symbol: "LTCUSDT",
+    name: yf.LTC,
+    icon: "/crypto/ltc.svg"
+  }
+}, {
+  node: "crypto_screen_4",
+  currency: {
+    symbol: "BNBUSDT",
+    name: yf.BNB,
+    icon: "/crypto/bnb.svg"
+  }
+}, {
+  node: "crypto_screen_5",
+  currency: {
+    symbol: "TRXUSDT",
+    name: yf.TRX,
+    icon: "/crypto/trx.svg"
+  }
+}].map(({
+  node: e,
+  currency: t
+}) => ({
+  node: e,
+  render: () => <YHe currency={t} />
+}));
+function XHe({
+  gltf: e
+}) {
+  return <_Component91 scene={e.scene} screens={JHe} />;
+}
+var ZHe = "loop_";
+var qHe = .1;
+function $He({
+  gltf: e
+}) {
+  const t = (0, de.useMemo)(() => new UC(e.scene), [e]);
+  (0, de.useEffect)(() => {
+    const n = e.animations.filter(i => i.name.startsWith(ZHe));
+    for (const i of n) {
+      const r = t.clipAction(i);
+      r.setLoop(Xw, 1 / 0);
+      r.play();
+    }
+    return () => {
+      t.stopAllAction();
+      for (const i of n) {
+        t.uncacheClip(i);
+      }
+    };
+  }, [e, t]);
+  Ha((n, i) => t.update(Math.min(i, qHe)));
+  return null;
+}
+var UK = {
+  Space: "Space",
+  Tab: "Tab",
+  Enter: "Enter",
+  Backspace: "Backspace",
+  Escape: "Esc",
+  CapsLock: "Caps",
+  ShiftLeft: "L Shift",
+  ShiftRight: "R Shift",
+  ControlLeft: "L Ctrl",
+  ControlRight: "R Ctrl",
+  AltLeft: "L Alt",
+  AltRight: "R Alt",
+  ArrowUp: "Up",
+  ArrowDown: "Down",
+  ArrowLeft: "Left",
+  ArrowRight: "Right",
+  MouseLeft: "L Mouse",
+  MouseMiddle: "M Mouse",
+  MouseRight: "R Mouse"
+};
+function cD(e) {
+  return UK[e] ? UK[e] : e.startsWith("Key") ? e.slice(3) : e.startsWith("Digit") ? e.slice(5) : e;
+}
+function MO(e) {
+  return e === 0 ? "MouseLeft" : e === 1 ? "MouseMiddle" : e === 2 ? "MouseRight" : null;
+}
+function eze() {
+  const e = il(r => r.gl);
+  const t = il(r => r.camera);
+  const {
+    room: n,
+    userId: i
+  } = on();
+  (0, de.useEffect)(() => {
+    const r = e.domElement;
+    const s = () => D9(r) ? P9(jre.list(), t, 50)?.userId ?? null : null;
+    const o = () => Uo.getControls().actions.openWheel;
+    const a = () => {
+      if (YA.isOpen()) {
+        return;
+      }
+      const y = s();
+      if (!y) {
+        return;
+      }
+      const E = n.state.players.get(i)?.role;
+      const b = n.state.players.get(y)?.role;
+      const w = sEe({
+        id: i,
+        role: E
+      }, {
+        id: y,
+        role: b
+      });
+      const T = Gq(E);
+      YA.open(y, {
+        opensAdminProfile: cN(E, "panel", "users"),
+        canRemove: n.state.config.rooms.ownerId === i && y !== i,
+        canKick: w && T.canKick,
+        canRestrict: w && T.restrictionTypes.length > 0
+      });
+    };
+    const l = () => {
+      if (!YA.isOpen()) {
+        return;
+      }
+      const {
+        selected: y,
+        userId: E,
+        segments: b
+      } = YA.get();
+      YA.close();
+      if (y >= 0 && E) {
+        const w = n.state.players.get(E)?.username ?? "";
+        b[y]?.action({
+          userId: E,
+          username: w
+        });
+      }
+    };
+    const u = y => {
+      MO(y.button) === o() && (y.preventDefault(), a());
+    };
+    const d = y => {
+      MO(y.button) === o() && l();
+    };
+    const h = y => {
+      y.repeat || y.code !== o() || a();
+    };
+    const p = y => {
+      y.code === o() && l();
+    };
+    const A = () => {
+      document.pointerLockElement !== r && YA.close();
+    };
+    r.addEventListener("mousedown", u);
+    window.addEventListener("mouseup", d);
+    window.addEventListener("keydown", h);
+    window.addEventListener("keyup", p);
+    document.addEventListener("pointerlockchange", A);
+    return () => {
+      r.removeEventListener("mousedown", u);
+      window.removeEventListener("mouseup", d);
+      window.removeEventListener("keydown", h);
+      window.removeEventListener("keyup", p);
+      document.removeEventListener("pointerlockchange", A);
+      YA.close();
+    };
+  }, [e, t, n, i]);
+}
+var nM = new ve();
+function _Component102() {
+  const e = il(i => i.camera);
+  const {
+    room: t
+  } = on();
+  const n = (0, de.useRef)(NaN);
+  Ha(() => {
+    const i = Xl.get();
+    if (!i) {
+      return;
+    }
+    e.getWorldDirection(nM);
+    const r = i.spatializer;
+    const s = t.state.config.voice.proximityDistance;
+    s !== n.current && (n.current = s, r.setProximityDistance(s));
+    r.setListener(e.position.x, e.position.y, e.position.z, nM.x, nM.y, nM.z);
+    for (const [o, a] of t.state.players) {
+      r.setSource(o, a.position.x, a.position.y, a.position.z);
+    }
+  });
+  return null;
+}
+var Poe = "/assets/casino_room-i-a1S2D6.glb";
+var rQ = "/assets/player_model-DpfHHge5.glb";
+var Loe = "/assets/cosmetics-CkGxr6fK.glb";
+var nze = .025;
+var FK = "spawnpoint";
+function QK(e) {
+  return e.isLight === !0;
+}
+rl.preload(Poe);
+rl.preload(rQ);
+rl.preload(Loe);
+function _Component105() {
+  const e = il(D => D.gl);
+  const t = il(D => D.camera);
+  const n = rl(Poe);
+  const i = rl(rQ);
+  const r = rl(Loe);
+  (0, de.useEffect)(() => {
+    ux.set(r.scene, r.animations);
+  }, [r]);
+  const s = (0, de.useMemo)(() => ({
+    scene: i.scene,
+    animations: i.animations
+  }), [i]);
+  (0, de.useMemo)(() => {
+    n.scene.traverse(D => {
+      QK(D) && (D.intensity = (D.userData.baseIntensity ??= D.intensity) * nze);
+    });
+  }, [n]);
+  const o = s9();
+  const {
+    lightingAllowed: a
+  } = Ore();
+  const l = o.lighting && a;
+  (0, de.useEffect)(() => {
+    n.scene.traverse(D => {
+      QK(D) && (D.visible = l);
+    });
+  }, [n, l]);
+  const u = (0, de.useMemo)(() => {
+    const D = new Set();
+    for (const O of n.animations) {
+      for (const z of O.tracks) {
+        const {
+          nodeName: Q
+        } = bo.parseTrackName(z.name);
+        Q && D.add(Q);
+      }
+    }
+    n.scene.traverse(O => {
+      D.has(O.name) || (O.matrixAutoUpdate = !1);
+    });
+    n.scene.updateMatrixWorld(!0);
+    return D;
+  }, [n]);
+  const d = (0, de.useMemo)(() => G3e(n.scene), [n]);
+  const h = (0, de.useMemo)(() => iMe(n.scene, u), [n, u]);
+  const p = (0, de.useMemo)(() => J3e(n.scene, u), [n, u]);
+  (0, de.useMemo)(() => h.attach(n.scene), [h, n]);
+  Ha(({
+    camera: D
+  }) => {
+    aie.update(D);
+    p.update();
+  }, KN.culling);
+  const A = (0, de.useMemo)(() => {
+    const D = n.scene.getObjectByName(FK);
+    if (!D) {
+      console.warn(`${FK} not found in GLB scene`);
+      return;
+    }
+    D.updateWorldMatrix(!0, !1);
+    return D.getWorldPosition(new ve());
+  }, [n]);
+  const [y, E] = (0, de.useState)(null);
+  (0, de.useEffect)(() => {
+    const D = new $te();
+    t.add(D);
+    w6e(D);
+    const O = GBe(e.domElement);
+    E(O);
+    return () => {
+      t.remove(D);
+      O.dispose();
+      E(null);
+    };
+  }, [e, t]);
+  const b = (0, de.useRef)(null);
+  const w = (0, de.useMemo)(() => ({
+    teleportTo: (D, O, z, Q, G) => b.current?.teleportTo(D, O, z, Q, G)
+  }), []);
+  const T = (0, de.useCallback)(D => {
+    b.current = D;
+  }, []);
+  eze();
+  const {
+    room: x
+  } = on();
+  (0, de.useEffect)(() => y ? l8e(x, w.teleportTo, y, t) : void 0, [x, w, y, t]);
+  const R = n;
+  return <Yre.Provider value={w}><primitive object={n.scene} />{y ? <_Component92 template={s} collider={d} camera={t} input={y} spawn={A} onLocalReady={T} /> : null}<_Component93 gltf={R} /><WLe gltf={R} /><_Component94 gltf={R} /><KNe gltf={R} /><_Component95 gltf={R} /><O8e gltf={R} /><CUe gltf={R} /><_Component96 gltf={R} /><HFe gltf={R} /><_Component97 gltf={R} /><_Component98 gltf={R} /><GQe gltf={R} /><_Component99 gltf={R} /><P7e gltf={R} /><_Component100 gltf={R} /><Y7e gltf={R} /><_Component101 gltf={R} /><EHe gltf={R} /><IHe gltf={R} /><KHe gltf={R} /><XHe gltf={R} /><$He gltf={R} /><_Component102 /></Yre.Provider>;
+}
+var c4 = vk();
+function Noe() {
+  return yk(c4);
+}
+var Ooe = {
+  active: !1,
+  total: 0,
+  pending: 0,
+  startedAt: 0,
+  path: null
+};
+var {
+  subscribe: Uoe,
+  emit: iM
+} = Sm();
+var Iv = Ooe;
+var Mb = {
+  get: () => Iv,
+  reset() {
+    Iv = Ooe;
+    iM();
+  },
+  begin(e) {
+    Iv = {
+      active: !0,
+      total: 0,
+      pending: 0,
+      startedAt: e,
+      path: null
+    };
+    iM();
+  },
+  setPending(e, t) {
+    Iv.pending === e && t === void 0 || (Iv = {
+      ...Iv,
+      pending: e,
+      total: t ?? Math.max(Iv.total, e)
+    }, iM());
+  },
+  finish(e) {
+    Iv = {
+      ...Iv,
+      active: !1,
+      pending: 0,
+      path: e
+    };
+    iM();
+  },
+  subscribe: Uoe
+};
+function rze() {
+  return (0, de.useSyncExternalStore)(Uoe, Mb.get, Mb.get);
+}
+var HK = `${$l.VITE_WEB_APP_URL}/api/client-events`;
+function zK(e) {
+  const {
+    tier: t,
+    type: n,
+    gpu: i
+  } = Mw();
+  const r = JSON.stringify({
+    ...e,
+    renderer: i ?? void 0,
+    gpuTier: t,
+    gpuType: n,
+    screen: `${window.innerWidth}x${window.innerHeight}@${window.devicePixelRatio}x`,
+    userAgent: navigator.userAgent.slice(0, 500)
+  });
+  try {
+    if (navigator.sendBeacon(HK, new Blob([r], {
+      type: "text/plain"
+    }))) {
+      return;
+    }
+  } catch {}
+  fetch(HK, {
+    method: "POST",
+    keepalive: !0,
+    headers: {
+      "content-type": "text/plain"
+    },
+    body: r
+  }).catch(() => {});
+}
+var sze = 8e3;
+var oze = 10;
+function _Component106() {
+  const e = il(i => i.gl);
+  const t = il(i => i.scene);
+  const n = il(i => i.camera);
+  (0, de.useEffect)(() => {
+    let i = !1;
+    let r = 0;
+    let s = 0;
+    const o = performance.now();
+    const a = u => {
+      i || (i = !0, zK({
+        name: "warmup_done",
+        path: u,
+        durationMs: Math.round(performance.now() - o)
+      }), Mb.finish(u), c4.set(!0));
+    };
+    const l = window.setTimeout(() => a("deadline"), sze);
+    zK({
+      name: "warmup_start"
+    });
+    Mb.begin(o);
+    r = requestAnimationFrame(() => {
+      let u;
+      try {
+        u = e.compile(t, n);
+      } catch (p) {
+        console.error("warmup: shader compile failed", p);
+        a("sync");
+        return;
+      }
+      Mb.setPending(u.size, u.size);
+      const {
+        properties: d
+      } = e;
+      const h = () => {
+        if (!i) {
+          try {
+            for (const p of [...u]) {
+              const A = (d.has(p) ? d.get(p) : null)?.currentProgram;
+              (A === void 0 || A.isReady()) && u.delete(p);
+            }
+          } catch (p) {
+            console.error("warmup: shader readiness poll failed", p);
+            a("sync");
+            return;
+          }
+          Mb.setPending(u.size);
+          if (u.size === 0) {
+            a("async");
+            return;
+          }
+          s = window.setTimeout(h, oze);
+        }
+      };
+      h();
+    });
+    return () => {
+      i = !0;
+      window.clearTimeout(l);
+      window.clearTimeout(s);
+      r !== 0 && cancelAnimationFrame(r);
+      Mb.reset();
+      c4.set(!1);
+    };
+  }, [e, t, n]);
+  return null;
+}
+function _Component103() {
+  const e = il(i => i.gl);
+  const t = il(i => i.camera);
+  const n = s9();
+  (0, de.useEffect)(() => {
+    e.toneMappingExposure = n.brightness;
+    t.fov = n.fov;
+    t.updateProjectionMatrix();
+  }, [e, t, n]);
+  return null;
+}
+var Hn = {
+  visible: !1,
+  fps: 0,
+  ms: 0,
+  minFps: 0,
+  maxFps: 0,
+  gpuMs: 0,
+  calls: 0,
+  tris: 0,
+  lines: 0,
+  points: 0,
+  programs: 0,
+  geometries: 0,
+  textures: 0,
+  dpr: 0,
+  bufferW: 0,
+  bufferH: 0,
+  objects: 0,
+  meshes: 0,
+  skinned: 0,
+  culled: 0,
+  lights: 0,
+  materials: 0,
+  jsUsedMB: 0,
+  jsLimitMB: 0,
+  gpuName: "",
+  gpuVendor: "",
+  glVersion: "",
+  antialias: !1,
+  cpuCores: 0,
+  deviceMemGB: 0,
+  platform: "",
+  maxTexSize: 0,
+  screenW: 0,
+  screenH: 0
+};
+var rM = 0;
+var h_ = 0;
+var zP = 0;
+var iS = 1 / 0;
+var f_ = 0;
+var cze = 500;
+var uze = 4;
+var GK = 1048576;
+var sM = null;
+var WK = null;
+var p_ = [];
+var g_ = 0;
+var oM = null;
+function _Component104() {
+  const e = il(n => n.gl);
+  const t = il(n => n.scene);
+  (0, de.useEffect)(() => {
+    const n = e.getContext();
+    sM = n;
+    const i = n.getExtension("WEBGL_debug_renderer_info");
+    Hn.gpuName = i ? String(n.getParameter(i.UNMASKED_RENDERER_WEBGL)) : "hidden by browser";
+    Hn.gpuVendor = i ? String(n.getParameter(i.UNMASKED_VENDOR_WEBGL)) : "";
+    const r = typeof WebGL2RenderingContext < "u" && n instanceof WebGL2RenderingContext;
+    Hn.glVersion = r ? "WebGL2" : "WebGL1";
+    Hn.antialias = !!n.getContextAttributes()?.antialias;
+    Hn.maxTexSize = n.getParameter(n.MAX_TEXTURE_SIZE);
+    WK = r ? n.getExtension("EXT_disjoint_timer_query_webgl2") : null;
+    const s = navigator;
+    Hn.cpuCores = s.hardwareConcurrency ?? 0;
+    Hn.deviceMemGB = s.deviceMemory ?? 0;
+    Hn.platform = s.platform || "";
+    Hn.screenW = Math.round(window.screen.width * window.devicePixelRatio);
+    Hn.screenH = Math.round(window.screen.height * window.devicePixelRatio);
+    const o = WK;
+    if (o) {
+      const a = n;
+      const l = o.TIME_ELAPSED_EXT;
+      t.onBeforeRender = () => {
+        g_++;
+        if (!(g_ !== 1 || !Hn.visible)) {
+          for (let u = p_.length - 1; u >= 0; u--) {
+            const d = p_[u];
+            const h = a.getQueryParameter(d, a.QUERY_RESULT_AVAILABLE);
+            const p = a.getParameter(o.GPU_DISJOINT_EXT);
+            h && (p || (Hn.gpuMs = Number(a.getQueryParameter(d, a.QUERY_RESULT)) / 1e6), a.deleteQuery(d), p_.splice(u, 1));
+          }
+          if (p_.length < uze) {
+            const u = a.createQuery();
+            u && (a.beginQuery(l, u), oM = u);
+          }
+        }
+      };
+      t.onAfterRender = () => {
+        g_ === 1 && oM && (a.endQuery(l), p_.push(oM), oM = null);
+        g_ = Math.max(0, g_ - 1);
+      };
+    }
+    return () => {
+      t.onBeforeRender = () => {};
+      t.onAfterRender = () => {};
+    };
+  }, [e, t]);
+  Ha(() => {
+    const n = performance.now();
+    if (zP) {
+      const s = n - zP;
+      h_ += s;
+      rM++;
+      s < iS && (iS = s);
+      s > f_ && (f_ = s);
+    }
+    zP = n;
+    const i = e.info;
+    Hn.calls = i.render.calls;
+    Hn.tris = i.render.triangles;
+    Hn.lines = i.render.lines;
+    Hn.points = i.render.points;
+    Hn.programs = i.programs?.length ?? 0;
+    Hn.geometries = i.memory.geometries;
+    Hn.textures = i.memory.textures;
+    Hn.dpr = e.getPixelRatio();
+    sM && (Hn.bufferW = sM.drawingBufferWidth, Hn.bufferH = sM.drawingBufferHeight);
+    const r = performance.memory;
+    r && (Hn.jsUsedMB = Math.round(r.usedJSHeapSize / GK), Hn.jsLimitMB = Math.round(r.jsHeapSizeLimit / GK));
+    h_ >= cze && (Hn.fps = Math.round(rM / (h_ / 1e3)), Hn.ms = Math.round(h_ / rM * 10) / 10, Hn.minFps = f_ > 0 ? Math.round(1e3 / f_) : 0, Hn.maxFps = iS > 0 && iS < 1 / 0 ? Math.round(1e3 / iS) : 0, rM = 0, h_ = 0, iS = 1 / 0, f_ = 0, Hn.visible && pze(t));
+  });
+  return null;
+}
+var u4 = new Set();
+function hze(e) {
+  if (e) {
+    if (!Array.isArray(e)) {
+      u4.add(e.uuid);
+      return;
+    }
+    for (const t of e) {
+      t && u4.add(t.uuid);
+    }
+  }
+}
+function fze(e) {
+  const t = e;
+  Hn.objects++;
+  t.isMesh && (Hn.meshes++, t.isSkinnedMesh && Hn.skinned++, e.visible || Hn.culled++, hze(t.material));
+  t.isLight && Hn.lights++;
+}
+function pze(e) {
+  Hn.objects = 0;
+  Hn.meshes = 0;
+  Hn.skinned = 0;
+  Hn.culled = 0;
+  Hn.lights = 0;
+  u4.clear();
+  e.traverse(fze);
+  Hn.materials = u4.size;
+}
+var Rb = e => e.toLocaleString();
+var GP = 24;
+var gze = .6;
+function Aze() {
+  return Hn.gpuMs <= 0 ? "" : Hn.gpuMs > Hn.ms * gze ? "GPU-bound" : "CPU-bound";
+}
+function mze(e, t) {
+  const n = Math.min(GP, Math.round(e / t * GP));
+  return "Ôûê".repeat(n).padEnd(GP, "-");
+}
+function vze() {
+  const e = If.rows();
+  const t = If.gauges();
+  if (e.length === 0 && t.length === 0) {
+    return [];
+  }
+  const n = Math.max(1, e.reduce((i, r) => Math.max(i, r.ms), 0));
+  return ["", "ÔöÇÔöÇ per second ÔöÇÔöÇ", ...t.map(([i, r]) => `${i.padEnd(20)} ${Rb(Math.round(r))}`), ...e.map(i => `${i.label.padEnd(20)} ${i.ms.toFixed(1).padStart(6)}ms ${Rb(i.calls).padStart(7)}x ${mze(i.ms, n)}`)];
+}
+var Foe = 0;
+var Qoe = 0;
+if (typeof PerformanceObserver < "u") {
+  try {
+    new PerformanceObserver(e => {
+      if (Hn.visible) {
+        for (const t of e.getEntries()) {
+          Foe++;
+          Qoe += t.duration;
+        }
+      }
+    }).observe({
+      entryTypes: ["longtask"]
+    });
+  } catch {}
+}
+function _Component107() {
+  const e = (0, de.useRef)(null);
+  const [t, n] = (0, de.useState)(!1);
+  (0, de.useEffect)(() => {
+    const i = r => {
+      r.key === "F9" && n(s => !s);
+    };
+    window.addEventListener("keydown", i);
+    return () => window.removeEventListener("keydown", i);
+  }, []);
+  (0, de.useEffect)(() => {
+    Hn.visible = t;
+    If.enabled = t;
+    if (!t) {
+      If.reset();
+      return;
+    }
+    let i = 0;
+    const r = () => {
+      i = requestAnimationFrame(r);
+      const s = e.current;
+      if (!s) {
+        return;
+      }
+      const o = Aze();
+      const a = Hn.gpuMs > 0 ? Math.max(0, Hn.ms - Hn.gpuMs) : 0;
+      s.textContent = [`FPS    ${Hn.fps}   ${Hn.ms}ms   (lo ${Hn.minFps} / hi ${Hn.maxFps})`, `GPU    ${Hn.gpuMs > 0 ? Hn.gpuMs.toFixed(2) + "ms" : "n/a"}   CPU ${a > 0 ? a.toFixed(2) + "ms" : "n/a"}   ${o}`, "", `Draws  ${Rb(Hn.calls)}`, `Tris   ${Rb(Hn.tris)}   Ln ${Hn.lines}  Pt ${Hn.points}`, `Shdrs  ${Hn.programs}`, "", `Geom   ${Rb(Hn.geometries)}   Tex ${Hn.textures}`, `Heap   ${Hn.jsUsedMB > 0 ? Hn.jsUsedMB + " / " + Hn.jsLimitMB + " MB" : "n/a"}`, "", `Res    ${Hn.bufferW}x${Hn.bufferH}   DPR ${Hn.dpr.toFixed(2)}`, `Scene  ${Rb(Hn.objects)} obj   ${Rb(Hn.meshes)} mesh   ${Hn.culled} hidden`, `       ${Hn.lights} lights   ${Hn.materials} mats   ${Hn.skinned} skin`, `Stalls ${Foe} longtasks   ${Qoe.toFixed(0)}ms total`, ...vze(), "", "ÔöÇÔöÇ device ÔöÇÔöÇ", `CPU    ${Hn.cpuCores || "?"} cores`, `RAM    ${Hn.deviceMemGB ? Hn.deviceMemGB + " GB" : "n/a"}`, `GPU    ${Hn.gpuName}`, `       ${Hn.gpuVendor}`, `Screen ${Hn.screenW}x${Hn.screenH}`, `GL     ${Hn.glVersion}  AA ${Hn.antialias ? "on" : "off"}  maxTex ${Hn.maxTexSize}`, `OS     ${Hn.platform}`].join(`
+`);
+    };
+    i = requestAnimationFrame(r);
+    return () => cancelAnimationFrame(i);
+  }, [t]);
+  return t ? <pre ref={e} style={{
+    position: "fixed",
+    top: 8,
+    left: 8,
+    zIndex: 1e3,
+    margin: 0,
+    font: "11px/1.45 ui-monospace, Menlo, Consolas, monospace",
+    color: "#7CFC9A",
+    background: "rgba(0,0,0,0.72)",
+    padding: "8px 10px",
+    borderRadius: 6,
+    whiteSpace: "pre",
+    pointerEvents: "none",
+    textShadow: "0 1px 1px rgba(0,0,0,0.8)"
+  }} /> : null;
+}
+var Eze = /Android|iPhone|iPod|iPad|Windows Phone|IEMobile|Opera Mini|Silk|Kindle|Mobile Safari/i;
+var RO = {
+  antialias: !0,
+  powerPreference: "high-performance"
+};
+function Hoe() {
+  try {
+    const e = document.createElement("canvas");
+    const t = e.getContext("webgl2", RO) ?? e.getContext("webgl", RO);
+    return t ? (t.getExtension("WEBGL_lose_context")?.loseContext(), !0) : !1;
+  } catch {
+    return !1;
+  }
+}
+function bze() {
+  return typeof document.documentElement.requestPointerLock == "function";
+}
+function Cze() {
+  return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+}
+function Sze() {
+  return Eze.test(navigator.userAgent) || Cze();
+}
+function wze() {
+  return bze() ? Sze() ? "no-mouse" : Hoe() ? null : "no-webgl" : "no-pointer-lock";
+}
+function Ize() {
+  return <S.Fragment><Lne gl={RO} camera={{
+      near: .06,
+      far: 1e3
+    }} onCreated={({
+      gl: e,
+      scene: t
+    }) => {
+      e.toneMapping = 4;
+      t.environment = new Vx(e).fromScene(new Nne()).texture;
+    }} style={{
+      position: "fixed",
+      inset: 0,
+      zIndex: 0
+    }}><_Component103 /><_Component104 /><de.Suspense fallback={null}><_Component105 /><_Component106 /></de.Suspense></Lne><_Component107 /></S.Fragment>;
+}
+function _ze(e) {
+  document.addEventListener("pointerlockchange", e);
+  return () => document.removeEventListener("pointerlockchange", e);
+}
+function sQ() {
+  return (0, de.useSyncExternalStore)(_ze, () => document.pointerLockElement !== null, () => !1);
+}
+function _Component174() {
+  const e = sQ();
+  const t = Kne();
+  const n = BLe();
+  const i = Gk();
+  const r = n?.expiresAt ?? null;
+  const [s, o] = (0, de.useState)(0);
+  (0, de.useEffect)(() => {
+    if (r == null) {
+      return;
+    }
+    let a = 0;
+    const l = () => {
+      o(Math.max(0, (r - Date.now()) / 1e3));
+      a = requestAnimationFrame(l);
+    };
+    l();
+    return () => cancelAnimationFrame(a);
+  }, [r]);
+  return !e || t || !n ? null : <div style={{
+    position: "fixed",
+    left: "50%",
+    bottom: 16,
+    transform: "translateX(-50%)",
+    pointerEvents: "none",
+    zIndex: 92,
+    fontFamily: oi.body,
+    fontSize: 15,
+    fontWeight: 600,
+    color: Ye.text.primary,
+    whiteSpace: "nowrap",
+    padding: "8px 16px",
+    borderRadius: 999,
+    background: Ye.bg.overlayHeavy,
+    border: `1px solid ${Ye.border.input}`,
+    boxShadow: `0 2px 8px ${Ye.bg.overlay}`,
+    textShadow: `0 1px 2px ${Ye.shadow}`
+  }}>Press <span style={{
+      color: Ye.accent
+    }}>'{cD(i.actions.quickAction)}'</span> to {n.label}{r != null ? <S.Fragment> <span style={{
+        color: Ye.text.dim
+      }}>({s.toFixed(2)})</span></S.Fragment> : null}</div>;
+}
+function Tze() {
+  const {
+    userId: e
+  } = on();
+  const t = kre();
+  const n = Rre();
+  const [i, ...r] = (Ai(o => [e, ...t].map(a => o.players.get(a)?.username ?? "").join(`
+`)) ?? "").split(`
+`);
+  const s = [...(n && i ? [{
+    id: e,
+    name: i,
+    self: !0
+  }] : []), ...t.map((o, a) => ({
+    id: o,
+    name: r[a] ?? "",
+    self: !1
+  })).filter(o => o.name !== "" && o.id !== e)];
+  return s.length === 0 ? null : <div style={{
+    position: "fixed",
+    left: 12,
+    top: "22vh",
+    zIndex: 90,
+    pointerEvents: "none",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 6,
+    fontSize: 17,
+    fontWeight: 600,
+    lineHeight: 1.45
+  }}>{s.map(({
+      id: o,
+      name: a,
+      self: l
+    }) => <div style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      maxWidth: "min(320px, 42vw)",
+      textShadow: "0 1px 3px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.8)"
+    }} key={o}><Bze /><span style={{
+        color: l ? Ye.status.deposit : Ye.text.primary,
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap"
+      }}>{a}</span></div>)}</div>;
+}
+function Bze() {
+  return <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={Ye.status.deposit} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{
+    flexShrink: 0,
+    filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.9))"
+  }} aria-hidden={!0}><path d="M11 5 6 9H2v6h4l5 4z" fill={Ye.status.deposit} /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M18.5 5.5a9 9 0 0 1 0 13" /></svg>;
+}
+var VK = 260;
+var Mze = 320;
+var Rze = /(https?:\/\/[^\s<>"]+[^\s<>".,;:!?)\]}'])/g;
+function _Component177() {
+  const {
+    room: e
+  } = on();
+  const t = Ai(a => a.config.announcements.permanentBroadcast) ?? "";
+  const [n, i] = (0, de.useState)(null);
+  const r = (0, de.useRef)([]);
+  (0, de.useEffect)(() => {
+    const a = () => {
+      r.current.forEach(u => clearTimeout(u));
+      r.current = [];
+    };
+    const l = e.onMessage("admin.message", u => {
+      a();
+      i({
+        event: u,
+        mounted: !1,
+        leaving: !1
+      });
+      Ti.play("ui.adminMessage");
+      requestAnimationFrame(() => requestAnimationFrame(() => i(d => d?.event.id === u.id ? {
+        ...d,
+        mounted: !0
+      } : d)));
+      r.current.push(window.setTimeout(() => {
+        i(d => d?.event.id === u.id ? {
+          ...d,
+          leaving: !0
+        } : d);
+        r.current.push(window.setTimeout(() => {
+          i(d => d?.event.id === u.id ? null : d);
+        }, Mze));
+      }, u.durationSeconds * 1e3));
+    });
+    return () => {
+      l();
+      a();
+    };
+  }, [e]);
+  const s = n ? n.event.text : t;
+  if (s === "") {
+    return null;
+  }
+  const o = n ? !n.mounted || n.leaving : !1;
+  return <div style={{
+    position: "fixed",
+    top: 95,
+    left: 14,
+    transform: `translateY(${o ? -14 : 0}px)`,
+    zIndex: 96,
+    pointerEvents: "none",
+    opacity: o ? 0 : 1,
+    transition: `transform ${VK}ms cubic-bezier(0.22, 0.8, 0.28, 1), opacity ${VK}ms ease`
+  }}><div style={{
+      ...M9(Ye.status.error),
+      pointerEvents: o ? "none" : "auto",
+      userSelect: "text",
+      cursor: "auto",
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      width: "min(360px, calc(100vw - 28px))",
+      padding: "14px 18px"
+    }}><BPe size={26} color={Ye.status.error} style={{
+        flexShrink: 0
+      }} /><span style={{
+        fontFamily: oi.body,
+        fontSize: 16,
+        fontWeight: 600,
+        lineHeight: 1.35,
+        color: Ye.text.primary,
+        wordBreak: "break-word"
+      }}>{Dze(s)}</span></div></div>;
+}
+function Dze(e) {
+  return e.split(Rze).map((t, n) => n % 2 === 1 ? <a href={t} target="_blank" rel="noopener noreferrer" style={{
+    color: Ye.accent,
+    textDecoration: "underline",
+    cursor: "pointer"
+  }} key={n}>{t}</a> : t);
+}
+var jK = 3;
+var Pze = 4200;
+var Lze = 400;
+var Nze = 48;
+var KK = [1, .93, .85];
+var Oze = [1, .86, .72];
+function Uze(e) {
+  return `+$${e.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })}`;
+}
+function Fze({
+  item: e,
+  index: t
+}) {
+  const n = Ye.status.deposit;
+  const i = Math.min(t, KK.length - 1);
+  const r = t * Nze;
+  let s = r;
+  let o = Oze[i];
+  let a = KK[i];
+  e.mounted ? e.leaving && (s = r + 8, o = 0, a *= .98) : (s = r - 8, o = 0);
+  return <div style={{
+    position: "absolute",
+    top: 0,
+    left: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    whiteSpace: "nowrap",
+    padding: "7px 16px",
+    borderRadius: 12,
+    background: "rgba(0, 0, 0, 0.5)",
+    border: `1px solid ${n}55`,
+    transform: `translateX(-50%) translateY(${s}px) scale(${a})`,
+    transformOrigin: "top center",
+    opacity: o,
+    textShadow: "0 1px 3px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.8)",
+    transition: "transform 400ms cubic-bezier(0.22, 0.8, 0.28, 1), opacity 320ms ease"
+  }}><span style={{
+      fontSize: 13,
+      fontWeight: 700,
+      lineHeight: 1,
+      letterSpacing: "0.06em",
+      textTransform: "uppercase",
+      color: Ye.text.secondary
+    }}>{e.reason}</span><span style={{
+      fontSize: 24,
+      fontWeight: 800,
+      lineHeight: 1,
+      color: n
+    }}>{Uze(e.amount)}</span></div>;
+}
+function Qze() {
+  const {
+    room: e
+  } = on();
+  const [t, n] = (0, de.useState)([]);
+  const i = (0, de.useRef)(new Map());
+  const r = (0, de.useRef)(new Map());
+  const s = (0, de.useCallback)(o => {
+    const a = i.current.get(o);
+    a && (clearTimeout(a), i.current.delete(o));
+    if (r.current.has(o)) {
+      return;
+    }
+    n(u => u.map(d => d.id === o ? {
+      ...d,
+      leaving: !0
+    } : d));
+    const l = window.setTimeout(() => {
+      r.current.delete(o);
+      n(u => u.filter(d => d.id !== o));
+    }, Lze);
+    r.current.set(o, l);
+  }, []);
+  (0, de.useEffect)(() => {
+    let o = 0;
+    const a = e.onMessage("balance.change", l => {
+      if (!l.amount || l.amount < 0) {
+        return;
+      }
+      const u = ++o;
+      n(d => [{
+        id: u,
+        reason: l.reason,
+        amount: l.amount,
+        mounted: !1,
+        leaving: !1
+      }, ...d]);
+      requestAnimationFrame(() => requestAnimationFrame(() => n(d => d.map(h => h.id === u ? {
+        ...h,
+        mounted: !0
+      } : h))));
+      i.current.set(u, window.setTimeout(() => s(u), Pze));
+    });
+    return () => {
+      a();
+      i.current.forEach(l => clearTimeout(l));
+      r.current.forEach(l => clearTimeout(l));
+      i.current.clear();
+      r.current.clear();
+    };
+  }, [e, s]);
+  (0, de.useEffect)(() => {
+    const o = t.filter(a => !a.leaving);
+    o.length > jK && o.slice(jK).forEach(a => s(a.id));
+  }, [t, s]);
+  return t.length === 0 ? null : <div style={{
+    position: "fixed",
+    top: 95,
+    left: "50%",
+    width: 0,
+    zIndex: 95,
+    pointerEvents: "none"
+  }}>{t.map((o, a) => <Fze item={o} index={a} key={o.id} />)}</div>;
+}
+var Hze = 50;
+var {
+  subscribe: zoe,
+  emit: YK
+} = Sm();
+var aM = [];
+var zze = 0;
+var d4 = {
+  push(e) {
+    const t = [...aM, {
+      id: zze++,
+      message: e
+    }];
+    aM = t.length > Hze ? t.slice(-50) : t;
+    YK();
+  },
+  clear() {
+    aM = [];
+    YK();
+  },
+  get: () => aM,
+  subscribe: zoe
+};
+function Gze() {
+  return (0, de.useSyncExternalStore)(zoe, d4.get, d4.get);
+}
+function Wze(e, t) {
+  return e ? Ye.text.chat : t ? Ye.text.primary : Ye.text.secondary;
+}
+function Vze({
+  message: e
+}) {
+  return e.kind === "game" ? <S.Fragment><span style={{
+      fontWeight: 700,
+      color: Ye.status.success
+    }}>{Iq[e.game]} ┬╗ </span><span style={{
+      fontWeight: 700,
+      color: Ye.text.primary
+    }}>{e.text}</span></S.Fragment> : e.kind === "system" ? <S.Fragment><span style={{
+      fontWeight: 700,
+      color: Ye.accent
+    }}>{e.source} ┬╗ </span><span style={{
+      color: Ye.text.primary
+    }}>{e.text}</span></S.Fragment> : <_Component108 message={e} />;
+}
+function _Component108({
+  message: e
+}) {
+  const t = hm(e.role);
+  const n = t.badge;
+  const i = n !== null || e.standing !== null;
+  return <S.Fragment>{n ? <span style={{
+      display: "inline-block",
+      whiteSpace: "nowrap",
+      background: n.bg,
+      color: n.fg,
+      fontWeight: 700,
+      fontSize: "0.8em",
+      borderRadius: 5,
+      padding: "0 6px",
+      marginRight: 5
+    }}>{n.label}</span> : null}{e.standing ? <span style={{
+      fontWeight: 700,
+      color: aw[e.standing.board]
+    }}>#{e.standing.position} </span> : e.rank ? <span style={{
+      fontWeight: 700,
+      color: e.rank.color
+    }}>{e.rank.numeral} </span> : null}<span style={{
+      fontWeight: i ? 700 : void 0,
+      color: t.nameColor
+    }}>{e.username}</span><span style={{
+      color: Wze(i, e.rank !== null)
+    }}>: {e.text}</span></S.Fragment>;
+}
+var JK = 200;
+function Kze(e) {
+  return `YOU ARE MUTED${e.endsAt === 0 ? "" : ` - ${J4(e.endsAt)}`}`.toUpperCase();
+}
+function Yze() {
+  const {
+    room: e
+  } = on();
+  const t = zT("CHAT_SEND");
+  const n = Gze();
+  const [i, r] = (0, de.useState)("");
+  const s = (0, de.useRef)(null);
+  const o = (0, de.useRef)(null);
+  const a = (0, de.useRef)(!0);
+  const l = zBe();
+  const u = sQ();
+  const d = Gk();
+  (0, de.useEffect)(() => {
+    const y = E => {
+      if (zu.isOpen() || cr.isOpen() || document.pointerLockElement == null) {
+        return;
+      }
+      const b = Uo.getControls().actions.openChat;
+      (E.code === b || E.code === "Enter" || E.code === "NumpadEnter") && (E.preventDefault(), zu.open());
+    };
+    window.addEventListener("keydown", y);
+    return () => window.removeEventListener("keydown", y);
+  }, []);
+  (0, de.useEffect)(() => {
+    const y = o.current;
+    y && (l ? y.focus() : y.blur());
+  }, [l]);
+  (0, de.useEffect)(() => {
+    const y = s.current;
+    y && (u || a.current) && (y.scrollTop = y.scrollHeight);
+  }, [n, u]);
+  function h() {
+    const y = s.current;
+    y && (a.current = u || y.scrollHeight - y.scrollTop - y.clientHeight < 16);
+  }
+  function p() {
+    const y = i.trim();
+    y && !t && or(e, "chat.send", {
+      text: y.slice(0, JK)
+    });
+    r("");
+  }
+  function A(y) {
+    y.stopPropagation();
+    y.key === "Enter" ? (y.preventDefault(), p(), zu.close()) : y.key === "Escape" && (y.preventDefault(), r(""), zu.close());
+  }
+  return <div style={{
+    position: "fixed",
+    left: 12,
+    bottom: 12,
+    width: "min(575px, calc(100vw - 24px))",
+    zIndex: 90,
+    pointerEvents: "none",
+    display: "flex",
+    flexDirection: "column",
+    gap: 8
+  }}><div ref={s} onScroll={h} className="chat-feed" style={{
+      pointerEvents: "auto",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "flex-start",
+      gap: 4,
+      maxHeight: "min(37vh, 285px)",
+      overflowY: "auto",
+      overflowX: "hidden",
+      scrollBehavior: "smooth",
+      fontSize: 15,
+      fontWeight: 500,
+      lineHeight: 1.45
+    }}><div style={{
+        marginTop: "auto",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-start",
+        gap: 4
+      }}>{n.map(({
+          id: y,
+          message: E
+        }) => {
+          const b = E.kind === "game" || E.kind === "system" && E.spaced === !0;
+          return <de.Fragment key={y}>{b ? <div>┬á</div> : null}<div style={{
+              maxWidth: "100%",
+              overflowWrap: "anywhere",
+              textShadow: "0 1px 3px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.8)"
+            }}><Vze message={E} /></div>{b ? <div>┬á</div> : null}</de.Fragment>;
+        })}</div></div><input ref={o} type="text" className="chat-input" value={i} onChange={y => r(y.target.value)} onKeyDown={A} onBlur={() => zu.close()} maxLength={JK} readOnly={t !== void 0} placeholder={t ? Kze(t) : l ? "SAY SOMETHING..." : `PRESS ${cD(d.actions.openChat)} OR ENTER TO CHAT`} style={{
+      pointerEvents: "auto",
+      display: "block",
+      width: "100%",
+      boxSizing: "border-box",
+      color: Ye.text.primary,
+      border: `1px solid ${l ? "rgba(255, 255, 255, 0.5)" : "rgba(255, 255, 255, 0.08)"}`,
+      borderRadius: 8,
+      margin: 0,
+      background: l ? "rgba(0, 0, 0, 0.6)" : "rgba(0, 0, 0, 0.32)",
+      backdropFilter: "blur(4px)",
+      WebkitBackdropFilter: "blur(4px)",
+      fontSize: 12,
+      fontWeight: 500,
+      padding: "9px 12px",
+      outline: "none",
+      transition: "background 0.2s ease, border-color 0.2s ease"
+    }} /></div>;
+}
+function Jze() {
+  const e = sQ();
+  const t = Kne();
+  if (!e || t) {
+    return null;
+  }
+  const n = Ye.text.primary;
+  return <div style={{
+    position: "fixed",
+    left: "50%",
+    top: "50%",
+    width: 30,
+    height: 30,
+    transform: "translate(-50%, -50%)",
+    pointerEvents: "none",
+    zIndex: 92,
+    background: [`linear-gradient(${n}, ${n}) center/2px 14px no-repeat`, `linear-gradient(${n}, ${n}) center/14px 2px no-repeat`].join(","),
+    filter: `drop-shadow(0 0 1px ${Ye.shadow})`
+  }} />;
+}
+var V_ = ZU();
+var WP = new Set();
+var lM = {};
+var kp = {
+  apply(e) {
+    WP = new Set(e.owned);
+    lM = {
+      ...e.loadout
+    };
+    V_.bump();
+  },
+  clear() {
+    WP = new Set();
+    lM = {};
+    V_.bump();
+  },
+  owns: e => WP.has(e),
+  getLoadout: () => lM,
+  equipped(e, t = 0) {
+    return lM[uU(e, t)] ?? null;
+  },
+  getVersion: V_.getVersion,
+  subscribe: V_.subscribe
+};
+var Xze = {
+  NOT_OWNED: "You don't own that cosmetic",
+  UNKNOWN_CODE: "That cosmetic no longer exists"
+};
+var XK = "Couldn't equip that, try again";
+var ZK = "Couldn't unequip that, try again";
+async function Zze() {
+  try {
+    const e = await (await Bl.api.cosmetics.$get()).json();
+    e.success && kp.apply(e.data);
+  } catch {
+    return;
+  }
+}
+async function qK(e, t, n) {
+  try {
+    const i = await (await Bl.api.cosmetics.loadout.$put({
+      json: {
+        type: e,
+        slot: t,
+        code: n
+      }
+    })).json();
+    if (i.success) {
+      kp.apply(i.data);
+      return !0;
+    }
+    const r = typeof i.error == "string" ? i.error : "";
+    Hi(Xze[r] ?? XK, "error", "default");
+    return !1;
+  } catch {
+    Hi(XK, "error", "default");
+    return !1;
+  }
+}
+async function $K(e, t) {
+  try {
+    const n = await (await Bl.api.cosmetics.loadout.$delete({
+      json: {
+        type: e,
+        slot: t
+      }
+    })).json();
+    return n.success ? (kp.apply(n.data), !0) : (Hi(ZK, "error", "default"), !1);
+  } catch {
+    Hi(ZK, "error", "default");
+    return !1;
+  }
+}
+function oQ() {
+  return qU(V_);
+}
+var qze = 5;
+var eY = 8;
+var $ze = 8;
+function Goe({
+  size: e,
+  outerRadius: t,
+  innerRadius: n,
+  segments: i,
+  hubLabel: r,
+  hubFontSize: s,
+  offsetX: o,
+  offsetY: a,
+  maxOffset: l
+}) {
+  const u = e / 2;
+  const d = n - $ze;
+  const h = (t + n) / 2;
+  const p = Math.hypot(o, a) >= 1;
+  const A = (b, w) => {
+    const T = b * Math.PI / 180;
+    return {
+      x: u + w * Math.cos(T),
+      y: u + w * Math.sin(T)
+    };
+  };
+  const y = ({
+    start: b,
+    end: w
+  }) => {
+    const T = A(b, t);
+    const x = A(w, t);
+    const R = A(w, n);
+    const D = A(b, n);
+    const O = w - b > 180 ? 1 : 0;
+    return [`M ${T.x} ${T.y}`, `A ${t} ${t} 0 ${O} 1 ${x.x} ${x.y}`, `L ${R.x} ${R.y}`, `A ${n} ${n} 0 ${O} 0 ${D.x} ${D.y}`, "Z"].join(" ");
+  };
+  const E = b => b.lit ? Ye.bg.panelSolid : b.empty ? Ye.border.stroke : Ye.text.secondary;
+  return <div style={{
+    position: "fixed",
+    inset: 0,
+    zIndex: 95,
+    pointerEvents: "none",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  }}><svg width={e} height={e} viewBox={`0 0 ${e} ${e}`} style={{
+      filter: `drop-shadow(0 6px 18px ${Ye.shadow})`
+    }}>{i.map(b => <path d={y(b.range)} fill={b.lit ? Ye.accent : Ye.bg.panel} stroke={Ye.border.hard} strokeWidth={2} key={b.key} />)}{i.map(b => {
+        const w = A((b.range.start + b.range.end) / 2, h);
+        return <text x={w.x} y={w.y} textAnchor="middle" dominantBaseline="central" fill={E(b)} style={{
+          font: `600 14px ${oi.body}`
+        }} key={b.key}>{b.label}</text>;
+      })}<circle cx={u} cy={u} r={d} fill={Ye.bg.panelSolid} stroke={Ye.border.stroke} strokeWidth={2} />{p ? <circle cx={u + o / l * (d - eY)} cy={u + a / l * (d - eY)} r={qze} fill={Ye.accent} /> : null}<text x={u} y={u} textAnchor="middle" dominantBaseline="central" fill={Ye.text.primary} style={{
+        font: `700 ${s}px ${oi.heading}`
+      }}>{r}</text></svg></div>;
+}
+var eGe = 340;
+var tGe = 158;
+var nGe = 62;
+var iGe = 12;
+function _Component179() {
+  const {
+    open: e,
+    selected: t,
+    offsetX: n,
+    offsetY: i
+  } = QBe();
+  oQ();
+  const r = UT();
+  if (!e) {
+    return null;
+  }
+  const s = Array.from({
+    length: Wk
+  }, (o, a) => {
+    const l = kp.equipped(Ft.EMOTE, a);
+    const u = l ? r.get(l)?.name ?? "" : "";
+    return {
+      key: `emote-${a}`,
+      label: u || "ÔÇö",
+      lit: t === a && l !== null,
+      empty: l === null,
+      range: tie(a)
+    };
+  });
+  return <Goe size={eGe} outerRadius={tGe} innerRadius={nGe} segments={s} hubLabel="EMOTES" hubFontSize={iGe} offsetX={n} offsetY={i} maxOffset={90} />;
+}
+function _Component110({
+  height: e = 48
+} = {}) {
+  return <img src="/betroom-combination-mark.svg" alt="Betroom" style={{
+    height: e,
+    width: "auto",
+    flexShrink: 0,
+    display: "block",
+    userSelect: "none",
+    filter: "drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5))"
+  }} />;
+}
+var Woe = 60;
+var tY = 460;
+function VP(e) {
+  return `$${(Number.isFinite(e) ? e : 0).toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  })}`;
+}
+var kO = {
+  fontSize: 14,
+  fontWeight: 600,
+  color: Ye.text.primary,
+  textShadow: "0 1px 2px rgba(0, 0, 0, 0.6)",
+  whiteSpace: "nowrap"
+};
+var nY = {
+  ...kO,
+  width: Woe,
+  textAlign: "center"
+};
+function _Component109({
+  rank: e
+}) {
+  return <span style={{
+    width: Woe,
+    textAlign: "center",
+    fontWeight: 800,
+    fontSize: 20,
+    color: e?.color ?? Ye.text.primary,
+    textShadow: "0 1px 2px rgba(0, 0, 0, 0.6)"
+  }}>{e ? e.numeral : "ÔÇô"}</span>;
+}
+function _Component112() {
+  const {
+    wagered: e
+  } = Ho();
+  const t = Ai(s => s.wagerRanks) ?? [];
+  const {
+    current: n,
+    next: i,
+    fraction: r
+  } = zEe([...t], e);
+  return <div style={{
+    width: 600,
+    flexShrink: 0,
+    display: "flex",
+    flexDirection: "column",
+    gap: 4
+  }}><div style={{
+      display: "flex",
+      alignItems: "flex-end",
+      gap: 14,
+      justifyContent: "center"
+    }}><span style={nY}>Current</span><div style={{
+        flex: 1,
+        maxWidth: tY,
+        display: "flex",
+        justifyContent: "space-between",
+        gap: 8
+      }}><span style={kO}>Wagered <span style={{
+            color: Ye.accent
+          }}>{VP(e)}</span>{i && <S.Fragment> / {VP(i.value)}</S.Fragment>}</span><span style={kO}>{i ? <S.Fragment><span style={{
+              color: Ye.accent
+            }}>{VP(i.value - e)}</span> to next</S.Fragment> : "Max rank"}</span></div><span style={nY}>Next</span></div><div style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 14,
+      justifyContent: "center"
+    }}><_Component109 rank={n} /><div style={{
+        position: "relative",
+        flex: 1,
+        maxWidth: tY,
+        height: 14,
+        borderRadius: 999,
+        background: "rgba(255, 255, 255, 0.08)",
+        border: `1px solid ${Ye.border.stroke}`,
+        overflow: "hidden"
+      }}><div style={{
+          width: `${r * 100}%`,
+          height: "100%",
+          background: Ye.accent,
+          borderRadius: 999,
+          transition: "width 300ms ease"
+        }} /></div><_Component109 rank={i ?? n} /></div></div>;
+}
+var oGe = $l.VITE_AVATAR_URL;
+var rY = 56;
+function _Component114() {
+  const {
+    username: e,
+    balance: t,
+    role: n,
+    image: i
+  } = Ho();
+  const r = () => {
+    window.open(`${$l.VITE_WEB_APP_URL}/profile/${encodeURIComponent(e)}`, "_blank", "noopener,noreferrer");
+  };
+  const s = hm(n);
+  const o = s.badge;
+  return <div style={{
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    gap: 14
+  }}><button type="button" onClick={() => cr.push({
+      kind: "deposit"
+    })} title="Deposit" aria-label="Deposit" className="hud-trigger" style={{
+      pointerEvents: "auto",
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      margin: 0,
+      padding: 0,
+      border: "none",
+      background: "none",
+      font: "inherit"
+    }}><span style={{
+        color: Ye.accent,
+        fontWeight: 700,
+        fontSize: 20,
+        textShadow: "0 1px 2px rgba(0, 0, 0, 0.6)",
+        whiteSpace: "nowrap"
+      }}>{jn(t)}</span></button><div style={{
+      width: 1,
+      height: 34,
+      background: Ye.border.stroke
+    }} /><button type="button" onClick={r} title="Open your profile" aria-label="Open your profile" className="hud-trigger" style={{
+      pointerEvents: "auto",
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      gap: 14,
+      margin: 0,
+      padding: 0,
+      border: "none",
+      background: "none",
+      font: "inherit",
+      textAlign: "left"
+    }}><img src={dE(oGe, i)} alt={`${e} avatar`} style={{
+        width: rY,
+        height: rY,
+        borderRadius: "50%",
+        objectFit: "cover",
+        border: `1px solid ${Ye.border.stroke}`
+      }} /><div style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-start",
+        gap: 3
+      }}><span style={{
+          color: s.nameColor,
+          fontWeight: 600,
+          fontSize: 20,
+          textShadow: "0 1px 2px rgba(0, 0, 0, 0.6)"
+        }}>{e}</span>{o ? <span style={{
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: "0.04em",
+          color: o.fg,
+          background: o.bg,
+          borderRadius: 6,
+          padding: "1px 8px",
+          lineHeight: 1.5,
+          whiteSpace: "nowrap",
+          textShadow: "0 1px 2px rgba(0, 0, 0, 0.4)"
+        }}>{o.label}</span> : null}</div></button></div>;
+}
+function _Component113() {
+  const {
+    pendingDeposits: e
+  } = HC();
+  return e.length === 0 ? null : <button type="button" onClick={() => cr.push({
+    kind: "deposit"
+  })} title="View pending deposits" style={{
+    ...M9(Ye.status.warning),
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    maxWidth: 260,
+    margin: 0,
+    padding: "10px 16px",
+    color: Ye.text.primary,
+    fontFamily: oi.body,
+    fontSize: 14,
+    fontWeight: 600,
+    lineHeight: 1.25,
+    textAlign: "left",
+    cursor: "pointer",
+    pointerEvents: "auto"
+  }}><PPe size={22} color={Ye.status.warning} style={{
+      flexShrink: 0
+    }} /><span>{e.length > 1 ? `${e.length} deposits` : "Deposit"} awaiting chain confirmation</span></button>;
+}
+function _Component111() {
+  const {
+    room: e
+  } = on();
+  Qo();
+  const t = e.state.displayName;
+  (0, de.useEffect)(() => {
+    document.title = t ? `Betroom - ${t}` : "Betroom";
+    return () => {
+      document.title = "Betroom";
+    };
+  }, [t]);
+  return t ? <div style={{
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    minWidth: 0
+  }}><span style={{
+      width: 1,
+      height: 22,
+      background: Ye.border.stroke,
+      flexShrink: 0
+    }} /><span style={{
+      fontFamily: oi.heading,
+      fontSize: 14,
+      fontWeight: 700,
+      letterSpacing: "0.14em",
+      textTransform: "uppercase",
+      color: Ye.text.secondary,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis"
+    }}>{t}</span></div> : null;
+}
+function _Component176() {
+  return <div style={{
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 90,
+    display: "flex",
+    alignItems: "center",
+    gap: 28,
+    padding: "12px 12px",
+    pointerEvents: "none",
+    userSelect: "none"
+  }}><div style={{
+      flex: 1,
+      minWidth: 0,
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      justifyContent: "flex-start"
+    }}><_Component110 /><_Component111 /></div><_Component112 /><div style={{
+      flex: 1,
+      minWidth: 0,
+      display: "flex",
+      alignItems: "center",
+      gap: 16,
+      justifyContent: "flex-end"
+    }}><_Component113 /><_Component114 /></div></div>;
+}
+function Voe() {
+  const e = document.activeElement;
+  return e instanceof HTMLElement ? e.tagName === "INPUT" || e.tagName === "TEXTAREA" || e.isContentEditable : !1;
+}
+function _Component115() {
+  (0, de.useEffect)(() => {
+    let e = !1;
+    let t = 0;
+    const n = () => document.pointerLockElement !== null && !cr.isOpen();
+    const i = () => {
+      e && n() && la.fire();
+      t = requestAnimationFrame(i);
+    };
+    const r = o => {
+      o.code !== Uo.getControls().actions.quickAction || Voe() || (e = !0);
+    };
+    const s = o => {
+      o.code === Uo.getControls().actions.quickAction && (e = !1);
+    };
+    window.addEventListener("keydown", r);
+    window.addEventListener("keyup", s);
+    t = requestAnimationFrame(i);
+    return () => {
+      window.removeEventListener("keydown", r);
+      window.removeEventListener("keyup", s);
+      cancelAnimationFrame(t);
+    };
+  }, []);
+  return null;
+}
+function _Component118() {
+  const {
+    room: e
+  } = on();
+  const t = Ai(n => n.config.cosmetics.configJson);
+  (0, de.useEffect)(() => {
+    zR.setFromJson(t ?? "");
+  }, [t]);
+  (0, de.useEffect)(() => {
+    const n = e.onMessage("cosmetics.state", r => kp.apply(r));
+    const i = e.onMessage("emote.play", r => Kre.play(r.userId, r.code));
+    Zze();
+    return () => {
+      n();
+      i();
+      kp.clear();
+    };
+  }, [e]);
+  return null;
+}
+function _Component119() {
+  const {
+    room: e
+  } = on();
+  (0, de.useEffect)(() => {
+    const t = () => Uo.getControls().actions.emoteWheel;
+    const n = o => {
+      o.code !== t() || o.repeat || zu.isOpen() || cr.isOpen() || document.pointerLockElement && (o.preventDefault(), JA.open());
+    };
+    const i = o => {
+      if (o.code !== t() || !JA.isOpen()) {
+        return;
+      }
+      const {
+        selected: a
+      } = JA.get();
+      JA.close();
+      if (a < 0) {
+        return;
+      }
+      const l = kp.equipped(Ft.EMOTE, a);
+      l && e.send("emote.play", {
+        code: l
+      });
+    };
+    const r = o => {
+      JA.isOpen() && o.preventDefault();
+    };
+    const s = () => {
+      document.pointerLockElement || JA.close();
+    };
+    window.addEventListener("keydown", n);
+    window.addEventListener("keyup", i);
+    window.addEventListener("contextmenu", r);
+    document.addEventListener("pointerlockchange", s);
+    return () => {
+      window.removeEventListener("keydown", n);
+      window.removeEventListener("keyup", i);
+      window.removeEventListener("contextmenu", r);
+      document.removeEventListener("pointerlockchange", s);
+      JA.close();
+    };
+  }, [e]);
+  return null;
+}
+var aQ = vk();
+function joe() {
+  return yk(aQ);
+}
+function _Component120() {
+  (0, de.useEffect)(() => {
+    const e = t => {
+      t.code !== Uo.getControls().actions.hideHud || t.repeat || !document.pointerLockElement || zu.isOpen() || (t.preventDefault(), aQ.toggle());
+    };
+    window.addEventListener("keydown", e);
+    return () => window.removeEventListener("keydown", e);
+  }, []);
+  return null;
+}
+function _Component116() {
+  const {
+    room: e
+  } = on();
+  am(e, "balance.change", t => {
+    t.type === "TRANSFER" && t.subjectType === "USER_TRANSFER" && t.amount > 0 && Ti.play("ui.moneyReceived");
+  });
+  am(e, "deposit.confirmed", () => {
+    Ti.play("ui.depositConfirmed");
+  });
+  am(e, "jackpot.win", () => {
+    Ti.play("ui.jackpotWin");
+  });
+  return null;
+}
+function AGe() {
+  const {
+    room: e
+  } = on();
+  (0, de.useEffect)(() => {
+    const t = e.onMessage("mute.list", n => fC.apply(n));
+    SBe();
+    return () => {
+      t();
+      fC.clear();
+    };
+  }, [e]);
+  return null;
+}
+function mGe() {
+  const e = vk();
+  return {
+    store: {
+      open: () => e.set(!0),
+      close: () => e.set(!1),
+      isOpen: e.get,
+      subscribe: e.subscribe
+    },
+    useOpen: () => yk(e)
+  };
+}
+var {
+  store: jP,
+  useOpen: vGe
+} = mGe();
+function _Component117() {
+  (0, de.useEffect)(() => {
+    const e = i => {
+      i.code === Uo.getControls().actions.playerList && (i.preventDefault(), !(Voe() || cr.isOpen()) && jP.open());
+    };
+    const t = i => {
+      i.code === Uo.getControls().actions.playerList && jP.close();
+    };
+    const n = () => jP.close();
+    window.addEventListener("keydown", e);
+    window.addEventListener("keyup", t);
+    window.addEventListener("blur", n);
+    return () => {
+      window.removeEventListener("keydown", e);
+      window.removeEventListener("keyup", t);
+      window.removeEventListener("blur", n);
+    };
+  }, []);
+  return null;
+}
+function EGe() {
+  (0, de.useEffect)(() => {
+    const e = n => {
+      n.code !== Uo.getControls().actions.thirdPerson || n.repeat || !document.pointerLockElement || zu.isOpen() || (n.preventDefault(), $A.toggle());
+    };
+    const t = n => {
+      $A.isActive() && (!document.pointerLockElement || cr.isOpen() || $A.zoom(n.deltaY));
+    };
+    window.addEventListener("keydown", e);
+    window.addEventListener("wheel", t, {
+      passive: !0
+    });
+    return () => {
+      window.removeEventListener("keydown", e);
+      window.removeEventListener("wheel", t);
+    };
+  }, []);
+  return null;
+}
+function bGe(e, t) {
+  t.forEach(function (n) {
+    n && typeof n != "string" && !Array.isArray(n) && Object.keys(n).forEach(function (i) {
+      if (i !== "default" && !(i in e)) {
+        var r = Object.getOwnPropertyDescriptor(n, i);
+        Object.defineProperty(e, i, r.get ? r : {
+          enumerable: !0,
+          get: function () {
+            return n[i];
+          }
+        });
+      }
+    });
+  });
+  return Object.freeze(e);
+}
+var CGe = Object.defineProperty;
+var SGe = (e, t, n) => t in e ? CGe(e, t, {
+  enumerable: !0,
+  configurable: !0,
+  writable: !0,
+  value: n
+}) : e[t] = n;
+var sY = (e, t, n) => SGe(e, typeof t != "symbol" ? t + "" : t, n);
+var Yu = class {
+  constructor() {
+    sY(this, "_locking");
+    sY(this, "_locks");
+    this._locking = Promise.resolve();
+    this._locks = 0;
+  }
+  isLocked() {
+    return this._locks > 0;
+  }
+  lock() {
+    this._locks += 1;
+    let e;
+    const t = new Promise(i => e = () => {
+      this._locks -= 1;
+      i();
+    });
+    const n = this._locking.then(() => e);
+    this._locking = this._locking.then(() => t);
+    return n;
+  }
+};
+function Zl(e, t) {
+  if (!e) {
+    throw new Error(t);
+  }
+}
+var wGe = 34028234663852886e22;
+var IGe = -34028234663852886e22;
+var _Ge = 4294967295;
+var xGe = 2147483647;
+var TGe = -2147483648;
+function ZM(e) {
+  if (typeof e != "number") {
+    throw new Error("invalid int 32: " + typeof e);
+  }
+  if (!Number.isInteger(e) || e > xGe || e < TGe) {
+    throw new Error("invalid int 32: " + e);
+  }
+}
+function DO(e) {
+  if (typeof e != "number") {
+    throw new Error("invalid uint 32: " + typeof e);
+  }
+  if (!Number.isInteger(e) || e > _Ge || e < 0) {
+    throw new Error("invalid uint 32: " + e);
+  }
+}
+function Koe(e) {
+  if (typeof e != "number") {
+    throw new Error("invalid float 32: " + typeof e);
+  }
+  if (Number.isFinite(e) && (e > wGe || e < IGe)) {
+    throw new Error("invalid float 32: " + e);
+  }
+}
+var Yoe = Symbol("@bufbuild/protobuf/enum-type");
+function BGe(e) {
+  const t = e[Yoe];
+  Zl(t, "missing enum type on enum object");
+  return t;
+}
+function Joe(e, t, n, i) {
+  e[Yoe] = Xoe(t, n.map(r => ({
+    no: r.no,
+    name: r.name,
+    localName: e[r.no]
+  })));
+}
+function Xoe(e, t, n) {
+  const i = Object.create(null);
+  const r = Object.create(null);
+  const s = [];
+  for (const o of t) {
+    const a = Zoe(o);
+    s.push(a);
+    i[o.name] = a;
+    r[o.no] = a;
+  }
+  return {
+    typeName: e,
+    values: s,
+    findName(o) {
+      return i[o];
+    },
+    findNumber(o) {
+      return r[o];
+    }
+  };
+}
+function MGe(e, t, n) {
+  const i = {};
+  for (const r of t) {
+    const s = Zoe(r);
+    i[s.localName] = s.no;
+    i[s.no] = s.localName;
+  }
+  Joe(i, e, t);
+  return i;
+}
+function Zoe(e) {
+  return "localName" in e ? e : Object.assign(Object.assign({}, e), {
+    localName: e.name
+  });
+}
+var lQ = class {
+  equals(e) {
+    return this.getType().runtime.util.equals(this.getType(), this, e);
+  }
+  clone() {
+    return this.getType().runtime.util.clone(this);
+  }
+  fromBinary(e, t) {
+    const n = this.getType().runtime.bin;
+    const i = n.makeReadOptions(t);
+    n.readMessage(this, i.readerFactory(e), e.byteLength, i);
+    return this;
+  }
+  fromJson(e, t) {
+    const n = this.getType();
+    const i = n.runtime.json;
+    const r = i.makeReadOptions(t);
+    i.readMessage(n, e, r, this);
+    return this;
+  }
+  fromJsonString(e, t) {
+    let n;
+    try {
+      n = JSON.parse(e);
+    } catch (i) {
+      throw new Error("cannot decode ".concat(this.getType().typeName, " from JSON: ").concat(i instanceof Error ? i.message : String(i)));
+    }
+    return this.fromJson(n, t);
+  }
+  toBinary(e) {
+    const t = this.getType().runtime.bin;
+    const n = t.makeWriteOptions(e);
+    const i = n.writerFactory();
+    t.writeMessage(this, i, n);
+    return i.finish();
+  }
+  toJson(e) {
+    const t = this.getType().runtime.json;
+    const n = t.makeWriteOptions(e);
+    return t.writeMessage(this, n);
+  }
+  toJsonString(e) {
+    var t;
+    const n = this.toJson(e);
+    return JSON.stringify(n, null, (t = e?.prettySpaces) !== null && t !== void 0 ? t : 0);
+  }
+  toJSON() {
+    return this.toJson({
+      emitDefaultValues: !0
+    });
+  }
+  getType() {
+    return Object.getPrototypeOf(this).constructor;
+  }
+};
+function RGe(e, t, n, i) {
+  var r;
+  const s = (r = i?.localName) !== null && r !== void 0 ? r : t.substring(t.lastIndexOf(".") + 1);
+  const o = {
+    [s]: function (a) {
+      e.util.initFields(this);
+      e.util.initPartial(a, this);
+    }
+  }[s];
+  Object.setPrototypeOf(o.prototype, new lQ());
+  Object.assign(o, {
+    runtime: e,
+    typeName: t,
+    fields: e.util.newFieldList(n),
+    fromBinary(a, l) {
+      return new o().fromBinary(a, l);
+    },
+    fromJson(a, l) {
+      return new o().fromJson(a, l);
+    },
+    fromJsonString(a, l) {
+      return new o().fromJsonString(a, l);
+    },
+    equals(a, l) {
+      return e.util.equals(o, a, l);
+    }
+  });
+  return o;
+}
+function kGe() {
+  let e = 0;
+  let t = 0;
+  for (let i = 0; i < 28; i += 7) {
+    let r = this.buf[this.pos++];
+    e |= (r & 127) << i;
+    if ((r & 128) == 0) {
+      this.assertBounds();
+      return [e, t];
+    }
+  }
+  let n = this.buf[this.pos++];
+  e |= (n & 15) << 28;
+  t = (n & 112) >> 4;
+  if ((n & 128) == 0) {
+    this.assertBounds();
+    return [e, t];
+  }
+  for (let i = 3; i <= 31; i += 7) {
+    let r = this.buf[this.pos++];
+    t |= (r & 127) << i;
+    if ((r & 128) == 0) {
+      this.assertBounds();
+      return [e, t];
+    }
+  }
+  throw new Error("invalid varint");
+}
+function KP(e, t, n) {
+  for (let s = 0; s < 28; s = s + 7) {
+    const o = e >>> s;
+    const a = !(!(o >>> 7) && t == 0);
+    const l = (a ? o | 128 : o) & 255;
+    n.push(l);
+    if (!a) {
+      return;
+    }
+  }
+  const i = e >>> 28 & 15 | (t & 7) << 4;
+  const r = t >> 3 != 0;
+  n.push((r ? i | 128 : i) & 255);
+  if (!!r) {
+    for (let s = 3; s < 31; s = s + 7) {
+      const o = t >>> s;
+      const a = !!(o >>> 7);
+      const l = (a ? o | 128 : o) & 255;
+      n.push(l);
+      if (!a) {
+        return;
+      }
+    }
+    n.push(t >>> 31 & 1);
+  }
+}
+var qM = 4294967296;
+function oY(e) {
+  const t = e[0] === "-";
+  t && (e = e.slice(1));
+  const n = 1e6;
+  let i = 0;
+  let r = 0;
+  function s(o, a) {
+    const l = Number(e.slice(o, a));
+    r *= n;
+    i = i * n + l;
+    i >= qM && (r = r + (i / qM | 0), i = i % qM);
+  }
+  s(-24, -18);
+  s(-18, -12);
+  s(-12, -6);
+  s(-6);
+  return t ? $oe(i, r) : cQ(i, r);
+}
+function DGe(e, t) {
+  let n = cQ(e, t);
+  const i = n.hi & 2147483648;
+  i && (n = $oe(n.lo, n.hi));
+  const r = qoe(n.lo, n.hi);
+  return i ? "-" + r : r;
+}
+function qoe(e, t) {
+  var n = PGe(e, t);
+  e = n.lo;
+  t = n.hi;
+  if (t <= 2097151) {
+    return String(qM * t + e);
+  }
+  const i = e & 16777215;
+  const r = (e >>> 24 | t << 8) & 16777215;
+  const s = t >> 16 & 65535;
+  let o = i + r * 6777216 + s * 6710656;
+  let a = r + s * 8147497;
+  let l = s * 2;
+  const u = 1e7;
+  o >= u && (a += Math.floor(o / u), o %= u);
+  a >= u && (l += Math.floor(a / u), a %= u);
+  return l.toString() + aY(a) + aY(o);
+}
+function PGe(e, t) {
+  return {
+    lo: e >>> 0,
+    hi: t >>> 0
+  };
+}
+function cQ(e, t) {
+  return {
+    lo: e | 0,
+    hi: t | 0
+  };
+}
+function $oe(e, t) {
+  t = ~t;
+  e ? e = ~e + 1 : t += 1;
+  return cQ(e, t);
+}
+var aY = e => {
+  const t = String(e);
+  return "0000000".slice(t.length) + t;
+};
+function lY(e, t) {
+  if (e >= 0) {
+    for (; e > 127;) {
+      t.push(e & 127 | 128);
+      e = e >>> 7;
+    }
+    t.push(e);
+  } else {
+    for (let n = 0; n < 9; n++) {
+      t.push(e & 127 | 128);
+      e = e >> 7;
+    }
+    t.push(1);
+  }
+}
+function LGe() {
+  let e = this.buf[this.pos++];
+  let t = e & 127;
+  if ((e & 128) == 0) {
+    this.assertBounds();
+    return t;
+  }
+  e = this.buf[this.pos++];
+  t |= (e & 127) << 7;
+  if ((e & 128) == 0) {
+    this.assertBounds();
+    return t;
+  }
+  e = this.buf[this.pos++];
+  t |= (e & 127) << 14;
+  if ((e & 128) == 0) {
+    this.assertBounds();
+    return t;
+  }
+  e = this.buf[this.pos++];
+  t |= (e & 127) << 21;
+  if ((e & 128) == 0) {
+    this.assertBounds();
+    return t;
+  }
+  e = this.buf[this.pos++];
+  t |= (e & 15) << 28;
+  for (let n = 5; (e & 128) !== 0 && n < 10; n++) {
+    e = this.buf[this.pos++];
+  }
+  if ((e & 128) != 0) {
+    throw new Error("invalid varint");
+  }
+  this.assertBounds();
+  return t >>> 0;
+}
+function NGe() {
+  const e = new DataView(new ArrayBuffer(8));
+  if (typeof BigInt == "function" && typeof e.getBigInt64 == "function" && typeof e.getBigUint64 == "function" && typeof e.setBigInt64 == "function" && typeof e.setBigUint64 == "function" && (typeof process != "object" || {}.BUF_BIGINT_DISABLE !== "1")) {
+    const i = BigInt("-9223372036854775808");
+    const r = BigInt("9223372036854775807");
+    const s = BigInt("0");
+    const o = BigInt("18446744073709551615");
+    return {
+      zero: BigInt(0),
+      supported: !0,
+      parse(a) {
+        const l = typeof a == "bigint" ? a : BigInt(a);
+        if (l > r || l < i) {
+          throw new Error("int64 invalid: ".concat(a));
+        }
+        return l;
+      },
+      uParse(a) {
+        const l = typeof a == "bigint" ? a : BigInt(a);
+        if (l > o || l < s) {
+          throw new Error("uint64 invalid: ".concat(a));
+        }
+        return l;
+      },
+      enc(a) {
+        e.setBigInt64(0, this.parse(a), !0);
+        return {
+          lo: e.getInt32(0, !0),
+          hi: e.getInt32(4, !0)
+        };
+      },
+      uEnc(a) {
+        e.setBigInt64(0, this.uParse(a), !0);
+        return {
+          lo: e.getInt32(0, !0),
+          hi: e.getInt32(4, !0)
+        };
+      },
+      dec(a, l) {
+        e.setInt32(0, a, !0);
+        e.setInt32(4, l, !0);
+        return e.getBigInt64(0, !0);
+      },
+      uDec(a, l) {
+        e.setInt32(0, a, !0);
+        e.setInt32(4, l, !0);
+        return e.getBigUint64(0, !0);
+      }
+    };
+  }
+  const t = i => Zl(/^-?[0-9]+$/.test(i), "int64 invalid: ".concat(i));
+  const n = i => Zl(/^[0-9]+$/.test(i), "uint64 invalid: ".concat(i));
+  return {
+    zero: "0",
+    supported: !1,
+    parse(i) {
+      typeof i != "string" && (i = i.toString());
+      t(i);
+      return i;
+    },
+    uParse(i) {
+      typeof i != "string" && (i = i.toString());
+      n(i);
+      return i;
+    },
+    enc(i) {
+      typeof i != "string" && (i = i.toString());
+      t(i);
+      return oY(i);
+    },
+    uEnc(i) {
+      typeof i != "string" && (i = i.toString());
+      n(i);
+      return oY(i);
+    },
+    dec(i, r) {
+      return DGe(i, r);
+    },
+    uDec(i, r) {
+      return qoe(i, r);
+    }
+  };
+}
+var el = NGe();
+var gn;
+(function (e) {
+  e[e.DOUBLE = 1] = "DOUBLE";
+  e[e.FLOAT = 2] = "FLOAT";
+  e[e.INT64 = 3] = "INT64";
+  e[e.UINT64 = 4] = "UINT64";
+  e[e.INT32 = 5] = "INT32";
+  e[e.FIXED64 = 6] = "FIXED64";
+  e[e.FIXED32 = 7] = "FIXED32";
+  e[e.BOOL = 8] = "BOOL";
+  e[e.STRING = 9] = "STRING";
+  e[e.BYTES = 12] = "BYTES";
+  e[e.UINT32 = 13] = "UINT32";
+  e[e.SFIXED32 = 15] = "SFIXED32";
+  e[e.SFIXED64 = 16] = "SFIXED64";
+  e[e.SINT32 = 17] = "SINT32";
+  e[e.SINT64 = 18] = "SINT64";
+})(gn || (gn = {}));
+var oE;
+(function (e) {
+  e[e.BIGINT = 0] = "BIGINT";
+  e[e.STRING = 1] = "STRING";
+})(oE || (oE = {}));
+function E1(e, t, n) {
+  if (t === n) {
+    return !0;
+  }
+  if (e == gn.BYTES) {
+    if (!(t instanceof Uint8Array) || !(n instanceof Uint8Array) || t.length !== n.length) {
+      return !1;
+    }
+    for (let i = 0; i < t.length; i++) {
+      if (t[i] !== n[i]) {
+        return !1;
+      }
+    }
+    return !0;
+  }
+  switch (e) {
+    case gn.UINT64:
+    case gn.FIXED64:
+    case gn.INT64:
+    case gn.SFIXED64:
+    case gn.SINT64:
+      return t == n;
+  }
+  return !1;
+}
+function Pw(e, t) {
+  switch (e) {
+    case gn.BOOL:
+      return !1;
+    case gn.UINT64:
+    case gn.FIXED64:
+    case gn.INT64:
+    case gn.SFIXED64:
+    case gn.SINT64:
+      return t == 0 ? el.zero : "0";
+    case gn.DOUBLE:
+    case gn.FLOAT:
+      return 0;
+    case gn.BYTES:
+      return new Uint8Array(0);
+    case gn.STRING:
+      return "";
+    default:
+      return 0;
+  }
+}
+function eae(e, t) {
+  switch (e) {
+    case gn.BOOL:
+      return t === !1;
+    case gn.STRING:
+      return t === "";
+    case gn.BYTES:
+      return t instanceof Uint8Array && !t.byteLength;
+    default:
+      return t == 0;
+  }
+}
+function OGe(e, t) {
+  this.v = e;
+  this.k = t;
+}
+function PO(e, t) {
+  (t == null || t > e.length) && (t = e.length);
+  for (var n = 0, i = Array(t); n < t; n++) {
+    i[n] = e[n];
+  }
+  return i;
+}
+function tae(e) {
+  if (Array.isArray(e)) {
+    return e;
+  }
+}
+function Ii(e, t, n) {
+  (t = VGe(t)) in e ? Object.defineProperty(e, t, {
+    value: n,
+    enumerable: !0,
+    configurable: !0,
+    writable: !0
+  }) : e[t] = n;
+  return e;
+}
+function UGe(e) {
+  if (typeof Symbol < "u" && e[Symbol.iterator] != null || e["@@iterator"] != null) {
+    return Array.from(e);
+  }
+}
+function FGe(e, t) {
+  var n = e == null ? null : typeof Symbol < "u" && e[Symbol.iterator] || e["@@iterator"];
+  if (n != null) {
+    var i;
+    var r;
+    var s;
+    var o;
+    var a = [];
+    var l = !0;
+    var u = !1;
+    try {
+      s = (n = n.call(e)).next;
+      if (t === 0) {
+        if (Object(n) !== n) {
+          return;
+        }
+        l = !1;
+      } else {
+        for (; !(l = (i = s.call(n)).done) && (a.push(i.value), a.length !== t); l = !0);
+      }
+    } catch (d) {
+      u = !0;
+      r = d;
+    } finally {
+      try {
+        if (!l && n.return != null && (o = n.return(), Object(o) !== o)) {
+          return;
+        }
+      } finally {
+        if (u) {
+          throw r;
+        }
+      }
+    }
+    return a;
+  }
+}
+function nae() {
+  throw new TypeError(`Invalid attempt to destructure non-iterable instance.
+In order to be iterable, non-array objects must have a [Symbol.iterator]() method.`);
+}
+function cY(e, t) {
+  var n = Object.keys(e);
+  if (Object.getOwnPropertySymbols) {
+    var i = Object.getOwnPropertySymbols(e);
+    t && (i = i.filter(function (r) {
+      return Object.getOwnPropertyDescriptor(e, r).enumerable;
+    }));
+    n.push.apply(n, i);
+  }
+  return n;
+}
+function QGe(e) {
+  for (var t = 1; t < arguments.length; t++) {
+    var n = arguments[t] != null ? arguments[t] : {};
+    t % 2 ? cY(Object(n), !0).forEach(function (i) {
+      Ii(e, i, n[i]);
+    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(n)) : cY(Object(n)).forEach(function (i) {
+      Object.defineProperty(e, i, Object.getOwnPropertyDescriptor(n, i));
+    });
+  }
+  return e;
+}
+function HGe(e, t) {
+  if (e == null) {
+    return {};
+  }
+  var n;
+  var i;
+  var r = zGe(e, t);
+  if (Object.getOwnPropertySymbols) {
+    var s = Object.getOwnPropertySymbols(e);
+    for (i = 0; i < s.length; i++) {
+      n = s[i];
+      t.indexOf(n) === -1 && {}.propertyIsEnumerable.call(e, n) && (r[n] = e[n]);
+    }
+  }
+  return r;
+}
+function zGe(e, t) {
+  if (e == null) {
+    return {};
+  }
+  var n = {};
+  for (var i in e) {
+    if ({}.hasOwnProperty.call(e, i)) {
+      if (t.indexOf(i) !== -1) {
+        continue;
+      }
+      n[i] = e[i];
+    }
+  }
+  return n;
+}
+function yi(e, t) {
+  return tae(e) || FGe(e, t) || iae(e, t) || nae();
+}
+function GGe(e) {
+  return tae(e) || UGe(e) || iae(e) || nae();
+}
+function WGe(e, t) {
+  if (typeof e != "object" || !e) {
+    return e;
+  }
+  var n = e[Symbol.toPrimitive];
+  if (n !== void 0) {
+    var i = n.call(e, t);
+    if (typeof i != "object") {
+      return i;
+    }
+    throw new TypeError("@@toPrimitive must return a primitive value.");
+  }
+  return (t === "string" ? String : Number)(e);
+}
+function VGe(e) {
+  var t = WGe(e, "string");
+  return typeof t == "symbol" ? t : t + "";
+}
+function iae(e, t) {
+  if (e) {
+    if (typeof e == "string") {
+      return PO(e, t);
+    }
+    var n = {}.toString.call(e).slice(8, -1);
+    n === "Object" && e.constructor && (n = e.constructor.name);
+    return n === "Map" || n === "Set" ? Array.from(e) : n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n) ? PO(e, t) : void 0;
+  }
+}
+function jGe(e) {
+  return function () {
+    return new j_(e.apply(this, arguments));
+  };
+}
+function j_(e) {
+  var t;
+  var n;
+  function i(s, o) {
+    try {
+      var a = e[s](o);
+      var l = a.value;
+      var u = l instanceof OGe;
+      Promise.resolve(u ? l.v : l).then(function (d) {
+        if (u) {
+          var h = s === "return" && l.k ? s : "next";
+          if (!l.k || d.done) {
+            return i(h, d);
+          }
+          d = e[h](d).value;
+        }
+        r(!!a.done, d);
+      }, function (d) {
+        i("throw", d);
+      });
+    } catch (d) {
+      r(2, d);
+    }
+  }
+  function r(s, o) {
+    s === 2 ? t.reject(o) : t.resolve({
+      value: o,
+      done: s
+    });
+    (t = t.next) ? i(t.key, t.arg) : n = null;
+  }
+  this._invoke = function (s, o) {
+    return new Promise(function (a, l) {
+      var u = {
+        key: s,
+        arg: o,
+        resolve: a,
+        reject: l,
+        next: null
+      };
+      n ? n = n.next = u : (t = n = u, i(s, o));
+    });
+  };
+  typeof e.return != "function" && (this.return = void 0);
+}
+j_.prototype[typeof Symbol == "function" && Symbol.asyncIterator || "@@asyncIterator"] = function () {
+  return this;
+};
+j_.prototype.next = function (e) {
+  return this._invoke("next", e);
+};
+j_.prototype.throw = function (e) {
+  return this._invoke("throw", e);
+};
+j_.prototype.return = function (e) {
+  return this._invoke("return", e);
+};
+var Tc;
+(function (e) {
+  e[e.Varint = 0] = "Varint";
+  e[e.Bit64 = 1] = "Bit64";
+  e[e.LengthDelimited = 2] = "LengthDelimited";
+  e[e.StartGroup = 3] = "StartGroup";
+  e[e.EndGroup = 4] = "EndGroup";
+  e[e.Bit32 = 5] = "Bit32";
+})(Tc || (Tc = {}));
+var KGe = class {
+  constructor(e) {
+    this.stack = [];
+    this.textEncoder = e ?? new TextEncoder();
+    this.chunks = [];
+    this.buf = [];
+  }
+  finish() {
+    this.chunks.push(new Uint8Array(this.buf));
+    let e = 0;
+    for (let i = 0; i < this.chunks.length; i++) {
+      e += this.chunks[i].length;
+    }
+    let t = new Uint8Array(e);
+    let n = 0;
+    for (let i = 0; i < this.chunks.length; i++) {
+      t.set(this.chunks[i], n);
+      n += this.chunks[i].length;
+    }
+    this.chunks = [];
+    return t;
+  }
+  fork() {
+    this.stack.push({
+      chunks: this.chunks,
+      buf: this.buf
+    });
+    this.chunks = [];
+    this.buf = [];
+    return this;
+  }
+  join() {
+    let e = this.finish();
+    let t = this.stack.pop();
+    if (!t) {
+      throw new Error("invalid state, fork stack empty");
+    }
+    this.chunks = t.chunks;
+    this.buf = t.buf;
+    this.uint32(e.byteLength);
+    return this.raw(e);
+  }
+  tag(e, t) {
+    return this.uint32((e << 3 | t) >>> 0);
+  }
+  raw(e) {
+    this.buf.length && (this.chunks.push(new Uint8Array(this.buf)), this.buf = []);
+    this.chunks.push(e);
+    return this;
+  }
+  uint32(e) {
+    for (DO(e); e > 127;) {
+      this.buf.push(e & 127 | 128);
+      e = e >>> 7;
+    }
+    this.buf.push(e);
+    return this;
+  }
+  int32(e) {
+    ZM(e);
+    lY(e, this.buf);
+    return this;
+  }
+  bool(e) {
+    this.buf.push(e ? 1 : 0);
+    return this;
+  }
+  bytes(e) {
+    this.uint32(e.byteLength);
+    return this.raw(e);
+  }
+  string(e) {
+    let t = this.textEncoder.encode(e);
+    this.uint32(t.byteLength);
+    return this.raw(t);
+  }
+  float(e) {
+    Koe(e);
+    let t = new Uint8Array(4);
+    new DataView(t.buffer).setFloat32(0, e, !0);
+    return this.raw(t);
+  }
+  double(e) {
+    let t = new Uint8Array(8);
+    new DataView(t.buffer).setFloat64(0, e, !0);
+    return this.raw(t);
+  }
+  fixed32(e) {
+    DO(e);
+    let t = new Uint8Array(4);
+    new DataView(t.buffer).setUint32(0, e, !0);
+    return this.raw(t);
+  }
+  sfixed32(e) {
+    ZM(e);
+    let t = new Uint8Array(4);
+    new DataView(t.buffer).setInt32(0, e, !0);
+    return this.raw(t);
+  }
+  sint32(e) {
+    ZM(e);
+    e = (e << 1 ^ e >> 31) >>> 0;
+    lY(e, this.buf);
+    return this;
+  }
+  sfixed64(e) {
+    let t = new Uint8Array(8);
+    let n = new DataView(t.buffer);
+    let i = el.enc(e);
+    n.setInt32(0, i.lo, !0);
+    n.setInt32(4, i.hi, !0);
+    return this.raw(t);
+  }
+  fixed64(e) {
+    let t = new Uint8Array(8);
+    let n = new DataView(t.buffer);
+    let i = el.uEnc(e);
+    n.setInt32(0, i.lo, !0);
+    n.setInt32(4, i.hi, !0);
+    return this.raw(t);
+  }
+  int64(e) {
+    let t = el.enc(e);
+    KP(t.lo, t.hi, this.buf);
+    return this;
+  }
+  sint64(e) {
+    let t = el.enc(e);
+    let n = t.hi >> 31;
+    KP(t.lo << 1 ^ n, (t.hi << 1 | t.lo >>> 31) ^ n, this.buf);
+    return this;
+  }
+  uint64(e) {
+    let t = el.uEnc(e);
+    KP(t.lo, t.hi, this.buf);
+    return this;
+  }
+};
+var YGe = class {
+  constructor(e, t) {
+    this.varint64 = kGe;
+    this.uint32 = LGe;
+    this.buf = e;
+    this.len = e.length;
+    this.pos = 0;
+    this.view = new DataView(e.buffer, e.byteOffset, e.byteLength);
+    this.textDecoder = t ?? new TextDecoder();
+  }
+  tag() {
+    let e = this.uint32();
+    let t = e >>> 3;
+    let n = e & 7;
+    if (t <= 0 || n < 0 || n > 5) {
+      throw new Error("illegal tag: field no " + t + " wire type " + n);
+    }
+    return [t, n];
+  }
+  skip(e, t) {
+    let n = this.pos;
+    switch (e) {
+      case Tc.Varint:
+        for (; this.buf[this.pos++] & 128;);
+        break;
+      case Tc.Bit64:
+        this.pos += 4;
+      case Tc.Bit32:
+        this.pos += 4;
+        break;
+      case Tc.LengthDelimited:
+        let i = this.uint32();
+        this.pos += i;
+        break;
+      case Tc.StartGroup:
+        for (;;) {
+          const r = yi(this.tag(), 2);
+          const s = r[0];
+          const o = r[1];
+          if (o === Tc.EndGroup) {
+            if (t !== void 0 && s !== t) {
+              throw new Error("invalid end group tag");
+            }
+            break;
+          }
+          this.skip(o, s);
+        }
+        break;
+      default:
+        throw new Error("cant skip wire type " + e);
+    }
+    this.assertBounds();
+    return this.buf.subarray(n, this.pos);
+  }
+  assertBounds() {
+    if (this.pos > this.len) {
+      throw new RangeError("premature EOF");
+    }
+  }
+  int32() {
+    return this.uint32() | 0;
+  }
+  sint32() {
+    let e = this.uint32();
+    return e >>> 1 ^ -(e & 1);
+  }
+  int64() {
+    return el.dec(...this.varint64());
+  }
+  uint64() {
+    return el.uDec(...this.varint64());
+  }
+  sint64() {
+    let e = yi(this.varint64(), 2);
+    let t = e[0];
+    let n = e[1];
+    let i = -(t & 1);
+    t = (t >>> 1 | (n & 1) << 31) ^ i;
+    n = n >>> 1 ^ i;
+    return el.dec(t, n);
+  }
+  bool() {
+    let e = yi(this.varint64(), 2);
+    let t = e[0];
+    let n = e[1];
+    return t !== 0 || n !== 0;
+  }
+  fixed32() {
+    return this.view.getUint32((this.pos += 4) - 4, !0);
+  }
+  sfixed32() {
+    return this.view.getInt32((this.pos += 4) - 4, !0);
+  }
+  fixed64() {
+    return el.uDec(this.sfixed32(), this.sfixed32());
+  }
+  sfixed64() {
+    return el.dec(this.sfixed32(), this.sfixed32());
+  }
+  float() {
+    return this.view.getFloat32((this.pos += 4) - 4, !0);
+  }
+  double() {
+    return this.view.getFloat64((this.pos += 8) - 8, !0);
+  }
+  bytes() {
+    let e = this.uint32();
+    let t = this.pos;
+    this.pos += e;
+    this.assertBounds();
+    return this.buf.subarray(t, t + e);
+  }
+  string() {
+    return this.textDecoder.decode(this.bytes());
+  }
+};
+function JGe(e, t, n, i) {
+  let r;
+  return {
+    typeName: t,
+    extendee: n,
+    get field() {
+      if (!r) {
+        const s = typeof i == "function" ? i() : i;
+        s.name = t.split(".").pop();
+        s.jsonName = "[".concat(t, "]");
+        r = e.util.newFieldList([s]).list()[0];
+      }
+      return r;
+    },
+    runtime: e
+  };
+}
+function rae(e) {
+  const t = e.field.localName;
+  const n = Object.create(null);
+  n[t] = XGe(e);
+  return [n, () => n[t]];
+}
+function XGe(e) {
+  const t = e.field;
+  if (t.repeated) {
+    return [];
+  }
+  if (t.default !== void 0) {
+    return t.default;
+  }
+  switch (t.kind) {
+    case "enum":
+      return t.T.values[0].no;
+    case "scalar":
+      return Pw(t.T, t.L);
+    case "message":
+      const n = t.T;
+      const i = new n();
+      return n.fieldWrapper ? n.fieldWrapper.unwrapField(i) : i;
+    case "map":
+      throw "map fields are not allowed to be extensions";
+  }
+}
+function ZGe(e, t) {
+  if (!t.repeated && (t.kind == "enum" || t.kind == "scalar")) {
+    for (let n = e.length - 1; n >= 0; --n) {
+      if (e[n].no == t.no) {
+        return [e[n]];
+      }
+    }
+    return [];
+  }
+  return e.filter(n => n.no === t.no);
+}
+var zv = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".split("");
+var uD = [];
+for (let e = 0; e < zv.length; e++) {
+  uD[zv[e].charCodeAt(0)] = e;
+}
+uD[45] = zv.indexOf("+");
+uD[95] = zv.indexOf("/");
+var sae = {
+  dec(e) {
+    let t = e.length * 3 / 4;
+    e[e.length - 2] == "=" ? t -= 2 : e[e.length - 1] == "=" && (t -= 1);
+    let n = new Uint8Array(t);
+    let i = 0;
+    let r = 0;
+    let s;
+    let o = 0;
+    for (let a = 0; a < e.length; a++) {
+      s = uD[e.charCodeAt(a)];
+      if (s === void 0) {
+        switch (e[a]) {
+          case "=":
+            r = 0;
+          case `
+`:
+          case "\r":
+          case "	":
+          case " ":
+            continue;
+          default:
+            throw Error("invalid base64 string.");
+        }
+      }
+      switch (r) {
+        case 0:
+          o = s;
+          r = 1;
+          break;
+        case 1:
+          n[i++] = o << 2 | (s & 48) >> 4;
+          o = s;
+          r = 2;
+          break;
+        case 2:
+          n[i++] = (o & 15) << 4 | (s & 60) >> 2;
+          o = s;
+          r = 3;
+          break;
+        case 3:
+          n[i++] = (o & 3) << 6 | s;
+          r = 0;
+      }
+    }
+    if (r == 1) {
+      throw Error("invalid base64 string.");
+    }
+    return n.subarray(0, i);
+  },
+  enc(e) {
+    let t = "";
+    let n = 0;
+    let i;
+    let r = 0;
+    for (let s = 0; s < e.length; s++) {
+      i = e[s];
+      switch (n) {
+        case 0:
+          t += zv[i >> 2];
+          r = (i & 3) << 4;
+          n = 1;
+          break;
+        case 1:
+          t += zv[r | i >> 4];
+          r = (i & 15) << 2;
+          n = 2;
+          break;
+        case 2:
+          t += zv[r | i >> 6];
+          t += zv[i & 63];
+          n = 0;
+      }
+    }
+    n && (t += zv[r], t += "=", n == 1 && (t += "="));
+    return t;
+  }
+};
+function qGe(e, t, n) {
+  aae(t, e);
+  const i = t.runtime.bin.makeReadOptions(n);
+  const r = ZGe(e.getType().runtime.bin.listUnknownFields(e), t.field);
+  const s = yi(rae(t), 2);
+  const o = s[0];
+  const a = s[1];
+  for (const l of r) {
+    t.runtime.bin.readField(o, i.readerFactory(l.data), t.field, l.wireType, i);
+  }
+  return a();
+}
+function $Ge(e, t, n, i) {
+  aae(t, e);
+  const r = t.runtime.bin.makeReadOptions(i);
+  const s = t.runtime.bin.makeWriteOptions(i);
+  if (oae(e, t)) {
+    const u = e.getType().runtime.bin.listUnknownFields(e).filter(d => d.no != t.field.no);
+    e.getType().runtime.bin.discardUnknownFields(e);
+    for (const d of u) {
+      e.getType().runtime.bin.onUnknownField(e, d.no, d.wireType, d.data);
+    }
+  }
+  const o = s.writerFactory();
+  let a = t.field;
+  !a.opt && !a.repeated && (a.kind == "enum" || a.kind == "scalar") && (a = Object.assign(Object.assign({}, t.field), {
+    opt: !0
+  }));
+  t.runtime.bin.writeField(a, n, o, s);
+  const l = r.readerFactory(o.finish());
+  for (; l.pos < l.len;) {
+    const u = yi(l.tag(), 2);
+    const d = u[0];
+    const h = u[1];
+    const p = l.skip(h, d);
+    e.getType().runtime.bin.onUnknownField(e, d, h, p);
+  }
+}
+function oae(e, t) {
+  const n = e.getType();
+  return t.extendee.typeName === n.typeName && !!n.runtime.bin.listUnknownFields(e).find(i => i.no == t.field.no);
+}
+function aae(e, t) {
+  Zl(e.extendee.typeName == t.getType().typeName, "extension ".concat(e.typeName, " can only be applied to message ").concat(e.extendee.typeName));
+}
+function lae(e, t) {
+  const n = e.localName;
+  if (e.repeated) {
+    return t[n].length > 0;
+  }
+  if (e.oneof) {
+    return t[e.oneof.localName].case === n;
+  }
+  switch (e.kind) {
+    case "enum":
+    case "scalar":
+      return e.opt || e.req ? t[n] !== void 0 : e.kind == "enum" ? t[n] !== e.T.values[0].no : !eae(e.T, t[n]);
+    case "message":
+      return t[n] !== void 0;
+    case "map":
+      return Object.keys(t[n]).length > 0;
+  }
+}
+function uY(e, t) {
+  const n = e.localName;
+  const i = !e.opt && !e.req;
+  if (e.repeated) {
+    t[n] = [];
+  } else {
+    if (e.oneof) {
+      t[e.oneof.localName] = {
+        case: void 0
+      };
+    } else {
+      switch (e.kind) {
+        case "map":
+          t[n] = {};
+          break;
+        case "enum":
+          t[n] = i ? e.T.values[0].no : void 0;
+          break;
+        case "scalar":
+          t[n] = i ? Pw(e.T, e.L) : void 0;
+          break;
+        case "message":
+          t[n] = void 0;
+      }
+    }
+  }
+}
+function Gv(e, t) {
+  if (e === null || typeof e != "object" || !Object.getOwnPropertyNames(lQ.prototype).every(i => i in e && typeof e[i] == "function")) {
+    return !1;
+  }
+  const n = e.getType();
+  return n === null || typeof n != "function" || !("typeName" in n) || typeof n.typeName != "string" ? !1 : t === void 0 ? !0 : n.typeName == t.typeName;
+}
+function cae(e, t) {
+  return Gv(t) || !e.fieldWrapper ? t : e.fieldWrapper.wrapField(t);
+}
+gn.DOUBLE;
+gn.FLOAT;
+gn.INT64;
+gn.UINT64;
+gn.INT32;
+gn.UINT32;
+gn.BOOL;
+gn.STRING;
+gn.BYTES;
+var dY = {
+  ignoreUnknownFields: !1
+};
+var hY = {
+  emitDefaultValues: !1,
+  enumAsInteger: !1,
+  useProtoFieldName: !1,
+  prettySpaces: 0
+};
+function eWe(e) {
+  return e ? Object.assign(Object.assign({}, dY), e) : dY;
+}
+function tWe(e) {
+  return e ? Object.assign(Object.assign({}, hY), e) : hY;
+}
+var h4 = Symbol();
+var $M = Symbol();
+function nWe() {
+  return {
+    makeReadOptions: eWe,
+    makeWriteOptions: tWe,
+    readMessage(e, t, n, i) {
+      if (t == null || Array.isArray(t) || typeof t != "object") {
+        throw new Error("cannot decode message ".concat(e.typeName, " from JSON: ").concat(m0(t)));
+      }
+      i = i ?? new e();
+      const r = new Map();
+      const s = n.typeRegistry;
+      for (const a of Object.entries(t)) {
+        var o = yi(a, 2);
+        const l = o[0];
+        const u = o[1];
+        const d = e.fields.findJsonName(l);
+        if (d) {
+          if (d.oneof) {
+            if (u === null && d.kind == "scalar") {
+              continue;
+            }
+            const h = r.get(d.oneof);
+            if (h !== void 0) {
+              throw new Error("cannot decode message ".concat(e.typeName, ' from JSON: multiple keys for oneof "').concat(d.oneof.name, '" present: "').concat(h, '", "').concat(l, '"'));
+            }
+            r.set(d.oneof, l);
+          }
+          fY(i, u, d, n, e);
+        } else {
+          let h = !1;
+          if (s?.findExtension && l.startsWith("[") && l.endsWith("]")) {
+            const p = s.findExtension(l.substring(1, l.length - 1));
+            if (p && p.extendee.typeName == e.typeName) {
+              h = !0;
+              const A = yi(rae(p), 2);
+              const y = A[0];
+              const E = A[1];
+              fY(y, u, p.field, n, p);
+              $Ge(i, p, E(), n);
+            }
+          }
+          if (!h && !n.ignoreUnknownFields) {
+            throw new Error("cannot decode message ".concat(e.typeName, ' from JSON: key "').concat(l, '" is unknown'));
+          }
+        }
+      }
+      return i;
+    },
+    writeMessage(e, t) {
+      const n = e.getType();
+      const i = {};
+      let r;
+      try {
+        for (r of n.fields.byNumber()) {
+          if (!lae(r, e)) {
+            if (r.req) {
+              throw "required field not set";
+            }
+            if (!t.emitDefaultValues || !rWe(r)) {
+              continue;
+            }
+          }
+          const o = r.oneof ? e[r.oneof.localName].value : e[r.localName];
+          const a = pY(r, o, t);
+          a !== void 0 && (i[t.useProtoFieldName ? r.name : r.jsonName] = a);
+        }
+        const s = t.typeRegistry;
+        if (s?.findExtensionFor) {
+          for (const o of n.runtime.bin.listUnknownFields(e)) {
+            const a = s.findExtensionFor(n.typeName, o.no);
+            if (a && oae(e, a)) {
+              const l = qGe(e, a, t);
+              const u = pY(a.field, l, t);
+              u !== void 0 && (i[a.field.jsonName] = u);
+            }
+          }
+        }
+      } catch (s) {
+        const o = r ? "cannot encode field ".concat(n.typeName, ".").concat(r.name, " to JSON") : "cannot encode message ".concat(n.typeName, " to JSON");
+        const a = s instanceof Error ? s.message : String(s);
+        throw new Error(o + (a.length > 0 ? ": ".concat(a) : ""));
+      }
+      return i;
+    },
+    readScalar(e, t, n) {
+      return vx(e, t, n ?? oE.BIGINT, !0);
+    },
+    writeScalar(e, t, n) {
+      if (t !== void 0 && (n || eae(e, t))) {
+        return eR(e, t);
+      }
+    },
+    debug: m0
+  };
+}
+function m0(e) {
+  if (e === null) {
+    return "null";
+  }
+  switch (typeof e) {
+    case "object":
+      return Array.isArray(e) ? "array" : "object";
+    case "string":
+      return e.length > 100 ? "string" : '"'.concat(e.split('"').join('\\"'), '"');
+    default:
+      return String(e);
+  }
+}
+function fY(e, t, n, i, r) {
+  let s = n.localName;
+  if (n.repeated) {
+    Zl(n.kind != "map");
+    if (t === null) {
+      return;
+    }
+    if (!Array.isArray(t)) {
+      throw new Error("cannot decode field ".concat(r.typeName, ".").concat(n.name, " from JSON: ").concat(m0(t)));
+    }
+    const a = e[s];
+    for (const l of t) {
+      if (l === null) {
+        throw new Error("cannot decode field ".concat(r.typeName, ".").concat(n.name, " from JSON: ").concat(m0(l)));
+      }
+      switch (n.kind) {
+        case "message":
+          a.push(n.T.fromJson(l, i));
+          break;
+        case "enum":
+          const u = YP(n.T, l, i.ignoreUnknownFields, !0);
+          u !== $M && a.push(u);
+          break;
+        case "scalar":
+          try {
+            a.push(vx(n.T, l, n.L, !0));
+          } catch (d) {
+            let h = "cannot decode field ".concat(r.typeName, ".").concat(n.name, " from JSON: ").concat(m0(l));
+            d instanceof Error && d.message.length > 0 && (h += ": ".concat(d.message));
+            throw new Error(h);
+          }
+      }
+    }
+  } else {
+    if (n.kind == "map") {
+      if (t === null) {
+        return;
+      }
+      if (typeof t != "object" || Array.isArray(t)) {
+        throw new Error("cannot decode field ".concat(r.typeName, ".").concat(n.name, " from JSON: ").concat(m0(t)));
+      }
+      const a = e[s];
+      for (const l of Object.entries(t)) {
+        var o = yi(l, 2);
+        const u = o[0];
+        const d = o[1];
+        if (d === null) {
+          throw new Error("cannot decode field ".concat(r.typeName, ".").concat(n.name, " from JSON: map value null"));
+        }
+        let h;
+        try {
+          h = iWe(n.K, u);
+        } catch (p) {
+          let A = "cannot decode map key for field ".concat(r.typeName, ".").concat(n.name, " from JSON: ").concat(m0(t));
+          p instanceof Error && p.message.length > 0 && (A += ": ".concat(p.message));
+          throw new Error(A);
+        }
+        switch (n.V.kind) {
+          case "message":
+            a[h] = n.V.T.fromJson(d, i);
+            break;
+          case "enum":
+            const p = YP(n.V.T, d, i.ignoreUnknownFields, !0);
+            p !== $M && (a[h] = p);
+            break;
+          case "scalar":
+            try {
+              a[h] = vx(n.V.T, d, oE.BIGINT, !0);
+            } catch (A) {
+              let y = "cannot decode map value for field ".concat(r.typeName, ".").concat(n.name, " from JSON: ").concat(m0(t));
+              A instanceof Error && A.message.length > 0 && (y += ": ".concat(A.message));
+              throw new Error(y);
+            }
+        }
+      }
+    } else {
+      n.oneof && (e = e[n.oneof.localName] = {
+        case: s
+      }, s = "value");
+      switch (n.kind) {
+        case "message":
+          const a = n.T;
+          if (t === null && a.typeName != "google.protobuf.Value") {
+            return;
+          }
+          let l = e[s];
+          Gv(l) ? l.fromJson(t, i) : (e[s] = l = a.fromJson(t, i), a.fieldWrapper && !n.oneof && (e[s] = a.fieldWrapper.unwrapField(l)));
+          break;
+        case "enum":
+          const u = YP(n.T, t, i.ignoreUnknownFields, !1);
+          switch (u) {
+            case h4:
+              uY(n, e);
+              break;
+            case $M:
+              break;
+            default:
+              e[s] = u;
+          }
+          break;
+        case "scalar":
+          try {
+            const d = vx(n.T, t, n.L, !1);
+            d === h4 ? uY(n, e) : e[s] = d;
+          } catch (d) {
+            let h = "cannot decode field ".concat(r.typeName, ".").concat(n.name, " from JSON: ").concat(m0(t));
+            d instanceof Error && d.message.length > 0 && (h += ": ".concat(d.message));
+            throw new Error(h);
+          }
+      }
+    }
+  }
+}
+function iWe(e, t) {
+  if (e === gn.BOOL) {
+    switch (t) {
+      case "true":
+        t = !0;
+        break;
+      case "false":
+        t = !1;
+    }
+  }
+  return vx(e, t, oE.BIGINT, !0).toString();
+}
+function vx(e, t, n, i) {
+  if (t === null) {
+    return i ? Pw(e, n) : h4;
+  }
+  switch (e) {
+    case gn.DOUBLE:
+    case gn.FLOAT:
+      if (t === "NaN") {
+        return NaN;
+      }
+      if (t === "Infinity") {
+        return Number.POSITIVE_INFINITY;
+      }
+      if (t === "-Infinity") {
+        return Number.NEGATIVE_INFINITY;
+      }
+      if (t === "" || typeof t == "string" && t.trim().length !== t.length || typeof t != "string" && typeof t != "number") {
+        break;
+      }
+      const r = Number(t);
+      if (Number.isNaN(r) || !Number.isFinite(r)) {
+        break;
+      }
+      e == gn.FLOAT && Koe(r);
+      return r;
+    case gn.INT32:
+    case gn.FIXED32:
+    case gn.SFIXED32:
+    case gn.SINT32:
+    case gn.UINT32:
+      let s;
+      typeof t == "number" ? s = t : typeof t == "string" && t.length > 0 && t.trim().length === t.length && (s = Number(t));
+      if (s === void 0) {
+        break;
+      }
+      e == gn.UINT32 || e == gn.FIXED32 ? DO(s) : ZM(s);
+      return s;
+    case gn.INT64:
+    case gn.SFIXED64:
+    case gn.SINT64:
+      if (typeof t != "number" && typeof t != "string") {
+        break;
+      }
+      const o = el.parse(t);
+      return n ? o.toString() : o;
+    case gn.FIXED64:
+    case gn.UINT64:
+      if (typeof t != "number" && typeof t != "string") {
+        break;
+      }
+      const a = el.uParse(t);
+      return n ? a.toString() : a;
+    case gn.BOOL:
+      if (typeof t != "boolean") {
+        break;
+      }
+      return t;
+    case gn.STRING:
+      if (typeof t != "string") {
+        break;
+      }
+      return t;
+    case gn.BYTES:
+      if (t === "") {
+        return new Uint8Array(0);
+      }
+      if (typeof t != "string") {
+        break;
+      }
+      return sae.dec(t);
+  }
+  throw new Error();
+}
+function YP(e, t, n, i) {
+  if (t === null) {
+    return e.typeName == "google.protobuf.NullValue" ? 0 : i ? e.values[0].no : h4;
+  }
+  switch (typeof t) {
+    case "number":
+      if (Number.isInteger(t)) {
+        return t;
+      }
+      break;
+    case "string":
+      const r = e.findName(t);
+      if (r !== void 0) {
+        return r.no;
+      }
+      if (n) {
+        return $M;
+      }
+  }
+  throw new Error("cannot decode enum ".concat(e.typeName, " from JSON: ").concat(m0(t)));
+}
+function rWe(e) {
+  return e.repeated || e.kind == "map" ? !0 : !(e.oneof || e.kind == "message" || e.opt || e.req);
+}
+function pY(e, t, n) {
+  if (e.kind == "map") {
+    Zl(typeof t == "object" && t != null);
+    const o = {};
+    const a = Object.entries(t);
+    switch (e.V.kind) {
+      case "scalar":
+        for (const u of a) {
+          var i = yi(u, 2);
+          const d = i[0];
+          const h = i[1];
+          o[d.toString()] = eR(e.V.T, h);
+        }
+        break;
+      case "message":
+        for (const u of a) {
+          var r = yi(u, 2);
+          const d = r[0];
+          const h = r[1];
+          o[d.toString()] = h.toJson(n);
+        }
+        break;
+      case "enum":
+        const l = e.V.T;
+        for (const u of a) {
+          var s = yi(u, 2);
+          const d = s[0];
+          const h = s[1];
+          o[d.toString()] = JP(l, h, n.enumAsInteger);
+        }
+    }
+    return n.emitDefaultValues || a.length > 0 ? o : void 0;
+  }
+  if (e.repeated) {
+    Zl(Array.isArray(t));
+    const o = [];
+    switch (e.kind) {
+      case "scalar":
+        for (let a = 0; a < t.length; a++) {
+          o.push(eR(e.T, t[a]));
+        }
+        break;
+      case "enum":
+        for (let a = 0; a < t.length; a++) {
+          o.push(JP(e.T, t[a], n.enumAsInteger));
+        }
+        break;
+      case "message":
+        for (let a = 0; a < t.length; a++) {
+          o.push(t[a].toJson(n));
+        }
+    }
+    return n.emitDefaultValues || o.length > 0 ? o : void 0;
+  }
+  switch (e.kind) {
+    case "scalar":
+      return eR(e.T, t);
+    case "enum":
+      return JP(e.T, t, n.enumAsInteger);
+    case "message":
+      return cae(e.T, t).toJson(n);
+  }
+}
+function JP(e, t, n) {
+  var i;
+  Zl(typeof t == "number");
+  if (e.typeName == "google.protobuf.NullValue") {
+    return null;
+  }
+  if (n) {
+    return t;
+  }
+  const r = e.findNumber(t);
+  return (i = r?.name) !== null && i !== void 0 ? i : t;
+}
+function eR(e, t) {
+  switch (e) {
+    case gn.INT32:
+    case gn.SFIXED32:
+    case gn.SINT32:
+    case gn.FIXED32:
+    case gn.UINT32:
+      Zl(typeof t == "number");
+      return t;
+    case gn.FLOAT:
+    case gn.DOUBLE:
+      Zl(typeof t == "number");
+      return Number.isNaN(t) ? "NaN" : t === Number.POSITIVE_INFINITY ? "Infinity" : t === Number.NEGATIVE_INFINITY ? "-Infinity" : t;
+    case gn.STRING:
+      Zl(typeof t == "string");
+      return t;
+    case gn.BOOL:
+      Zl(typeof t == "boolean");
+      return t;
+    case gn.UINT64:
+    case gn.FIXED64:
+    case gn.INT64:
+    case gn.SFIXED64:
+    case gn.SINT64:
+      Zl(typeof t == "bigint" || typeof t == "string" || typeof t == "number");
+      return t.toString();
+    case gn.BYTES:
+      Zl(t instanceof Uint8Array);
+      return sae.enc(t);
+  }
+}
+var rS = Symbol("@bufbuild/protobuf/unknown-fields");
+var gY = {
+  readUnknownFields: !0,
+  readerFactory: e => new YGe(e)
+};
+var AY = {
+  writeUnknownFields: !0,
+  writerFactory: () => new KGe()
+};
+function sWe(e) {
+  return e ? Object.assign(Object.assign({}, gY), e) : gY;
+}
+function oWe(e) {
+  return e ? Object.assign(Object.assign({}, AY), e) : AY;
+}
+function aWe() {
+  return {
+    makeReadOptions: sWe,
+    makeWriteOptions: oWe,
+    listUnknownFields(e) {
+      var t;
+      return (t = e[rS]) !== null && t !== void 0 ? t : [];
+    },
+    discardUnknownFields(e) {
+      delete e[rS];
+    },
+    writeUnknownFields(e, t) {
+      const n = e[rS];
+      if (n) {
+        for (const i of n) {
+          t.tag(i.no, i.wireType).raw(i.data);
+        }
+      }
+    },
+    onUnknownField(e, t, n, i) {
+      const r = e;
+      Array.isArray(r[rS]) || (r[rS] = []);
+      r[rS].push({
+        no: t,
+        wireType: n,
+        data: i
+      });
+    },
+    readMessage(e, t, n, i, r) {
+      const s = e.getType();
+      const o = r ? t.len : t.pos + n;
+      let a;
+      let l;
+      for (; t.pos < o;) {
+        var u = yi(t.tag(), 2);
+        a = u[0];
+        l = u[1];
+        if (r === !0 && l == Tc.EndGroup) {
+          break;
+        }
+        const d = s.fields.find(a);
+        if (!d) {
+          const h = t.skip(l, a);
+          i.readUnknownFields && this.onUnknownField(e, a, l, h);
+          continue;
+        }
+        mY(e, t, d, l, i);
+      }
+      if (r && (l != Tc.EndGroup || a !== n)) {
+        throw new Error("invalid end group tag");
+      }
+    },
+    readField: mY,
+    writeMessage(e, t, n) {
+      const i = e.getType();
+      for (const r of i.fields.byNumber()) {
+        if (!lae(r, e)) {
+          if (r.req) {
+            throw new Error("cannot encode field ".concat(i.typeName, ".").concat(r.name, " to binary: required field not set"));
+          }
+          continue;
+        }
+        vY(r, r.oneof ? e[r.oneof.localName].value : e[r.localName], t, n);
+      }
+      n.writeUnknownFields && this.writeUnknownFields(e, t);
+      return t;
+    },
+    writeField(e, t, n, i) {
+      t !== void 0 && vY(e, t, n, i);
+    }
+  };
+}
+function mY(e, t, n, i, r) {
+  let s = n.repeated;
+  let o = n.localName;
+  n.oneof && (e = e[n.oneof.localName], e.case != o && delete e.value, e.case = o, o = "value");
+  switch (n.kind) {
+    case "scalar":
+    case "enum":
+      const a = n.kind == "enum" ? gn.INT32 : n.T;
+      let l = f4;
+      n.kind == "scalar" && n.L > 0 && (l = cWe);
+      if (s) {
+        let A = e[o];
+        if (i == Tc.LengthDelimited && a != gn.STRING && a != gn.BYTES) {
+          let y = t.uint32() + t.pos;
+          for (; t.pos < y;) {
+            A.push(l(t, a));
+          }
+        } else {
+          A.push(l(t, a));
+        }
+      } else {
+        e[o] = l(t, a);
+      }
+      break;
+    case "message":
+      const u = n.T;
+      s ? e[o].push(tR(t, new u(), r, n)) : Gv(e[o]) ? tR(t, e[o], r, n) : (e[o] = tR(t, new u(), r, n), u.fieldWrapper && !n.oneof && !n.repeated && (e[o] = u.fieldWrapper.unwrapField(e[o])));
+      break;
+    case "map":
+      let d = yi(lWe(n, t, r), 2);
+      let h = d[0];
+      let p = d[1];
+      e[o][h] = p;
+  }
+}
+function tR(e, t, n, i) {
+  const r = t.getType().runtime.bin;
+  const s = i?.delimited;
+  r.readMessage(t, e, s ? i.no : e.uint32(), n, s);
+  return t;
+}
+function lWe(e, t, n) {
+  const i = t.uint32();
+  const r = t.pos + i;
+  let s;
+  let o;
+  for (; t.pos < r;) {
+    switch (yi(t.tag(), 1)[0]) {
+      case 1:
+        s = f4(t, e.K);
+        break;
+      case 2:
+        switch (e.V.kind) {
+          case "scalar":
+            o = f4(t, e.V.T);
+            break;
+          case "enum":
+            o = t.int32();
+            break;
+          case "message":
+            o = tR(t, new e.V.T(), n, void 0);
+        }
+    }
+  }
+  s === void 0 && (s = Pw(e.K, oE.BIGINT));
+  typeof s != "string" && typeof s != "number" && (s = s.toString());
+  if (o === void 0) {
+    switch (e.V.kind) {
+      case "scalar":
+        o = Pw(e.V.T, oE.BIGINT);
+        break;
+      case "enum":
+        o = e.V.T.values[0].no;
+        break;
+      case "message":
+        o = new e.V.T();
+    }
+  }
+  return [s, o];
+}
+function cWe(e, t) {
+  const n = f4(e, t);
+  return typeof n == "bigint" ? n.toString() : n;
+}
+function f4(e, t) {
+  switch (t) {
+    case gn.STRING:
+      return e.string();
+    case gn.BOOL:
+      return e.bool();
+    case gn.DOUBLE:
+      return e.double();
+    case gn.FLOAT:
+      return e.float();
+    case gn.INT32:
+      return e.int32();
+    case gn.INT64:
+      return e.int64();
+    case gn.UINT64:
+      return e.uint64();
+    case gn.FIXED64:
+      return e.fixed64();
+    case gn.BYTES:
+      return e.bytes();
+    case gn.FIXED32:
+      return e.fixed32();
+    case gn.SFIXED32:
+      return e.sfixed32();
+    case gn.SFIXED64:
+      return e.sfixed64();
+    case gn.SINT64:
+      return e.sint64();
+    case gn.UINT32:
+      return e.uint32();
+    case gn.SINT32:
+      return e.sint32();
+  }
+}
+function vY(e, t, n, i) {
+  Zl(t !== void 0);
+  const r = e.repeated;
+  switch (e.kind) {
+    case "scalar":
+    case "enum":
+      let o = e.kind == "enum" ? gn.INT32 : e.T;
+      if (r) {
+        Zl(Array.isArray(t));
+        if (e.packed) {
+          dWe(n, o, e.no, t);
+        } else {
+          for (const a of t) {
+            yx(n, o, e.no, a);
+          }
+        }
+      } else {
+        yx(n, o, e.no, t);
+      }
+      break;
+    case "message":
+      if (r) {
+        Zl(Array.isArray(t));
+        for (const a of t) {
+          yY(n, i, e, a);
+        }
+      } else {
+        yY(n, i, e, t);
+      }
+      break;
+    case "map":
+      Zl(typeof t == "object" && t != null);
+      for (const a of Object.entries(t)) {
+        var s = yi(a, 2);
+        const l = s[0];
+        const u = s[1];
+        uWe(n, i, e, l, u);
+      }
+  }
+}
+function uWe(e, t, n, i, r) {
+  e.tag(n.no, Tc.LengthDelimited);
+  e.fork();
+  let s = i;
+  switch (n.K) {
+    case gn.INT32:
+    case gn.FIXED32:
+    case gn.UINT32:
+    case gn.SFIXED32:
+    case gn.SINT32:
+      s = Number.parseInt(i);
+      break;
+    case gn.BOOL:
+      Zl(i == "true" || i == "false");
+      s = i == "true";
+  }
+  yx(e, n.K, 1, s);
+  switch (n.V.kind) {
+    case "scalar":
+      yx(e, n.V.T, 2, r);
+      break;
+    case "enum":
+      yx(e, gn.INT32, 2, r);
+      break;
+    case "message":
+      Zl(r !== void 0);
+      e.tag(2, Tc.LengthDelimited).bytes(r.toBinary(t));
+  }
+  e.join();
+}
+function yY(e, t, n, i) {
+  const r = cae(n.T, i);
+  n.delimited ? e.tag(n.no, Tc.StartGroup).raw(r.toBinary(t)).tag(n.no, Tc.EndGroup) : e.tag(n.no, Tc.LengthDelimited).bytes(r.toBinary(t));
+}
+function yx(e, t, n, i) {
+  Zl(i !== void 0);
+  let r = yi(uae(t), 2);
+  let s = r[0];
+  let o = r[1];
+  e.tag(n, s)[o](i);
+}
+function dWe(e, t, n, i) {
+  if (!i.length) {
+    return;
+  }
+  e.tag(n, Tc.LengthDelimited).fork();
+  let r = yi(uae(t), 2)[1];
+  for (let s = 0; s < i.length; s++) {
+    e[r](i[s]);
+  }
+  e.join();
+}
+function uae(e) {
+  let t = Tc.Varint;
+  switch (e) {
+    case gn.BYTES:
+    case gn.STRING:
+      t = Tc.LengthDelimited;
+      break;
+    case gn.DOUBLE:
+    case gn.FIXED64:
+    case gn.SFIXED64:
+      t = Tc.Bit64;
+      break;
+    case gn.FIXED32:
+    case gn.SFIXED32:
+    case gn.FLOAT:
+      t = Tc.Bit32;
+  }
+  const n = gn[e].toLowerCase();
+  return [t, n];
+}
+function hWe() {
+  return {
+    setEnumType: Joe,
+    initPartial(e, t) {
+      if (e === void 0) {
+        return;
+      }
+      const n = t.getType();
+      for (const r of n.fields.byMember()) {
+        const s = r.localName;
+        const o = t;
+        const a = e;
+        if (a[s] != null) {
+          switch (r.kind) {
+            case "oneof":
+              const l = a[s].case;
+              if (l === void 0) {
+                continue;
+              }
+              const u = r.findField(l);
+              let d = a[s].value;
+              u && u.kind == "message" && !Gv(d, u.T) ? d = new u.T(d) : u && u.kind === "scalar" && u.T === gn.BYTES && (d = A_(d));
+              o[s] = {
+                case: l,
+                value: d
+              };
+              break;
+            case "scalar":
+            case "enum":
+              let h = a[s];
+              r.T === gn.BYTES && (h = r.repeated ? h.map(A_) : A_(h));
+              o[s] = h;
+              break;
+            case "map":
+              switch (r.V.kind) {
+                case "scalar":
+                case "enum":
+                  if (r.V.T === gn.BYTES) {
+                    for (const y of Object.entries(a[s])) {
+                      var i = yi(y, 2);
+                      const E = i[0];
+                      const b = i[1];
+                      o[s][E] = A_(b);
+                    }
+                  } else {
+                    Object.assign(o[s], a[s]);
+                  }
+                  break;
+                case "message":
+                  const A = r.V.T;
+                  for (const y of Object.keys(a[s])) {
+                    let E = a[s][y];
+                    A.fieldWrapper || (E = new A(E));
+                    o[s][y] = E;
+                  }
+              }
+              break;
+            case "message":
+              const p = r.T;
+              if (r.repeated) {
+                o[s] = a[s].map(A => Gv(A, p) ? A : new p(A));
+              } else {
+                const A = a[s];
+                p.fieldWrapper ? p.typeName === "google.protobuf.BytesValue" ? o[s] = A_(A) : o[s] = A : o[s] = Gv(A, p) ? A : new p(A);
+              }
+          }
+        }
+      }
+    },
+    equals(e, t, n) {
+      return t === n ? !0 : !t || !n ? !1 : e.fields.byMember().every(i => {
+        const r = t[i.localName];
+        const s = n[i.localName];
+        if (i.repeated) {
+          if (r.length !== s.length) {
+            return !1;
+          }
+          switch (i.kind) {
+            case "message":
+              return r.every((o, a) => i.T.equals(o, s[a]));
+            case "scalar":
+              return r.every((o, a) => E1(i.T, o, s[a]));
+            case "enum":
+              return r.every((o, a) => E1(gn.INT32, o, s[a]));
+          }
+          throw new Error("repeated cannot contain ".concat(i.kind));
+        }
+        switch (i.kind) {
+          case "message":
+            let o = r;
+            let a = s;
+            i.T.fieldWrapper && (o !== void 0 && !Gv(o) && (o = i.T.fieldWrapper.wrapField(o)), a !== void 0 && !Gv(a) && (a = i.T.fieldWrapper.wrapField(a)));
+            return i.T.equals(o, a);
+          case "enum":
+            return E1(gn.INT32, r, s);
+          case "scalar":
+            return E1(i.T, r, s);
+          case "oneof":
+            if (r.case !== s.case) {
+              return !1;
+            }
+            const l = i.findField(r.case);
+            if (l === void 0) {
+              return !0;
+            }
+            switch (l.kind) {
+              case "message":
+                return l.T.equals(r.value, s.value);
+              case "enum":
+                return E1(gn.INT32, r.value, s.value);
+              case "scalar":
+                return E1(l.T, r.value, s.value);
+            }
+            throw new Error("oneof cannot contain ".concat(l.kind));
+          case "map":
+            const u = Object.keys(r).concat(Object.keys(s));
+            switch (i.V.kind) {
+              case "message":
+                const d = i.V.T;
+                return u.every(p => d.equals(r[p], s[p]));
+              case "enum":
+                return u.every(p => E1(gn.INT32, r[p], s[p]));
+              case "scalar":
+                const h = i.V.T;
+                return u.every(p => E1(h, r[p], s[p]));
+            }
+        }
+      });
+    },
+    clone(e) {
+      const t = e.getType();
+      const n = new t();
+      const i = n;
+      for (const s of t.fields.byMember()) {
+        const o = e[s.localName];
+        let a;
+        if (s.repeated) {
+          a = o.map(cM);
+        } else {
+          if (s.kind == "map") {
+            a = i[s.localName];
+            for (const l of Object.entries(o)) {
+              var r = yi(l, 2);
+              const u = r[0];
+              const d = r[1];
+              a[u] = cM(d);
+            }
+          } else {
+            s.kind == "oneof" ? a = s.findField(o.case) ? {
+              case: o.case,
+              value: cM(o.value)
+            } : {
+              case: void 0
+            } : a = cM(o);
+          }
+        }
+        i[s.localName] = a;
+      }
+      for (const s of t.runtime.bin.listUnknownFields(e)) {
+        t.runtime.bin.onUnknownField(i, s.no, s.wireType, s.data);
+      }
+      return n;
+    }
+  };
+}
+function cM(e) {
+  if (e === void 0) {
+    return e;
+  }
+  if (Gv(e)) {
+    return e.clone();
+  }
+  if (e instanceof Uint8Array) {
+    const t = new Uint8Array(e.byteLength);
+    t.set(e);
+    return t;
+  }
+  return e;
+}
+function A_(e) {
+  return e instanceof Uint8Array ? e : new Uint8Array(e);
+}
+function fWe(e, t, n) {
+  return {
+    syntax: e,
+    json: nWe(),
+    bin: aWe(),
+    util: Object.assign(Object.assign({}, hWe()), {
+      newFieldList: t,
+      initFields: n
+    }),
+    makeMessageType(i, r, s) {
+      return RGe(this, i, r, s);
+    },
+    makeEnum: MGe,
+    makeEnumType: Xoe,
+    getEnumType: BGe,
+    makeExtension(i, r, s) {
+      return JGe(this, i, r, s);
+    }
+  };
+}
+var pWe = class {
+  constructor(e, t) {
+    this._fields = e;
+    this._normalizer = t;
+  }
+  findJsonName(e) {
+    if (!this.jsonNames) {
+      const t = {};
+      for (const n of this.list()) {
+        t[n.jsonName] = t[n.name] = n;
+      }
+      this.jsonNames = t;
+    }
+    return this.jsonNames[e];
+  }
+  find(e) {
+    if (!this.numbers) {
+      const t = {};
+      for (const n of this.list()) {
+        t[n.no] = n;
+      }
+      this.numbers = t;
+    }
+    return this.numbers[e];
+  }
+  list() {
+    this.all || (this.all = this._normalizer(this._fields));
+    return this.all;
+  }
+  byNumber() {
+    this.numbersAsc || (this.numbersAsc = this.list().concat().sort((e, t) => e.no - t.no));
+    return this.numbersAsc;
+  }
+  byMember() {
+    if (!this.members) {
+      this.members = [];
+      const e = this.members;
+      let t;
+      for (const n of this.list()) {
+        n.oneof ? n.oneof !== t && (t = n.oneof, e.push(t)) : e.push(n);
+      }
+    }
+    return this.members;
+  }
+};
+function dae(e, t) {
+  const n = hae(e);
+  return t ? n : EWe(yWe(n));
+}
+function gWe(e) {
+  return dae(e, !1);
+}
+var AWe = hae;
+function hae(e) {
+  let t = !1;
+  const n = [];
+  for (let i = 0; i < e.length; i++) {
+    let r = e.charAt(i);
+    switch (r) {
+      case "_":
+        t = !0;
+        break;
+      case "0":
+      case "1":
+      case "2":
+      case "3":
+      case "4":
+      case "5":
+      case "6":
+      case "7":
+      case "8":
+      case "9":
+        n.push(r);
+        t = !1;
+        break;
+      default:
+        t && (t = !1, r = r.toUpperCase());
+        n.push(r);
+    }
+  }
+  return n.join("");
+}
+var mWe = new Set(["constructor", "toString", "toJSON", "valueOf"]);
+var vWe = new Set(["getType", "clone", "equals", "fromBinary", "fromJson", "fromJsonString", "toBinary", "toJson", "toJsonString", "toObject"]);
+var fae = e => "".concat(e, "$");
+var yWe = e => vWe.has(e) ? fae(e) : e;
+var EWe = e => mWe.has(e) ? fae(e) : e;
+var bWe = class {
+  constructor(e) {
+    this.kind = "oneof";
+    this.repeated = !1;
+    this.packed = !1;
+    this.opt = !1;
+    this.req = !1;
+    this.default = void 0;
+    this.fields = [];
+    this.name = e;
+    this.localName = gWe(e);
+  }
+  addField(e) {
+    Zl(e.oneof === this, "field ".concat(e.name, " not one of ").concat(this.name));
+    this.fields.push(e);
+  }
+  findField(e) {
+    if (!this._lookup) {
+      this._lookup = Object.create(null);
+      for (let t = 0; t < this.fields.length; t++) {
+        this._lookup[this.fields[t].localName] = this.fields[t];
+      }
+    }
+    return this._lookup[e];
+  }
+};
+function CWe(e, t) {
+  var n;
+  var i;
+  var r;
+  var s;
+  var o;
+  var a;
+  const l = [];
+  let u;
+  for (const d of typeof e == "function" ? e() : e) {
+    const h = d;
+    h.localName = dae(d.name, d.oneof !== void 0);
+    h.jsonName = (n = d.jsonName) !== null && n !== void 0 ? n : AWe(d.name);
+    h.repeated = (i = d.repeated) !== null && i !== void 0 ? i : !1;
+    d.kind == "scalar" && (h.L = (r = d.L) !== null && r !== void 0 ? r : oE.BIGINT);
+    h.delimited = (s = d.delimited) !== null && s !== void 0 ? s : !1;
+    h.req = (o = d.req) !== null && o !== void 0 ? o : !1;
+    h.opt = (a = d.opt) !== null && a !== void 0 ? a : !1;
+    d.packed === void 0 && (h.packed = d.kind == "enum" || d.kind == "scalar" && d.T != gn.BYTES && d.T != gn.STRING);
+    if (d.oneof !== void 0) {
+      const p = typeof d.oneof == "string" ? d.oneof : d.oneof.name;
+      (!u || u.name != p) && (u = new bWe(p));
+      h.oneof = u;
+      u.addField(h);
+    }
+    l.push(h);
+  }
+  return l;
+}
+var mt = fWe("proto3", e => new pWe(e, t => CWe(t)), e => {
+  for (const t of e.getType().fields.byMember()) {
+    if (t.opt) {
+      continue;
+    }
+    const n = t.localName;
+    const i = e;
+    if (t.repeated) {
+      i[n] = [];
+      continue;
+    }
+    switch (t.kind) {
+      case "oneof":
+        i[n] = {
+          case: void 0
+        };
+        break;
+      case "enum":
+        i[n] = 0;
+        break;
+      case "map":
+        i[n] = {};
+        break;
+      case "scalar":
+        i[n] = Pw(t.T, t.L);
+    }
+  }
+});
+var yC = class _b extends lQ {
+  constructor(t) {
+    super();
+    this.seconds = el.zero;
+    this.nanos = 0;
+    mt.util.initPartial(t, this);
+  }
+  fromJson(t, n) {
+    if (typeof t != "string") {
+      throw new Error("cannot decode google.protobuf.Timestamp from JSON: ".concat(mt.json.debug(t)));
+    }
+    const i = t.match(/^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})(?:Z|\.([0-9]{3,9})Z|([+-][0-9][0-9]:[0-9][0-9]))$/);
+    if (!i) {
+      throw new Error("cannot decode google.protobuf.Timestamp from JSON: invalid RFC 3339 string");
+    }
+    const r = Date.parse(i[1] + "-" + i[2] + "-" + i[3] + "T" + i[4] + ":" + i[5] + ":" + i[6] + (i[8] ? i[8] : "Z"));
+    if (Number.isNaN(r)) {
+      throw new Error("cannot decode google.protobuf.Timestamp from JSON: invalid RFC 3339 string");
+    }
+    if (r < Date.parse("0001-01-01T00:00:00Z") || r > Date.parse("9999-12-31T23:59:59Z")) {
+      throw new Error("cannot decode message google.protobuf.Timestamp from JSON: must be from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59Z inclusive");
+    }
+    this.seconds = el.parse(r / 1e3);
+    this.nanos = 0;
+    i[7] && (this.nanos = parseInt("1" + i[7] + "0".repeat(9 - i[7].length)) - 1e9);
+    return this;
+  }
+  toJson(t) {
+    const n = Number(this.seconds) * 1e3;
+    if (n < Date.parse("0001-01-01T00:00:00Z") || n > Date.parse("9999-12-31T23:59:59Z")) {
+      throw new Error("cannot encode google.protobuf.Timestamp to JSON: must be from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59Z inclusive");
+    }
+    if (this.nanos < 0) {
+      throw new Error("cannot encode google.protobuf.Timestamp to JSON: nanos must not be negative");
+    }
+    let i = "Z";
+    if (this.nanos > 0) {
+      const r = (this.nanos + 1e9).toString().substring(1);
+      r.substring(3) === "000000" ? i = "." + r.substring(0, 3) + "Z" : r.substring(6) === "000" ? i = "." + r.substring(0, 6) + "Z" : i = "." + r + "Z";
+    }
+    return new Date(n).toISOString().replace(".000Z", i);
+  }
+  toDate() {
+    return new Date(Number(this.seconds) * 1e3 + Math.ceil(this.nanos / 1e6));
+  }
+  static now() {
+    return _b.fromDate(new Date());
+  }
+  static fromDate(t) {
+    const n = t.getTime();
+    return new _b({
+      seconds: el.parse(Math.floor(n / 1e3)),
+      nanos: n % 1e3 * 1e6
+    });
+  }
+  static fromBinary(t, n) {
+    return new _b().fromBinary(t, n);
+  }
+  static fromJson(t, n) {
+    return new _b().fromJson(t, n);
+  }
+  static fromJsonString(t, n) {
+    return new _b().fromJsonString(t, n);
+  }
+  static equals(t, n) {
+    return mt.util.equals(_b, t, n);
+  }
+};
+yC.runtime = mt;
+yC.typeName = "google.protobuf.Timestamp";
+yC.fields = mt.util.newFieldList(() => [{
+  no: 1,
+  name: "seconds",
+  kind: "scalar",
+  T: 3
+}, {
+  no: 2,
+  name: "nanos",
+  kind: "scalar",
+  T: 5
+}]);
+var SWe = mt.makeMessageType("livekit.MetricsBatch", () => [{
+  no: 1,
+  name: "timestamp_ms",
+  kind: "scalar",
+  T: 3
+}, {
+  no: 2,
+  name: "normalized_timestamp",
+  kind: "message",
+  T: yC
+}, {
+  no: 3,
+  name: "str_data",
+  kind: "scalar",
+  T: 9,
+  repeated: !0
+}, {
+  no: 4,
+  name: "time_series",
+  kind: "message",
+  T: wWe,
+  repeated: !0
+}, {
+  no: 5,
+  name: "events",
+  kind: "message",
+  T: _We,
+  repeated: !0
+}]);
+var wWe = mt.makeMessageType("livekit.TimeSeriesMetric", () => [{
+  no: 1,
+  name: "label",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 2,
+  name: "participant_identity",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 3,
+  name: "track_sid",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 4,
+  name: "samples",
+  kind: "message",
+  T: IWe,
+  repeated: !0
+}, {
+  no: 5,
+  name: "rid",
+  kind: "scalar",
+  T: 13
+}]);
+var IWe = mt.makeMessageType("livekit.MetricSample", () => [{
+  no: 1,
+  name: "timestamp_ms",
+  kind: "scalar",
+  T: 3
+}, {
+  no: 2,
+  name: "normalized_timestamp",
+  kind: "message",
+  T: yC
+}, {
+  no: 3,
+  name: "value",
+  kind: "scalar",
+  T: 2
+}]);
+var _We = mt.makeMessageType("livekit.EventMetric", () => [{
+  no: 1,
+  name: "label",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 2,
+  name: "participant_identity",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 3,
+  name: "track_sid",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 4,
+  name: "start_timestamp_ms",
+  kind: "scalar",
+  T: 3
+}, {
+  no: 5,
+  name: "end_timestamp_ms",
+  kind: "scalar",
+  T: 3,
+  opt: !0
+}, {
+  no: 6,
+  name: "normalized_start_timestamp",
+  kind: "message",
+  T: yC
+}, {
+  no: 7,
+  name: "normalized_end_timestamp",
+  kind: "message",
+  T: yC,
+  opt: !0
+}, {
+  no: 8,
+  name: "metadata",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 9,
+  name: "rid",
+  kind: "scalar",
+  T: 13
+}]);
+var pae = mt.makeEnum("livekit.BackupCodecPolicy", [{
+  no: 0,
+  name: "PREFER_REGRESSION"
+}, {
+  no: 1,
+  name: "SIMULCAST"
+}, {
+  no: 2,
+  name: "REGRESSION"
+}]);
+var em = mt.makeEnum("livekit.TrackType", [{
+  no: 0,
+  name: "AUDIO"
+}, {
+  no: 1,
+  name: "VIDEO"
+}, {
+  no: 2,
+  name: "DATA"
+}]);
+var Zc = mt.makeEnum("livekit.TrackSource", [{
+  no: 0,
+  name: "UNKNOWN"
+}, {
+  no: 1,
+  name: "CAMERA"
+}, {
+  no: 2,
+  name: "MICROPHONE"
+}, {
+  no: 3,
+  name: "SCREEN_SHARE"
+}, {
+  no: 4,
+  name: "SCREEN_SHARE_AUDIO"
+}]);
+var uQ = mt.makeEnum("livekit.VideoQuality", [{
+  no: 0,
+  name: "LOW"
+}, {
+  no: 1,
+  name: "MEDIUM"
+}, {
+  no: 2,
+  name: "HIGH"
+}, {
+  no: 3,
+  name: "OFF"
+}]);
+var xS = mt.makeEnum("livekit.ConnectionQuality", [{
+  no: 0,
+  name: "POOR"
+}, {
+  no: 1,
+  name: "GOOD"
+}, {
+  no: 2,
+  name: "EXCELLENT"
+}, {
+  no: 3,
+  name: "LOST"
+}]);
+var nT = mt.makeEnum("livekit.ClientConfigSetting", [{
+  no: 0,
+  name: "UNSET"
+}, {
+  no: 1,
+  name: "DISABLED"
+}, {
+  no: 2,
+  name: "ENABLED"
+}]);
+var Ip = mt.makeEnum("livekit.DisconnectReason", [{
+  no: 0,
+  name: "UNKNOWN_REASON"
+}, {
+  no: 1,
+  name: "CLIENT_INITIATED"
+}, {
+  no: 2,
+  name: "DUPLICATE_IDENTITY"
+}, {
+  no: 3,
+  name: "SERVER_SHUTDOWN"
+}, {
+  no: 4,
+  name: "PARTICIPANT_REMOVED"
+}, {
+  no: 5,
+  name: "ROOM_DELETED"
+}, {
+  no: 6,
+  name: "STATE_MISMATCH"
+}, {
+  no: 7,
+  name: "JOIN_FAILURE"
+}, {
+  no: 8,
+  name: "MIGRATION"
+}, {
+  no: 9,
+  name: "SIGNAL_CLOSE"
+}, {
+  no: 10,
+  name: "ROOM_CLOSED"
+}, {
+  no: 11,
+  name: "USER_UNAVAILABLE"
+}, {
+  no: 12,
+  name: "USER_REJECTED"
+}, {
+  no: 13,
+  name: "SIP_TRUNK_FAILURE"
+}, {
+  no: 14,
+  name: "CONNECTION_TIMEOUT"
+}, {
+  no: 15,
+  name: "MEDIA_FAILURE"
+}, {
+  no: 16,
+  name: "AGENT_ERROR"
+}]);
+var Mv = mt.makeEnum("livekit.ReconnectReason", [{
+  no: 0,
+  name: "RR_UNKNOWN"
+}, {
+  no: 1,
+  name: "RR_SIGNAL_DISCONNECTED"
+}, {
+  no: 2,
+  name: "RR_PUBLISHER_FAILED"
+}, {
+  no: 3,
+  name: "RR_SUBSCRIBER_FAILED"
+}, {
+  no: 4,
+  name: "RR_SWITCH_CANDIDATE"
+}]);
+var xWe = mt.makeEnum("livekit.SubscriptionError", [{
+  no: 0,
+  name: "SE_UNKNOWN"
+}, {
+  no: 1,
+  name: "SE_CODEC_UNSUPPORTED"
+}, {
+  no: 2,
+  name: "SE_TRACK_NOTFOUND"
+}]);
+var Gu = mt.makeEnum("livekit.AudioTrackFeature", [{
+  no: 0,
+  name: "TF_STEREO"
+}, {
+  no: 1,
+  name: "TF_NO_DTX"
+}, {
+  no: 2,
+  name: "TF_AUTO_GAIN_CONTROL"
+}, {
+  no: 3,
+  name: "TF_ECHO_CANCELLATION"
+}, {
+  no: 4,
+  name: "TF_NOISE_SUPPRESSION"
+}, {
+  no: 5,
+  name: "TF_ENHANCED_NOISE_CANCELLATION"
+}, {
+  no: 6,
+  name: "TF_PRECONNECT_BUFFER"
+}]);
+var Lw = mt.makeEnum("livekit.PacketTrailerFeature", [{
+  no: 0,
+  name: "PTF_USER_TIMESTAMP"
+}, {
+  no: 1,
+  name: "PTF_FRAME_ID"
+}, {
+  no: 2,
+  name: "PTF_USER_DATA"
+}]);
+var dD = mt.makeMessageType("livekit.Room", () => [{
+  no: 1,
+  name: "sid",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "name",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 3,
+  name: "empty_timeout",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 14,
+  name: "departure_timeout",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 4,
+  name: "max_participants",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 5,
+  name: "creation_time",
+  kind: "scalar",
+  T: 3
+}, {
+  no: 15,
+  name: "creation_time_ms",
+  kind: "scalar",
+  T: 3
+}, {
+  no: 6,
+  name: "turn_password",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 7,
+  name: "enabled_codecs",
+  kind: "message",
+  T: p4,
+  repeated: !0
+}, {
+  no: 8,
+  name: "metadata",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 9,
+  name: "num_participants",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 11,
+  name: "num_publishers",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 10,
+  name: "active_recording",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 13,
+  name: "version",
+  kind: "message",
+  T: Tae
+}]);
+var p4 = mt.makeMessageType("livekit.Codec", () => [{
+  no: 1,
+  name: "mime",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "fmtp_line",
+  kind: "scalar",
+  T: 9
+}]);
+var TWe = mt.makeMessageType("livekit.ParticipantPermission", () => [{
+  no: 1,
+  name: "can_subscribe",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 2,
+  name: "can_publish",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 3,
+  name: "can_publish_data",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 9,
+  name: "can_publish_sources",
+  kind: "enum",
+  T: mt.getEnumType(Zc),
+  repeated: !0
+}, {
+  no: 7,
+  name: "hidden",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 8,
+  name: "recorder",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 10,
+  name: "can_update_metadata",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 11,
+  name: "agent",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 12,
+  name: "can_subscribe_metrics",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 13,
+  name: "can_manage_agent_session",
+  kind: "scalar",
+  T: 8
+}]);
+var EC = mt.makeMessageType("livekit.ParticipantInfo", () => [{
+  no: 1,
+  name: "sid",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "identity",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 3,
+  name: "state",
+  kind: "enum",
+  T: mt.getEnumType(HS)
+}, {
+  no: 4,
+  name: "tracks",
+  kind: "message",
+  T: TS,
+  repeated: !0
+}, {
+  no: 5,
+  name: "metadata",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 6,
+  name: "joined_at",
+  kind: "scalar",
+  T: 3
+}, {
+  no: 17,
+  name: "joined_at_ms",
+  kind: "scalar",
+  T: 3
+}, {
+  no: 9,
+  name: "name",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 10,
+  name: "version",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 11,
+  name: "permission",
+  kind: "message",
+  T: TWe
+}, {
+  no: 12,
+  name: "region",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 13,
+  name: "is_publisher",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 14,
+  name: "kind",
+  kind: "enum",
+  T: mt.getEnumType(iT)
+}, {
+  no: 15,
+  name: "attributes",
+  kind: "map",
+  K: 9,
+  V: {
+    kind: "scalar",
+    T: 9
+  }
+}, {
+  no: 16,
+  name: "disconnect_reason",
+  kind: "enum",
+  T: mt.getEnumType(Ip)
+}, {
+  no: 18,
+  name: "kind_details",
+  kind: "enum",
+  T: mt.getEnumType(BWe),
+  repeated: !0
+}, {
+  no: 19,
+  name: "data_tracks",
+  kind: "message",
+  T: hD,
+  repeated: !0
+}, {
+  no: 20,
+  name: "client_protocol",
+  kind: "scalar",
+  T: 5
+}, {
+  no: 21,
+  name: "capabilities",
+  kind: "enum",
+  T: mt.getEnumType(rT),
+  repeated: !0
+}]);
+var HS = mt.makeEnum("livekit.ParticipantInfo.State", [{
+  no: 0,
+  name: "JOINING"
+}, {
+  no: 1,
+  name: "JOINED"
+}, {
+  no: 2,
+  name: "ACTIVE"
+}, {
+  no: 3,
+  name: "DISCONNECTED"
+}]);
+var iT = mt.makeEnum("livekit.ParticipantInfo.Kind", [{
+  no: 0,
+  name: "STANDARD"
+}, {
+  no: 1,
+  name: "INGRESS"
+}, {
+  no: 2,
+  name: "EGRESS"
+}, {
+  no: 3,
+  name: "SIP"
+}, {
+  no: 4,
+  name: "AGENT"
+}, {
+  no: 7,
+  name: "CONNECTOR"
+}, {
+  no: 8,
+  name: "BRIDGE"
+}]);
+var BWe = mt.makeEnum("livekit.ParticipantInfo.KindDetail", [{
+  no: 0,
+  name: "CLOUD_AGENT"
+}, {
+  no: 1,
+  name: "FORWARDED"
+}, {
+  no: 2,
+  name: "CONNECTOR_WHATSAPP"
+}, {
+  no: 3,
+  name: "CONNECTOR_TWILIO"
+}, {
+  no: 4,
+  name: "BRIDGE_RTSP"
+}, {
+  no: 5,
+  name: "SIMULATION"
+}]);
+var Zs = mt.makeEnum("livekit.Encryption.Type", [{
+  no: 0,
+  name: "NONE"
+}, {
+  no: 1,
+  name: "GCM"
+}, {
+  no: 2,
+  name: "CUSTOM"
+}]);
+var MWe = mt.makeMessageType("livekit.SimulcastCodecInfo", () => [{
+  no: 1,
+  name: "mime_type",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "mid",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 3,
+  name: "cid",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 4,
+  name: "layers",
+  kind: "message",
+  T: V1,
+  repeated: !0
+}, {
+  no: 5,
+  name: "video_layer_mode",
+  kind: "enum",
+  T: mt.getEnumType(fQ)
+}, {
+  no: 6,
+  name: "sdp_cid",
+  kind: "scalar",
+  T: 9
+}]);
+var TS = mt.makeMessageType("livekit.TrackInfo", () => [{
+  no: 1,
+  name: "sid",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "type",
+  kind: "enum",
+  T: mt.getEnumType(em)
+}, {
+  no: 3,
+  name: "name",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 4,
+  name: "muted",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 5,
+  name: "width",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 6,
+  name: "height",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 7,
+  name: "simulcast",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 8,
+  name: "disable_dtx",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 9,
+  name: "source",
+  kind: "enum",
+  T: mt.getEnumType(Zc)
+}, {
+  no: 10,
+  name: "layers",
+  kind: "message",
+  T: V1,
+  repeated: !0
+}, {
+  no: 11,
+  name: "mime_type",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 12,
+  name: "mid",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 13,
+  name: "codecs",
+  kind: "message",
+  T: MWe,
+  repeated: !0
+}, {
+  no: 14,
+  name: "stereo",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 15,
+  name: "disable_red",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 16,
+  name: "encryption",
+  kind: "enum",
+  T: mt.getEnumType(Zs)
+}, {
+  no: 17,
+  name: "stream",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 18,
+  name: "version",
+  kind: "message",
+  T: Tae
+}, {
+  no: 19,
+  name: "audio_features",
+  kind: "enum",
+  T: mt.getEnumType(Gu),
+  repeated: !0
+}, {
+  no: 20,
+  name: "backup_codec_policy",
+  kind: "enum",
+  T: mt.getEnumType(pae)
+}, {
+  no: 21,
+  name: "packet_trailer_features",
+  kind: "enum",
+  T: mt.getEnumType(Lw),
+  repeated: !0
+}]);
+var hD = mt.makeMessageType("livekit.DataTrackInfo", () => [{
+  no: 1,
+  name: "pub_handle",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 2,
+  name: "sid",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 3,
+  name: "name",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 4,
+  name: "encryption",
+  kind: "enum",
+  T: mt.getEnumType(Zs)
+}, {
+  no: 5,
+  name: "frame_encoding",
+  kind: "message",
+  T: gae,
+  opt: !0
+}, {
+  no: 6,
+  name: "schema",
+  kind: "message",
+  T: dQ,
+  opt: !0
+}]);
+var gae = mt.makeMessageType("livekit.DataTrackFrameEncoding", () => [{
+  no: 1,
+  name: "well_known",
+  kind: "enum",
+  T: mt.getEnumType(RWe),
+  oneof: "value"
+}, {
+  no: 2,
+  name: "custom",
+  kind: "scalar",
+  T: 9,
+  oneof: "value"
+}]);
+var RWe = mt.makeEnum("livekit.DataTrackFrameEncoding.WellKnownFrameEncoding", [{
+  no: 0,
+  name: "WELL_KNOWN_FRAME_ENCODING_UNSPECIFIED",
+  localName: "UNSPECIFIED"
+}, {
+  no: 1,
+  name: "WELL_KNOWN_FRAME_ENCODING_ROS1",
+  localName: "ROS1"
+}, {
+  no: 2,
+  name: "WELL_KNOWN_FRAME_ENCODING_CDR",
+  localName: "CDR"
+}, {
+  no: 3,
+  name: "WELL_KNOWN_FRAME_ENCODING_PROTOBUF",
+  localName: "PROTOBUF"
+}, {
+  no: 4,
+  name: "WELL_KNOWN_FRAME_ENCODING_FLATBUFFER",
+  localName: "FLATBUFFER"
+}, {
+  no: 5,
+  name: "WELL_KNOWN_FRAME_ENCODING_CBOR",
+  localName: "CBOR"
+}, {
+  no: 6,
+  name: "WELL_KNOWN_FRAME_ENCODING_MSGPACK",
+  localName: "MSGPACK"
+}, {
+  no: 7,
+  name: "WELL_KNOWN_FRAME_ENCODING_JSON",
+  localName: "JSON"
+}]);
+var kWe = mt.makeMessageType("livekit.DataTrackSchemaEncoding", () => [{
+  no: 1,
+  name: "well_known",
+  kind: "enum",
+  T: mt.getEnumType(DWe),
+  oneof: "value"
+}, {
+  no: 2,
+  name: "custom",
+  kind: "scalar",
+  T: 9,
+  oneof: "value"
+}]);
+var DWe = mt.makeEnum("livekit.DataTrackSchemaEncoding.WellKnownSchemaEncoding", [{
+  no: 0,
+  name: "WELL_KNOWN_SCHEMA_ENCODING_UNSPECIFIED",
+  localName: "UNSPECIFIED"
+}, {
+  no: 1,
+  name: "WELL_KNOWN_SCHEMA_ENCODING_PROTOBUF",
+  localName: "PROTOBUF"
+}, {
+  no: 2,
+  name: "WELL_KNOWN_SCHEMA_ENCODING_FLATBUFFER",
+  localName: "FLATBUFFER"
+}, {
+  no: 3,
+  name: "WELL_KNOWN_SCHEMA_ENCODING_ROS1_MSG",
+  localName: "ROS1_MSG"
+}, {
+  no: 4,
+  name: "WELL_KNOWN_SCHEMA_ENCODING_ROS2_MSG",
+  localName: "ROS2_MSG"
+}, {
+  no: 5,
+  name: "WELL_KNOWN_SCHEMA_ENCODING_ROS2_IDL",
+  localName: "ROS2_IDL"
+}, {
+  no: 6,
+  name: "WELL_KNOWN_SCHEMA_ENCODING_OMG_IDL",
+  localName: "OMG_IDL"
+}, {
+  no: 7,
+  name: "WELL_KNOWN_SCHEMA_ENCODING_JSON_SCHEMA",
+  localName: "JSON_SCHEMA"
+}]);
+var dQ = mt.makeMessageType("livekit.DataTrackSchemaId", () => [{
+  no: 1,
+  name: "name",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "encoding",
+  kind: "message",
+  T: kWe
+}]);
+var PWe = mt.makeMessageType("livekit.DataTrackSubscriptionOptions", () => [{
+  no: 1,
+  name: "target_fps",
+  kind: "scalar",
+  T: 13,
+  opt: !0
+}]);
+var hQ = mt.makeMessageType("livekit.DataBlobKey", () => [{
+  no: 1,
+  name: "generic",
+  kind: "scalar",
+  T: 9,
+  oneof: "key"
+}, {
+  no: 2,
+  name: "schema_id",
+  kind: "message",
+  T: dQ,
+  oneof: "key"
+}]);
+var Aae = mt.makeMessageType("livekit.DataBlob", () => [{
+  no: 1,
+  name: "key",
+  kind: "message",
+  T: hQ
+}, {
+  no: 2,
+  name: "contents",
+  kind: "scalar",
+  T: 12
+}]);
+var V1 = mt.makeMessageType("livekit.VideoLayer", () => [{
+  no: 1,
+  name: "quality",
+  kind: "enum",
+  T: mt.getEnumType(uQ)
+}, {
+  no: 2,
+  name: "width",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 3,
+  name: "height",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 4,
+  name: "bitrate",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 5,
+  name: "ssrc",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 6,
+  name: "spatial_layer",
+  kind: "scalar",
+  T: 5
+}, {
+  no: 7,
+  name: "rid",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 8,
+  name: "repair_ssrc",
+  kind: "scalar",
+  T: 13
+}]);
+var fQ = mt.makeEnum("livekit.VideoLayer.Mode", [{
+  no: 0,
+  name: "MODE_UNUSED"
+}, {
+  no: 1,
+  name: "ONE_SPATIAL_LAYER_PER_STREAM"
+}, {
+  no: 2,
+  name: "MULTIPLE_SPATIAL_LAYERS_PER_STREAM"
+}, {
+  no: 3,
+  name: "ONE_SPATIAL_LAYER_PER_STREAM_INCOMPLETE_RTCP_SR"
+}]);
+var Uh = mt.makeMessageType("livekit.DataPacket", () => [{
+  no: 1,
+  name: "kind",
+  kind: "enum",
+  T: mt.getEnumType(j1)
+}, {
+  no: 4,
+  name: "participant_identity",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 5,
+  name: "destination_identities",
+  kind: "scalar",
+  T: 9,
+  repeated: !0
+}, {
+  no: 2,
+  name: "user",
+  kind: "message",
+  T: pQ,
+  oneof: "value"
+}, {
+  no: 3,
+  name: "speaker",
+  kind: "message",
+  T: LWe,
+  oneof: "value"
+}, {
+  no: 6,
+  name: "sip_dtmf",
+  kind: "message",
+  T: Eae,
+  oneof: "value"
+}, {
+  no: 7,
+  name: "transcription",
+  kind: "message",
+  T: NWe,
+  oneof: "value"
+}, {
+  no: 8,
+  name: "metrics",
+  kind: "message",
+  T: SWe,
+  oneof: "value"
+}, {
+  no: 9,
+  name: "chat_message",
+  kind: "message",
+  T: g4,
+  oneof: "value"
+}, {
+  no: 10,
+  name: "rpc_request",
+  kind: "message",
+  T: gQ,
+  oneof: "value"
+}, {
+  no: 11,
+  name: "rpc_ack",
+  kind: "message",
+  T: fD,
+  oneof: "value"
+}, {
+  no: 12,
+  name: "rpc_response",
+  kind: "message",
+  T: AQ,
+  oneof: "value"
+}, {
+  no: 13,
+  name: "stream_header",
+  kind: "message",
+  T: pD,
+  oneof: "value"
+}, {
+  no: 14,
+  name: "stream_chunk",
+  kind: "message",
+  T: ty,
+  oneof: "value"
+}, {
+  no: 15,
+  name: "stream_trailer",
+  kind: "message",
+  T: mQ,
+  oneof: "value"
+}, {
+  no: 18,
+  name: "encrypted_packet",
+  kind: "message",
+  T: mae,
+  oneof: "value"
+}, {
+  no: 16,
+  name: "sequence",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 17,
+  name: "participant_sid",
+  kind: "scalar",
+  T: 9
+}]);
+var j1 = mt.makeEnum("livekit.DataPacket.Kind", [{
+  no: 0,
+  name: "RELIABLE"
+}, {
+  no: 1,
+  name: "LOSSY"
+}]);
+var mae = mt.makeMessageType("livekit.EncryptedPacket", () => [{
+  no: 1,
+  name: "encryption_type",
+  kind: "enum",
+  T: mt.getEnumType(Zs)
+}, {
+  no: 2,
+  name: "iv",
+  kind: "scalar",
+  T: 12
+}, {
+  no: 3,
+  name: "key_index",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 4,
+  name: "encrypted_value",
+  kind: "scalar",
+  T: 12
+}]);
+var vae = mt.makeMessageType("livekit.EncryptedPacketPayload", () => [{
+  no: 1,
+  name: "user",
+  kind: "message",
+  T: pQ,
+  oneof: "value"
+}, {
+  no: 3,
+  name: "chat_message",
+  kind: "message",
+  T: g4,
+  oneof: "value"
+}, {
+  no: 4,
+  name: "rpc_request",
+  kind: "message",
+  T: gQ,
+  oneof: "value"
+}, {
+  no: 5,
+  name: "rpc_ack",
+  kind: "message",
+  T: fD,
+  oneof: "value"
+}, {
+  no: 6,
+  name: "rpc_response",
+  kind: "message",
+  T: AQ,
+  oneof: "value"
+}, {
+  no: 7,
+  name: "stream_header",
+  kind: "message",
+  T: pD,
+  oneof: "value"
+}, {
+  no: 8,
+  name: "stream_chunk",
+  kind: "message",
+  T: ty,
+  oneof: "value"
+}, {
+  no: 9,
+  name: "stream_trailer",
+  kind: "message",
+  T: mQ,
+  oneof: "value"
+}]);
+var LWe = mt.makeMessageType("livekit.ActiveSpeakerUpdate", () => [{
+  no: 1,
+  name: "speakers",
+  kind: "message",
+  T: yae,
+  repeated: !0
+}]);
+var yae = mt.makeMessageType("livekit.SpeakerInfo", () => [{
+  no: 1,
+  name: "sid",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "level",
+  kind: "scalar",
+  T: 2
+}, {
+  no: 3,
+  name: "active",
+  kind: "scalar",
+  T: 8
+}]);
+var pQ = mt.makeMessageType("livekit.UserPacket", () => [{
+  no: 1,
+  name: "participant_sid",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 5,
+  name: "participant_identity",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "payload",
+  kind: "scalar",
+  T: 12
+}, {
+  no: 3,
+  name: "destination_sids",
+  kind: "scalar",
+  T: 9,
+  repeated: !0
+}, {
+  no: 6,
+  name: "destination_identities",
+  kind: "scalar",
+  T: 9,
+  repeated: !0
+}, {
+  no: 4,
+  name: "topic",
+  kind: "scalar",
+  T: 9,
+  opt: !0
+}, {
+  no: 8,
+  name: "id",
+  kind: "scalar",
+  T: 9,
+  opt: !0
+}, {
+  no: 9,
+  name: "start_time",
+  kind: "scalar",
+  T: 4,
+  opt: !0
+}, {
+  no: 10,
+  name: "end_time",
+  kind: "scalar",
+  T: 4,
+  opt: !0
+}, {
+  no: 11,
+  name: "nonce",
+  kind: "scalar",
+  T: 12
+}]);
+var Eae = mt.makeMessageType("livekit.SipDTMF", () => [{
+  no: 3,
+  name: "code",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 4,
+  name: "digit",
+  kind: "scalar",
+  T: 9
+}]);
+var NWe = mt.makeMessageType("livekit.Transcription", () => [{
+  no: 2,
+  name: "transcribed_participant_identity",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 3,
+  name: "track_id",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 4,
+  name: "segments",
+  kind: "message",
+  T: OWe,
+  repeated: !0
+}]);
+var OWe = mt.makeMessageType("livekit.TranscriptionSegment", () => [{
+  no: 1,
+  name: "id",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "text",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 3,
+  name: "start_time",
+  kind: "scalar",
+  T: 4
+}, {
+  no: 4,
+  name: "end_time",
+  kind: "scalar",
+  T: 4
+}, {
+  no: 5,
+  name: "final",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 6,
+  name: "language",
+  kind: "scalar",
+  T: 9
+}]);
+var g4 = mt.makeMessageType("livekit.ChatMessage", () => [{
+  no: 1,
+  name: "id",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "timestamp",
+  kind: "scalar",
+  T: 3
+}, {
+  no: 3,
+  name: "edit_timestamp",
+  kind: "scalar",
+  T: 3,
+  opt: !0
+}, {
+  no: 4,
+  name: "message",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 5,
+  name: "deleted",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 6,
+  name: "generated",
+  kind: "scalar",
+  T: 8
+}]);
+var gQ = mt.makeMessageType("livekit.RpcRequest", () => [{
+  no: 1,
+  name: "id",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "method",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 3,
+  name: "payload",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 4,
+  name: "response_timeout_ms",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 5,
+  name: "version",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 6,
+  name: "compressed_payload",
+  kind: "scalar",
+  T: 12
+}]);
+var fD = mt.makeMessageType("livekit.RpcAck", () => [{
+  no: 1,
+  name: "request_id",
+  kind: "scalar",
+  T: 9
+}]);
+var AQ = mt.makeMessageType("livekit.RpcResponse", () => [{
+  no: 1,
+  name: "request_id",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "payload",
+  kind: "scalar",
+  T: 9,
+  oneof: "value"
+}, {
+  no: 3,
+  name: "error",
+  kind: "message",
+  T: bae,
+  oneof: "value"
+}, {
+  no: 4,
+  name: "compressed_payload",
+  kind: "scalar",
+  T: 12,
+  oneof: "value"
+}]);
+var bae = mt.makeMessageType("livekit.RpcError", () => [{
+  no: 1,
+  name: "code",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 2,
+  name: "message",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 3,
+  name: "data",
+  kind: "scalar",
+  T: 9
+}]);
+var Cae = mt.makeMessageType("livekit.ParticipantTracks", () => [{
+  no: 1,
+  name: "participant_sid",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "track_sids",
+  kind: "scalar",
+  T: 9,
+  repeated: !0
+}]);
+var Sae = mt.makeMessageType("livekit.ServerInfo", () => [{
+  no: 1,
+  name: "edition",
+  kind: "enum",
+  T: mt.getEnumType(wae)
+}, {
+  no: 2,
+  name: "version",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 3,
+  name: "protocol",
+  kind: "scalar",
+  T: 5
+}, {
+  no: 4,
+  name: "region",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 5,
+  name: "node_id",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 6,
+  name: "debug_info",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 7,
+  name: "agent_protocol",
+  kind: "scalar",
+  T: 5
+}]);
+var wae = mt.makeEnum("livekit.ServerInfo.Edition", [{
+  no: 0,
+  name: "Standard"
+}, {
+  no: 1,
+  name: "Cloud"
+}]);
+var Iae = mt.makeMessageType("livekit.ClientInfo", () => [{
+  no: 1,
+  name: "sdk",
+  kind: "enum",
+  T: mt.getEnumType(_ae)
+}, {
+  no: 2,
+  name: "version",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 3,
+  name: "protocol",
+  kind: "scalar",
+  T: 5
+}, {
+  no: 4,
+  name: "os",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 5,
+  name: "os_version",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 6,
+  name: "device_model",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 7,
+  name: "browser",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 8,
+  name: "browser_version",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 9,
+  name: "address",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 10,
+  name: "network",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 11,
+  name: "other_sdks",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 12,
+  name: "client_protocol",
+  kind: "scalar",
+  T: 5
+}, {
+  no: 13,
+  name: "capabilities",
+  kind: "enum",
+  T: mt.getEnumType(rT),
+  repeated: !0
+}]);
+var _ae = mt.makeEnum("livekit.ClientInfo.SDK", [{
+  no: 0,
+  name: "UNKNOWN"
+}, {
+  no: 1,
+  name: "JS"
+}, {
+  no: 2,
+  name: "SWIFT"
+}, {
+  no: 3,
+  name: "ANDROID"
+}, {
+  no: 4,
+  name: "FLUTTER"
+}, {
+  no: 5,
+  name: "GO"
+}, {
+  no: 6,
+  name: "UNITY"
+}, {
+  no: 7,
+  name: "REACT_NATIVE"
+}, {
+  no: 8,
+  name: "RUST"
+}, {
+  no: 9,
+  name: "PYTHON"
+}, {
+  no: 10,
+  name: "CPP"
+}, {
+  no: 11,
+  name: "UNITY_WEB"
+}, {
+  no: 12,
+  name: "NODE"
+}, {
+  no: 13,
+  name: "UNREAL"
+}, {
+  no: 14,
+  name: "ESP32"
+}]);
+var rT = mt.makeEnum("livekit.ClientInfo.Capability", [{
+  no: 0,
+  name: "CAP_UNUSED"
+}, {
+  no: 1,
+  name: "CAP_PACKET_TRAILER"
+}, {
+  no: 2,
+  name: "CAP_COMPRESSION_DEFLATE_RAW"
+}]);
+var xae = mt.makeMessageType("livekit.ClientConfiguration", () => [{
+  no: 1,
+  name: "video",
+  kind: "message",
+  T: EY
+}, {
+  no: 2,
+  name: "screen",
+  kind: "message",
+  T: EY
+}, {
+  no: 3,
+  name: "resume_connection",
+  kind: "enum",
+  T: mt.getEnumType(nT)
+}, {
+  no: 4,
+  name: "disabled_codecs",
+  kind: "message",
+  T: UWe
+}, {
+  no: 5,
+  name: "force_relay",
+  kind: "enum",
+  T: mt.getEnumType(nT)
+}]);
+var EY = mt.makeMessageType("livekit.VideoConfiguration", () => [{
+  no: 1,
+  name: "hardware_encoder",
+  kind: "enum",
+  T: mt.getEnumType(nT)
+}]);
+var UWe = mt.makeMessageType("livekit.DisabledCodecs", () => [{
+  no: 1,
+  name: "codecs",
+  kind: "message",
+  T: p4,
+  repeated: !0
+}, {
+  no: 2,
+  name: "publish",
+  kind: "message",
+  T: p4,
+  repeated: !0
+}]);
+var Tae = mt.makeMessageType("livekit.TimedVersion", () => [{
+  no: 1,
+  name: "unix_micro",
+  kind: "scalar",
+  T: 3
+}, {
+  no: 2,
+  name: "ticks",
+  kind: "scalar",
+  T: 5
+}]);
+var LO = mt.makeEnum("livekit.DataStream.OperationType", [{
+  no: 0,
+  name: "CREATE"
+}, {
+  no: 1,
+  name: "UPDATE"
+}, {
+  no: 2,
+  name: "DELETE"
+}, {
+  no: 3,
+  name: "REACTION"
+}]);
+var nh = mt.makeEnum("livekit.DataStream.CompressionType", [{
+  no: 0,
+  name: "NONE"
+}, {
+  no: 1,
+  name: "DEFLATE_RAW"
+}]);
+var Bae = mt.makeMessageType("livekit.DataStream.TextHeader", () => [{
+  no: 1,
+  name: "operation_type",
+  kind: "enum",
+  T: mt.getEnumType(LO)
+}, {
+  no: 2,
+  name: "version",
+  kind: "scalar",
+  T: 5
+}, {
+  no: 3,
+  name: "reply_to_stream_id",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 4,
+  name: "attached_stream_ids",
+  kind: "scalar",
+  T: 9,
+  repeated: !0
+}, {
+  no: 5,
+  name: "generated",
+  kind: "scalar",
+  T: 8
+}], {
+  localName: "DataStream_TextHeader"
+});
+var Mae = mt.makeMessageType("livekit.DataStream.ByteHeader", () => [{
+  no: 1,
+  name: "name",
+  kind: "scalar",
+  T: 9
+}], {
+  localName: "DataStream_ByteHeader"
+});
+var pD = mt.makeMessageType("livekit.DataStream.Header", () => [{
+  no: 1,
+  name: "stream_id",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "timestamp",
+  kind: "scalar",
+  T: 3
+}, {
+  no: 3,
+  name: "topic",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 4,
+  name: "mime_type",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 5,
+  name: "total_length",
+  kind: "scalar",
+  T: 4,
+  opt: !0
+}, {
+  no: 7,
+  name: "encryption_type",
+  kind: "enum",
+  T: mt.getEnumType(Zs)
+}, {
+  no: 8,
+  name: "attributes",
+  kind: "map",
+  K: 9,
+  V: {
+    kind: "scalar",
+    T: 9
+  }
+}, {
+  no: 9,
+  name: "text_header",
+  kind: "message",
+  T: Bae,
+  oneof: "content_header"
+}, {
+  no: 10,
+  name: "byte_header",
+  kind: "message",
+  T: Mae,
+  oneof: "content_header"
+}, {
+  no: 11,
+  name: "inline_content",
+  kind: "scalar",
+  T: 12,
+  opt: !0
+}, {
+  no: 12,
+  name: "compression",
+  kind: "enum",
+  T: mt.getEnumType(nh)
+}], {
+  localName: "DataStream_Header"
+});
+var ty = mt.makeMessageType("livekit.DataStream.Chunk", () => [{
+  no: 1,
+  name: "stream_id",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "chunk_index",
+  kind: "scalar",
+  T: 4
+}, {
+  no: 3,
+  name: "content",
+  kind: "scalar",
+  T: 12
+}, {
+  no: 4,
+  name: "version",
+  kind: "scalar",
+  T: 5
+}, {
+  no: 5,
+  name: "iv",
+  kind: "scalar",
+  T: 12,
+  opt: !0
+}], {
+  localName: "DataStream_Chunk"
+});
+var mQ = mt.makeMessageType("livekit.DataStream.Trailer", () => [{
+  no: 1,
+  name: "stream_id",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "reason",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 3,
+  name: "attributes",
+  kind: "map",
+  K: 9,
+  V: {
+    kind: "scalar",
+    T: 9
+  }
+}], {
+  localName: "DataStream_Trailer"
+});
+var FWe = mt.makeMessageType("livekit.SubscribedAudioCodec", () => [{
+  no: 1,
+  name: "codec",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "enabled",
+  kind: "scalar",
+  T: 8
+}]);
+var tm = mt.makeEnum("livekit.SignalTarget", [{
+  no: 0,
+  name: "PUBLISHER"
+}, {
+  no: 1,
+  name: "SUBSCRIBER"
+}]);
+var NO = mt.makeEnum("livekit.StreamState", [{
+  no: 0,
+  name: "ACTIVE"
+}, {
+  no: 1,
+  name: "PAUSED"
+}]);
+var QWe = mt.makeEnum("livekit.CandidateProtocol", [{
+  no: 0,
+  name: "UDP"
+}, {
+  no: 1,
+  name: "TCP"
+}, {
+  no: 2,
+  name: "TLS"
+}]);
+var HWe = mt.makeMessageType("livekit.SignalRequest", () => [{
+  no: 1,
+  name: "offer",
+  kind: "message",
+  T: aE,
+  oneof: "message"
+}, {
+  no: 2,
+  name: "answer",
+  kind: "message",
+  T: aE,
+  oneof: "message"
+}, {
+  no: 3,
+  name: "trickle",
+  kind: "message",
+  T: gD,
+  oneof: "message"
+}, {
+  no: 4,
+  name: "add_track",
+  kind: "message",
+  T: sT,
+  oneof: "message"
+}, {
+  no: 5,
+  name: "mute",
+  kind: "message",
+  T: AD,
+  oneof: "message"
+}, {
+  no: 6,
+  name: "subscription",
+  kind: "message",
+  T: mD,
+  oneof: "message"
+}, {
+  no: 7,
+  name: "track_setting",
+  kind: "message",
+  T: Dae,
+  oneof: "message"
+}, {
+  no: 8,
+  name: "leave",
+  kind: "message",
+  T: vD,
+  oneof: "message"
+}, {
+  no: 10,
+  name: "update_layers",
+  kind: "message",
+  T: Lae,
+  oneof: "message"
+}, {
+  no: 11,
+  name: "subscription_permission",
+  kind: "message",
+  T: Uae,
+  oneof: "message"
+}, {
+  no: 12,
+  name: "sync_state",
+  kind: "message",
+  T: IQ,
+  oneof: "message"
+}, {
+  no: 13,
+  name: "simulate",
+  kind: "message",
+  T: p0,
+  oneof: "message"
+}, {
+  no: 14,
+  name: "ping",
+  kind: "scalar",
+  T: 3,
+  oneof: "message"
+}, {
+  no: 15,
+  name: "update_metadata",
+  kind: "message",
+  T: SQ,
+  oneof: "message"
+}, {
+  no: 16,
+  name: "ping_req",
+  kind: "message",
+  T: Hae,
+  oneof: "message"
+}, {
+  no: 17,
+  name: "update_audio_track",
+  kind: "message",
+  T: CQ,
+  oneof: "message"
+}, {
+  no: 18,
+  name: "update_video_track",
+  kind: "message",
+  T: Pae,
+  oneof: "message"
+}, {
+  no: 19,
+  name: "publish_data_track_request",
+  kind: "message",
+  T: vQ,
+  oneof: "message"
+}, {
+  no: 20,
+  name: "unpublish_data_track_request",
+  kind: "message",
+  T: EQ,
+  oneof: "message"
+}, {
+  no: 21,
+  name: "update_data_subscription",
+  kind: "message",
+  T: Rae,
+  oneof: "message"
+}, {
+  no: 22,
+  name: "store_data_blob_request",
+  kind: "message",
+  T: JWe,
+  oneof: "message"
+}, {
+  no: 23,
+  name: "get_data_blob_request",
+  kind: "message",
+  T: ZWe,
+  oneof: "message"
+}]);
+var bY = mt.makeMessageType("livekit.SignalResponse", () => [{
+  no: 1,
+  name: "join",
+  kind: "message",
+  T: VWe,
+  oneof: "message"
+}, {
+  no: 2,
+  name: "answer",
+  kind: "message",
+  T: aE,
+  oneof: "message"
+}, {
+  no: 3,
+  name: "offer",
+  kind: "message",
+  T: aE,
+  oneof: "message"
+}, {
+  no: 4,
+  name: "trickle",
+  kind: "message",
+  T: gD,
+  oneof: "message"
+}, {
+  no: 5,
+  name: "update",
+  kind: "message",
+  T: YWe,
+  oneof: "message"
+}, {
+  no: 6,
+  name: "track_published",
+  kind: "message",
+  T: bQ,
+  oneof: "message"
+}, {
+  no: 8,
+  name: "leave",
+  kind: "message",
+  T: vD,
+  oneof: "message"
+}, {
+  no: 9,
+  name: "mute",
+  kind: "message",
+  T: AD,
+  oneof: "message"
+}, {
+  no: 10,
+  name: "speakers_changed",
+  kind: "message",
+  T: $We,
+  oneof: "message"
+}, {
+  no: 11,
+  name: "room_update",
+  kind: "message",
+  T: eVe,
+  oneof: "message"
+}, {
+  no: 12,
+  name: "connection_quality",
+  kind: "message",
+  T: nVe,
+  oneof: "message"
+}, {
+  no: 13,
+  name: "stream_state_update",
+  kind: "message",
+  T: rVe,
+  oneof: "message"
+}, {
+  no: 14,
+  name: "subscribed_quality_update",
+  kind: "message",
+  T: oVe,
+  oneof: "message"
+}, {
+  no: 15,
+  name: "subscription_permission_update",
+  kind: "message",
+  T: lVe,
+  oneof: "message"
+}, {
+  no: 16,
+  name: "refresh_token",
+  kind: "scalar",
+  T: 9,
+  oneof: "message"
+}, {
+  no: 17,
+  name: "track_unpublished",
+  kind: "message",
+  T: KWe,
+  oneof: "message"
+}, {
+  no: 18,
+  name: "pong",
+  kind: "scalar",
+  T: 3,
+  oneof: "message"
+}, {
+  no: 19,
+  name: "reconnect",
+  kind: "message",
+  T: jWe,
+  oneof: "message"
+}, {
+  no: 20,
+  name: "pong_resp",
+  kind: "message",
+  T: uVe,
+  oneof: "message"
+}, {
+  no: 21,
+  name: "subscription_response",
+  kind: "message",
+  T: fVe,
+  oneof: "message"
+}, {
+  no: 22,
+  name: "request_response",
+  kind: "message",
+  T: pVe,
+  oneof: "message"
+}, {
+  no: 23,
+  name: "track_subscribed",
+  kind: "message",
+  T: gVe,
+  oneof: "message"
+}, {
+  no: 24,
+  name: "room_moved",
+  kind: "message",
+  T: cVe,
+  oneof: "message"
+}, {
+  no: 25,
+  name: "media_sections_requirement",
+  kind: "message",
+  T: vVe,
+  oneof: "message"
+}, {
+  no: 26,
+  name: "subscribed_audio_codec_update",
+  kind: "message",
+  T: aVe,
+  oneof: "message"
+}, {
+  no: 27,
+  name: "publish_data_track_response",
+  kind: "message",
+  T: yQ,
+  oneof: "message"
+}, {
+  no: 28,
+  name: "unpublish_data_track_response",
+  kind: "message",
+  T: zWe,
+  oneof: "message"
+}, {
+  no: 29,
+  name: "data_track_subscriber_handles",
+  kind: "message",
+  T: GWe,
+  oneof: "message"
+}, {
+  no: 30,
+  name: "store_data_blob_response",
+  kind: "message",
+  T: XWe,
+  oneof: "message"
+}, {
+  no: 31,
+  name: "get_data_blob_response",
+  kind: "message",
+  T: qWe,
+  oneof: "message"
+}]);
+var OO = mt.makeMessageType("livekit.SimulcastCodec", () => [{
+  no: 1,
+  name: "codec",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "cid",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 4,
+  name: "layers",
+  kind: "message",
+  T: V1,
+  repeated: !0
+}, {
+  no: 5,
+  name: "video_layer_mode",
+  kind: "enum",
+  T: mt.getEnumType(fQ)
+}]);
+var sT = mt.makeMessageType("livekit.AddTrackRequest", () => [{
+  no: 1,
+  name: "cid",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "name",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 3,
+  name: "type",
+  kind: "enum",
+  T: mt.getEnumType(em)
+}, {
+  no: 4,
+  name: "width",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 5,
+  name: "height",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 6,
+  name: "muted",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 7,
+  name: "disable_dtx",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 8,
+  name: "source",
+  kind: "enum",
+  T: mt.getEnumType(Zc)
+}, {
+  no: 9,
+  name: "layers",
+  kind: "message",
+  T: V1,
+  repeated: !0
+}, {
+  no: 10,
+  name: "simulcast_codecs",
+  kind: "message",
+  T: OO,
+  repeated: !0
+}, {
+  no: 11,
+  name: "sid",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 12,
+  name: "stereo",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 13,
+  name: "disable_red",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 14,
+  name: "encryption",
+  kind: "enum",
+  T: mt.getEnumType(Zs)
+}, {
+  no: 15,
+  name: "stream",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 16,
+  name: "backup_codec_policy",
+  kind: "enum",
+  T: mt.getEnumType(pae)
+}, {
+  no: 17,
+  name: "audio_features",
+  kind: "enum",
+  T: mt.getEnumType(Gu),
+  repeated: !0
+}, {
+  no: 18,
+  name: "packet_trailer_features",
+  kind: "enum",
+  T: mt.getEnumType(Lw),
+  repeated: !0
+}]);
+var vQ = mt.makeMessageType("livekit.PublishDataTrackRequest", () => [{
+  no: 1,
+  name: "pub_handle",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 2,
+  name: "name",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 3,
+  name: "encryption",
+  kind: "enum",
+  T: mt.getEnumType(Zs)
+}, {
+  no: 4,
+  name: "frame_encoding",
+  kind: "message",
+  T: gae,
+  opt: !0
+}, {
+  no: 5,
+  name: "schema",
+  kind: "message",
+  T: dQ,
+  opt: !0
+}]);
+var yQ = mt.makeMessageType("livekit.PublishDataTrackResponse", () => [{
+  no: 1,
+  name: "info",
+  kind: "message",
+  T: hD
+}]);
+var EQ = mt.makeMessageType("livekit.UnpublishDataTrackRequest", () => [{
+  no: 1,
+  name: "pub_handle",
+  kind: "scalar",
+  T: 13
+}]);
+var zWe = mt.makeMessageType("livekit.UnpublishDataTrackResponse", () => [{
+  no: 1,
+  name: "info",
+  kind: "message",
+  T: hD
+}]);
+var GWe = mt.makeMessageType("livekit.DataTrackSubscriberHandles", () => [{
+  no: 1,
+  name: "sub_handles",
+  kind: "map",
+  K: 13,
+  V: {
+    kind: "message",
+    T: WWe
+  }
+}]);
+var WWe = mt.makeMessageType("livekit.DataTrackSubscriberHandles.PublishedDataTrack", () => [{
+  no: 1,
+  name: "publisher_identity",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "publisher_sid",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 3,
+  name: "track_sid",
+  kind: "scalar",
+  T: 9
+}], {
+  localName: "DataTrackSubscriberHandles_PublishedDataTrack"
+});
+var gD = mt.makeMessageType("livekit.TrickleRequest", () => [{
+  no: 1,
+  name: "candidateInit",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "target",
+  kind: "enum",
+  T: mt.getEnumType(tm)
+}, {
+  no: 3,
+  name: "final",
+  kind: "scalar",
+  T: 8
+}]);
+var AD = mt.makeMessageType("livekit.MuteTrackRequest", () => [{
+  no: 1,
+  name: "sid",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "muted",
+  kind: "scalar",
+  T: 8
+}]);
+var VWe = mt.makeMessageType("livekit.JoinResponse", () => [{
+  no: 1,
+  name: "room",
+  kind: "message",
+  T: dD
+}, {
+  no: 2,
+  name: "participant",
+  kind: "message",
+  T: EC
+}, {
+  no: 3,
+  name: "other_participants",
+  kind: "message",
+  T: EC,
+  repeated: !0
+}, {
+  no: 4,
+  name: "server_version",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 5,
+  name: "ice_servers",
+  kind: "message",
+  T: Nae,
+  repeated: !0
+}, {
+  no: 6,
+  name: "subscriber_primary",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 7,
+  name: "alternative_url",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 8,
+  name: "client_configuration",
+  kind: "message",
+  T: xae
+}, {
+  no: 9,
+  name: "server_region",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 10,
+  name: "ping_timeout",
+  kind: "scalar",
+  T: 5
+}, {
+  no: 11,
+  name: "ping_interval",
+  kind: "scalar",
+  T: 5
+}, {
+  no: 12,
+  name: "server_info",
+  kind: "message",
+  T: Sae
+}, {
+  no: 13,
+  name: "sif_trailer",
+  kind: "scalar",
+  T: 12
+}, {
+  no: 14,
+  name: "enabled_publish_codecs",
+  kind: "message",
+  T: p4,
+  repeated: !0
+}, {
+  no: 15,
+  name: "fast_publish",
+  kind: "scalar",
+  T: 8
+}]);
+var jWe = mt.makeMessageType("livekit.ReconnectResponse", () => [{
+  no: 1,
+  name: "ice_servers",
+  kind: "message",
+  T: Nae,
+  repeated: !0
+}, {
+  no: 2,
+  name: "client_configuration",
+  kind: "message",
+  T: xae
+}, {
+  no: 3,
+  name: "server_info",
+  kind: "message",
+  T: Sae
+}, {
+  no: 4,
+  name: "last_message_seq",
+  kind: "scalar",
+  T: 13
+}]);
+var bQ = mt.makeMessageType("livekit.TrackPublishedResponse", () => [{
+  no: 1,
+  name: "cid",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "track",
+  kind: "message",
+  T: TS
+}]);
+var KWe = mt.makeMessageType("livekit.TrackUnpublishedResponse", () => [{
+  no: 1,
+  name: "track_sid",
+  kind: "scalar",
+  T: 9
+}]);
+var aE = mt.makeMessageType("livekit.SessionDescription", () => [{
+  no: 1,
+  name: "type",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "sdp",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 3,
+  name: "id",
+  kind: "scalar",
+  T: 13
+}, {
+  no: 4,
+  name: "mid_to_track_id",
+  kind: "map",
+  K: 9,
+  V: {
+    kind: "scalar",
+    T: 9
+  }
+}]);
+var YWe = mt.makeMessageType("livekit.ParticipantUpdate", () => [{
+  no: 1,
+  name: "participants",
+  kind: "message",
+  T: EC,
+  repeated: !0
+}]);
+var mD = mt.makeMessageType("livekit.UpdateSubscription", () => [{
+  no: 1,
+  name: "track_sids",
+  kind: "scalar",
+  T: 9,
+  repeated: !0
+}, {
+  no: 2,
+  name: "subscribe",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 3,
+  name: "participant_tracks",
+  kind: "message",
+  T: Cae,
+  repeated: !0
+}]);
+var Rae = mt.makeMessageType("livekit.UpdateDataSubscription", () => [{
+  no: 1,
+  name: "updates",
+  kind: "message",
+  T: kae,
+  repeated: !0
+}]);
+var kae = mt.makeMessageType("livekit.UpdateDataSubscription.Update", () => [{
+  no: 1,
+  name: "track_sid",
+  kind: "scalar",
+  T: 9
+}, {
+  no: 2,
+  name: "subscribe",
+  kind: "scalar",
+  T: 8
+}, {
+  no: 3,
+  name: "options",
+  kind: "message",
+  T: PWe
+}], {
+  localName: "UpdateDataSubscription_Update"
+});
